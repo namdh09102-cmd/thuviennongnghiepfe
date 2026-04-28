@@ -23,7 +23,15 @@ export async function GET(req: NextRequest) {
     .range(from, to);
 
   if (category) {
-    query = query.eq('category_id', category);
+    const { data: catData } = await supabaseAdmin
+      .from('categories')
+      .select('id')
+      .eq('slug', category)
+      .single();
+      
+    if (catData) {
+      query = query.eq('category_id', catData.id);
+    }
   }
 
   if (sort === 'hot') {

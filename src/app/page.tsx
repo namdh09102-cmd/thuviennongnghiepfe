@@ -17,6 +17,8 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeSort, setActiveSort] = useState('latest');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStart = useRef(0);
   
   // Fetch Categories
   const { data: categories } = useSWRInfinite(
@@ -26,7 +28,7 @@ export default function HomePage() {
 
   const getKey = (pageIndex: number, previousPageData: any) => {
     if (previousPageData && !previousPageData.data.length) return null;
-    return `/api/posts?page=${pageIndex + 1}&category=${activeCategory || ''}&sort=${activeSort}&limit=10`;
+    return `/api/posts?page=${pageIndex + 1}&category=${activeCategory || ''}&sort=${activeSort}&limit=20`;
   };
 
   const categoryList = Array.isArray(categories?.[0]) ? categories[0] : [];
@@ -40,7 +42,7 @@ export default function HomePage() {
   if (error) {
     console.error('SWR Error:', error);
   }
-  const isReachingEnd = data && Array.isArray(data[data.length - 1]?.data) && data[data.length - 1].data.length < 10;
+  const isReachingEnd = data && Array.isArray(data[data.length - 1]?.data) && data[data.length - 1].data.length < 20;
   
   const { ref, inView } = useInView();
 
@@ -50,13 +52,36 @@ export default function HomePage() {
     }
   }, [inView, isReachingEnd, isValidating, setSize, size]);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (typeof window !== 'undefined' && window.scrollY === 0) {
+      touchStart.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchEnd = async (e: React.TouchEvent) => {
+    const touchEnd = e.changedTouches[0].clientY;
+    if (typeof window !== 'undefined' && window.scrollY === 0 && touchEnd - touchStart.current > 120) {
+      setIsRefreshing(true);
+      await setSize(1);
+      setIsRefreshing(false);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       {/* Main Feed */}
-      <main className="lg:col-span-8 space-y-6">
+      <main 
+        className="lg:col-span-8 space-y-6"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* Header Section */}
-        <div className="space-y-1">
+        <div className="space-y-1 relative">
+          {isRefreshing && (
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white rounded-full p-2 shadow-md border border-gray-100 text-green-600 z-20 flex items-center justify-center animate-spin">
+              <Sparkles className="w-4 h-4 animate-pulse" />
+            </div>
+          )}
           <h1 className="text-2xl font-black text-gray-900 flex items-center space-x-2">
             <Sparkles className="w-6 h-6 text-amber-500 fill-amber-500" />
             <span>Dành cho bạn hôm nay</span>
@@ -99,16 +124,28 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Post List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-          
-          {(isLoading || isValidating) && Array(4).fill(0).map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
-        </div>
+        {/* Post List / Empty State */}
+        {posts.length === 0 && !isLoading && !isValidating ? (
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-white rounded-3xl border border-gray-100 shadow-sm">
+            <div className="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4">
+              <Sparkles className="w-8 h-8" />
+            </div>
+            <h3 className="text-sm font-black text-gray-900 mb-1">Hãy là người đầu tiên chia sẻ!</h3>
+            <p className="text-xs text-gray-400 font-medium max-w-xs">
+              Không tìm thấy bài viết nào trong danh mục này.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+            
+            {(isLoading || isValidating) && Array(4).fill(0).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        )}
 
         {/* Load More Trigger */}
         <div ref={ref} className="h-20 flex items-center justify-center">
