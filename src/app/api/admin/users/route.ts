@@ -4,8 +4,8 @@ import { auth } from '@/auth';
 
 export async function GET(req: NextRequest) {
   const session = await auth();
-  const role = (session?.user as any)?.role;
-  if (!session?.user || (role !== 'ADMIN' && role !== 'admin')) {
+  const userRole = (session?.user as any)?.role;
+  if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'admin')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -35,8 +35,8 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const session = await auth();
-  const role = (session?.user as any)?.role;
-  if (!session?.user || (role !== 'ADMIN' && role !== 'admin')) {
+  const userRole = (session?.user as any)?.role;
+  if (!session?.user || (userRole !== 'ADMIN' && userRole !== 'admin')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
