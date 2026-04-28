@@ -27,9 +27,15 @@ export default function HomePage() {
     return `/api/posts?page=${pageIndex + 1}&category=${activeCategory || ''}&sort=${activeSort}&limit=10`;
   };
 
-  const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(getKey, fetcher);
+  const { data, size, setSize, isLoading, isValidating, error } = useSWRInfinite(getKey, fetcher);
   
-  const posts = data ? data.map((page) => page.data).flat() : [];
+  const posts = data 
+    ? data.filter(page => page && Array.isArray(page.data)).map((page) => page.data).flat() 
+    : [];
+
+  if (error) {
+    console.error('SWR Error:', error);
+  }
   const isReachingEnd = data && data[data.length - 1]?.data.length < 10;
   
   const { ref, inView } = useInView();

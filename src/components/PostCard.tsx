@@ -36,7 +36,7 @@ export default function PostCard({ post }: PostCardProps) {
           />
           <div className="absolute top-4 left-4">
             <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-green-700 text-[10px] font-black uppercase rounded-full shadow-sm">
-              {post.category.name}
+              {post.category?.name || 'Chưa phân loại'}
             </span>
           </div>
         </div>
@@ -59,11 +59,11 @@ export default function PostCard({ post }: PostCardProps) {
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={post.author.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky'}
-                alt={post.author.full_name}
+                src={post.author?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky'}
+                alt={post.author?.full_name || 'Tác giả'}
                 className="w-8 h-8 rounded-full bg-gray-100"
               />
-              {post.author.is_verified && (
+              {post.author?.is_verified && (
                 <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
                   <Award className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
                 </div>
@@ -71,12 +71,14 @@ export default function PostCard({ post }: PostCardProps) {
             </div>
             <div>
               <p className="text-[10px] font-black text-gray-900 leading-none">
-                {post.author.full_name}
+                {post.author?.full_name || 'Người dùng'}
               </p>
               <div className="flex items-center text-[9px] text-gray-400 mt-1 space-x-1">
                 <Clock className="w-2.5 h-2.5" />
                 <span>
-                  {formatDistanceToNow(new Date(post.published_at), { addSuffix: true, locale: vi })}
+                  {post.published_at 
+                    ? formatDistanceToNow(new Date(post.published_at), { addSuffix: true, locale: vi })
+                    : 'Vừa xong'}
                 </span>
               </div>
             </div>
