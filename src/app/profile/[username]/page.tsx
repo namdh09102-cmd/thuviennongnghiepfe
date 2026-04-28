@@ -51,89 +51,52 @@ export default async function ProfilePage({ params }: { params: { username: stri
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
       <JsonLd data={personSchema} />
       
-      {/* Profile Header */}
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden mb-12">
-        <div className="h-32 bg-gradient-to-r from-green-600 to-teal-700" />
-        <div className="px-8 pb-8">
-          <div className="relative flex justify-between items-end -mt-12 mb-6">
-            <div className="relative">
-              <img 
-                src={profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'} 
-                className="w-32 h-32 rounded-[32px] border-4 border-white shadow-lg bg-white" 
-                alt={profile.full_name} 
-              />
-              {profile.is_verified && (
-                <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1 shadow-md">
-                  <CheckCircle className="w-6 h-6 text-blue-500 fill-blue-50" />
+      <ProfileHeader profile={profile} isOwn={false} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Sidebar */}
+        <div className="lg:col-span-4 space-y-6">
+          <ActivityHeatmap />
+          
+          <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm space-y-6">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center justify-between">
+              <span>Huy hiệu đạt được</span>
+            </h3>
+            <div className="grid grid-cols-3 gap-4">
+              {profile.badges?.slice(0, 6).map((badge: any) => (
+                <BadgeCard key={badge.id} badge={badge} />
+              ))}
+              {!profile.badges?.length && (
+                <div className="col-span-full py-6 text-center">
+                  <p className="text-[10px] text-gray-400 italic">Chưa có huy hiệu nào.</p>
                 </div>
               )}
             </div>
-            <button className="bg-green-600 text-white font-black text-xs px-8 py-3 rounded-2xl hover:bg-green-700 transition-all">
-              Theo dõi
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-2xl font-black text-gray-900 flex items-center space-x-2">
-                <span>{profile.full_name}</span>
-                {profile.role === 'expert' && <Award className="w-5 h-5 text-amber-500" />}
-              </h1>
-              <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mt-1">@{profile.username}</p>
-            </div>
-
-            <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
-              {profile.bio || 'Chưa có tiểu sử.'}
-            </p>
-
-            <div className="flex flex-wrap items-center gap-6 text-[10px] font-black text-gray-400 uppercase tracking-widest pt-4">
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4" />
-                <span>{profile.region || 'Việt Nam'}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4" />
-                <span>Tham gia {format(new Date(profile.created_at), 'MMMM yyyy', { locale: vi })}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-12 pt-6 border-t border-gray-50">
-              <div className="flex flex-col items-center">
-                <span className="text-xl font-black text-gray-900">{profile.posts?.length || 0}</span>
-                <span className="text-[9px] font-black text-gray-400 uppercase">Bài viết</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="text-xl font-black text-green-600">{profile.points || 0}</span>
-                <span className="text-[9px] font-black text-gray-400 uppercase">Điểm uy tín</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="text-xl font-black text-gray-900">0</span>
-                <span className="text-[9px] font-black text-gray-400 uppercase">Người theo dõi</span>
-              </div>
-            </div>
           </div>
         </div>
-      </div>
 
-      {/* User Posts */}
-      <div className="space-y-6">
-        <h2 className="text-lg font-black text-gray-900 flex items-center space-x-2 ml-4">
-          <FileText className="w-5 h-5 text-green-600" />
-          <span>Bài viết của {profile.full_name}</span>
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {profile.posts?.map((post: any) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-          {profile.posts?.length === 0 && (
-            <div className="col-span-full py-20 text-center bg-white rounded-[40px] border border-dashed border-gray-200">
-              <p className="text-xs text-gray-400 font-medium italic">Chưa có bài viết nào được đăng tải.</p>
+        {/* Right Content */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
+            <h2 className="text-lg font-black text-gray-900 flex items-center space-x-2 mb-8">
+              <FileText className="w-5 h-5 text-green-600" />
+              <span>Bài viết của {profile.full_name}</span>
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {profile.posts?.map((post: any) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+              {profile.posts?.length === 0 && (
+                <div className="col-span-full py-20 text-center bg-gray-50/50 rounded-[40px] border border-dashed border-gray-200">
+                  <p className="text-xs text-gray-400 font-medium italic">Chưa có bài viết nào được đăng tải.</p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
