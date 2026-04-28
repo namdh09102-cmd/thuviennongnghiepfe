@@ -22,64 +22,9 @@ import PostCard from '@/components/PostCard';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export const revalidate = 3600; // ISR: Revalidate every 1 hour
-
-const MOCK_POSTS: Record<string, any> = {
-  'ky-thuat-trong-dua-luoi-nha-mang': {
-    id: 'mock-1',
-    slug: 'ky-thuat-trong-dua-luoi-nha-mang',
-    title: 'Kỹ thuật trồng dưa lưới nhà màng đạt năng suất cao',
-    excerpt: 'Chia sẻ chi tiết quy trình trồng dưa lưới trong nhà màng từ giai đoạn ươm hạt đến thu hoạch.',
-    content: `<p>Trồng dưa lưới trong nhà màng đang là hướng đi mang lại hiệu quả kinh tế cao cho bà con nông dân. Bài viết này Thư viện Nông nghiệp xin chia sẻ trọn bộ kỹ thuật trồng dưa lưới đạt chuẩn.</p>
-              <h2>1. Chuẩn bị nhà màng và giá thể</h2>
-              <p>Nhà màng cần đảm bảo độ thông thoáng, che chắn được côn trùng gây hại. Giá thể lý tưởng gồm xơ dừa, phân hữu cơ hoai mục và tro trấu tỷ lệ 7:2:1.</p>
-              <h2>2. Chăm sóc và bón phân</h2>
-              <p>Cần tuân thủ nghiêm ngặt lịch tưới nước nhỏ giọt kết hợp dinh dưỡng NPK vi lượng theo từng thời kỳ sinh trưởng của cây.</p>`,
-    published_at: '2025-06-15T00:00:00Z',
-    thumbnail_url: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&w=1200&q=80',
-    category: { id: 1, name: 'Kỹ thuật trồng trọt', slug: 'ky-thuat' },
-    author: { username: 'chuyengia_minh', full_name: 'Nguyễn Văn Minh', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Minh', role: 'Kỹ sư Nông nghiệp', points: 120, is_verified: true },
-    tags: ['dưa lưới', 'nhà màng', 'kỹ thuật'],
-    content_length: 1200
-  },
-  'phong-tru-dao-on-lua-he-thu': {
-    id: 'mock-2',
-    slug: 'phong-tru-dao-on-lua-he-thu',
-    title: 'Biện pháp phòng trừ bệnh đạo ôn hại lúa vụ Hè Thu',
-    excerpt: 'Nhận biết sớm dấu hiệu và áp dụng các biện pháp sinh học, hóa học phòng trị bệnh đạo ôn kịp thời.',
-    content: `<p>Bệnh đạo ôn do nấm Pyricularia oryzae gây ra là nỗi ám ảnh của người trồng lúa vụ Hè Thu. Thời tiết nắng mưa xen kẽ tạo điều kiện cho bào tử nấm phát tán mạnh.</p>
-              <h2>Dấu hiệu nhận biết</h2>
-              <p>Vết bệnh ban đầu là những chấm nhỏ màu xanh xám, sau đó lan rộng thành hình thoi màu nâu xám có quầng vàng xung quanh.</p>
-              <h2>Biện pháp phòng trị</h2>
-              <p>Không bón thừa đạm, giữ mực nước ruộng hợp lý. Sử dụng thuốc đặc trị phun phòng khi lúa trổ lẹt xẹt và trổ đều.</p>`,
-    published_at: '2025-07-10T00:00:00Z',
-    thumbnail_url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
-    category: { id: 2, name: 'Phòng trừ sâu bệnh', slug: 'sau-benh' },
-    author: { username: 'ky_su_hoa', full_name: 'Lê Thị Hoa', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Hoa', role: 'Chuyên gia Bảo vệ Thực vật', points: 95, is_verified: true },
-    tags: ['lúa', 'đạo ôn', 'hè thu'],
-    content_length: 1000
-  },
-  'bon-phan-npk-dung-cach': {
-    id: 'mock-3',
-    slug: 'bon-phan-npk-dung-cach',
-    title: 'Quy tắc bón phân NPK đúng cách cho cây ăn trái',
-    excerpt: 'Bón phân theo nguyên tắc 4 đúng: đúng loại, đúng liều lượng, đúng lúc và đúng cách để tối ưu chi phí.',
-    content: `<p>Phân bón NPK cung cấp 3 nguyên tố dinh dưỡng thiết yếu cho cây trồng. Bón phân sai cách vừa gây lãng phí tiền bạc vừa làm suy thoái đất canh tác.</p>
-              <h2>Nguyên tắc 4 Đúng trong bón phân</h2>
-              <p>- Đúng loại: Phù hợp nhu cầu cây trồng.<br/>- Đúng liều: Tránh thừa gây cháy rễ.<br/>- Đúng lúc: Bón đón đầu đợt sinh trưởng.<br/>- Đúng cách: Bón theo tán cây, vùi lấp đất.</p>`,
-    published_at: '2025-08-01T00:00:00Z',
-    thumbnail_url: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1200&q=80',
-    category: { id: 3, name: 'Dinh dưỡng & Phân bón', slug: 'dinh-duong' },
-    author: { username: 'tan_npk', full_name: 'Trần Đại Tấn', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tan', role: 'Kỹ thuật viên Nông nghệ', points: 80, is_verified: false },
-    tags: ['NPK', 'phân bón', 'cây ăn trái'],
-    content_length: 800
-  }
-};
+export const dynamicParams = true; // SSR for non-prerendered slugs
 
 async function getPost(slug: string) {
-  if (MOCK_POSTS[slug]) {
-    return MOCK_POSTS[slug];
-  }
-
   if (!supabaseAdmin) {
     console.error('Supabase Admin client not initialized. Check environment variables.');
     return null;
@@ -100,10 +45,6 @@ async function getPost(slug: string) {
 }
 
 async function getRelatedPosts(categoryId: number, currentSlug: string) {
-  if ([1, 2, 3].includes(categoryId)) {
-    return Object.values(MOCK_POSTS).filter(p => p.category.id === categoryId && p.slug !== currentSlug);
-  }
-
   if (!supabaseAdmin) return [];
 
   const { data, error } = await supabaseAdmin
@@ -122,32 +63,39 @@ async function getRelatedPosts(categoryId: number, currentSlug: string) {
 }
 
 export async function generateStaticParams() {
-  return [
-    { slug: 'ky-thuat-trong-dua-luoi-nha-mang' },
-    { slug: 'phong-tru-dao-on-lua-he-thu' },
-    { slug: 'bon-phan-npk-dung-cach' }
-  ];
+  if (!supabaseAdmin) return [];
+  
+  const { data: posts } = await supabaseAdmin
+    .from('posts')
+    .select('slug')
+    .eq('status', 'published')
+    .limit(20);
+
+  return posts ? posts.map((p: any) => ({ slug: p.slug })) : [];
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const post = await getPost(params.slug);
   if (!post) return { title: 'Không tìm thấy bài viết' };
 
+  const authorName = post.author?.full_name || 'Thành viên TVNN';
+  const metaDescription = post.excerpt ? post.excerpt.slice(0, 160) : 'Cộng đồng chia sẻ kiến thức nông nghiệp Việt Nam';
+
   return {
-    title: `${post.title} | Thuviennongnghiep`,
-    description: post.excerpt,
+    title: `${post.title} | TVNN`,
+    description: metaDescription,
     openGraph: {
       title: post.title,
-      description: post.excerpt,
+      description: metaDescription,
       images: [post.thumbnail_url],
       type: 'article',
       publishedTime: post.published_at,
-      authors: [post.author.full_name],
+      authors: [authorName],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
-      description: post.excerpt,
+      description: metaDescription,
       images: [post.thumbnail_url],
     },
   };
@@ -156,6 +104,16 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function PostDetailPage({ params }: { params: { slug: string } }) {
   const post = await getPost(params.slug);
   if (!post) notFound();
+
+  const author = post.author || {
+    full_name: 'Thành viên TVNN',
+    username: 'tvnn',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TVNN',
+    role: 'Thành viên',
+    bio: 'Người yêu nông nghiệp',
+    points: 0,
+    is_verified: false
+  };
 
   const relatedPosts = post.category ? await getRelatedPosts(post.category.id, post.slug) : [];
 
@@ -170,8 +128,8 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
     dateModified: post.updated_at,
     author: {
       '@type': 'Person',
-      name: post.author.full_name,
-      url: `${baseUrl}/profile/${post.author.username}`,
+      name: author.full_name,
+      url: `${baseUrl}/profile/${author.username}`,
     },
   };
 
@@ -209,23 +167,23 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
               <div className="flex items-center space-x-3">
                 <div className="relative">
                   <Image
-                    src={post.author.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Author'}
-                    alt={post.author.full_name}
+                    src={author.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Author'}
+                    alt={author.full_name}
                     className="w-12 h-12 rounded-full border-2 border-white shadow-sm object-cover"
                     width={80}
                     height={80}
                     placeholder="blur"
                     blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
                   />
-                  {post.author.is_verified && (
+                  {author.is_verified && (
                     <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
                       <Award className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                     </div>
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-black text-gray-900 leading-none mb-1">{post.author.full_name}</p>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{post.author.role || 'Chuyên gia'}</p>
+                  <p className="text-sm font-black text-gray-900 leading-none mb-1">{author.full_name}</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{author.role || 'Chuyên gia'}</p>
                 </div>
               </div>
 
@@ -286,19 +244,19 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
           {/* Author Card */}
           <div className="bg-white border border-gray-100 rounded-[32px] p-8 shadow-sm text-center">
             <Image
-              src={post.author.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Author'}
-              alt={post.author.full_name}
+              src={author.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Author'}
+              alt={author.full_name}
               className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-green-50 shadow-md object-cover"
               width={160}
               height={160}
               placeholder="blur"
               blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
             />
-            <h4 className="font-black text-lg text-gray-900 mb-1">{post.author.full_name}</h4>
-            <p className="text-xs text-gray-500 font-medium mb-4">{post.author.bio || 'Chuyên gia tư vấn kỹ thuật nông nghiệp tại Thư viện Nông nghiệp.'}</p>
+            <h4 className="font-black text-lg text-gray-900 mb-1">{author.full_name}</h4>
+            <p className="text-xs text-gray-500 font-medium mb-4">{author.bio || 'Chuyên gia tư vấn kỹ thuật nông nghiệp tại Thư viện Nông nghiệp.'}</p>
             <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-50">
               <div>
-                <p className="text-xl font-black text-green-600">{post.author.points || 0}</p>
+                <p className="text-xl font-black text-green-600">{author.points || 0}</p>
                 <p className="text-[9px] font-black text-gray-400 uppercase">Điểm uy tín</p>
               </div>
               <div>
