@@ -147,6 +147,10 @@ export default function Home() {
               <span>📚</span>
               <span>Cẩm nang nhà nông</span>
             </Link>
+            <Link href="/san-pham" className="flex items-center space-x-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-green-600 transition-colors">
+              <span>🏪</span>
+              <span>Tra cứu vật tư</span>
+            </Link>
             <Link href="/lich-mua-vu" className="flex items-center space-x-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-green-600 transition-colors">
               <span>📅</span>
               <span>Lịch mùa vụ</span>
