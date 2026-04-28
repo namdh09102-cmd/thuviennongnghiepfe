@@ -12,6 +12,7 @@ import ActivityHeatmap from '@/components/ActivityHeatmap';
 import BadgeCard from '@/components/BadgeCard';
 
 async function getProfile(username: string) {
+  if (!supabaseAdmin) return null;
   const { data, error } = await supabaseAdmin
     .from('profiles')
     .select(`

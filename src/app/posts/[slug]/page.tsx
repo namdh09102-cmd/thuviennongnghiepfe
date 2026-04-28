@@ -22,6 +22,11 @@ import PostCard from '@/components/PostCard';
 import { supabaseAdmin } from '@/lib/supabase';
 
 async function getPost(slug: string) {
+  if (!supabaseAdmin) {
+    console.error('Supabase Admin client not initialized. Check environment variables.');
+    return null;
+  }
+  
   const { data, error } = await supabaseAdmin
     .from('posts')
     .select(`
@@ -37,6 +42,8 @@ async function getPost(slug: string) {
 }
 
 async function getRelatedPosts(categoryId: number, currentSlug: string) {
+  if (!supabaseAdmin) return [];
+
   const { data, error } = await supabaseAdmin
     .from('posts')
     .select(`

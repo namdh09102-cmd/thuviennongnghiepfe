@@ -10,6 +10,7 @@ import JsonLd from '@/components/JsonLd';
 const API_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://thuviennongnghiepfe.vercel.app';
 
 async function getQuestion(id: string) {
+  if (!supabaseAdmin) return null;
   const { data, error } = await supabaseAdmin
     .from('questions')
     .select(`
