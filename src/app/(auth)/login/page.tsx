@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { LogIn, UserPlus, Github, Mail, Lock, User, MapPin, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { LogIn, UserPlus, Mail, Lock, User, MapPin, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginPage() {
