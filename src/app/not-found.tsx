@@ -15,7 +15,7 @@ export default function NotFound() {
       </div>
 
       <div className="space-y-4 max-w-md">
-        <h1 className="text-3xl font-black text-gray-900">Không tìm thấy "vùng đất" này!</h1>
+        <h1 className="text-3xl font-black text-gray-900">Không tìm thấy &quot;vùng đất&quot; này!</h1>
         <p className="text-sm text-gray-500 font-medium leading-relaxed">
           Có vẻ như trang anh đang tìm kiếm không tồn tại hoặc đã được chuyển đi. Hãy thử tìm kiếm nội dung khác nhé.
         </p>
