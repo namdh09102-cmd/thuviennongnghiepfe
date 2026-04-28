@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { auth } from '@/auth';
+import { jwtVerify } from 'jose';
+
+async function checkAdminAuth(req: NextRequest) {
+  const adminToken = req.cookies.get('admin_token')?.value;
+  if (!adminToken) return false;
+
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'default_secret_key');
+    const { payload } = await jwtVerify(adminToken, secret);
+    return payload.role === 'admin';
+  } catch (e) {
+    return false;
+  }
+}
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  const role = (session?.user as any)?.role;
-  if (!session?.user || (role !== 'ADMIN' && role !== 'admin')) {
+  const isAuth = await checkAdminAuth(req);
+  if (!isAuth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Lấy danh sách comment (có thể thêm logic lọc comment bị report sau này)
   const { data, error } = await supabaseAdmin
     .from('comments')
     .select(`
@@ -24,9 +35,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await auth();
-  const role = (session?.user as any)?.role;
-  if (!session?.user || (role !== 'ADMIN' && role !== 'admin')) {
+  const isAuth = await checkAdminAuth(req);
+  if (!isAuth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
