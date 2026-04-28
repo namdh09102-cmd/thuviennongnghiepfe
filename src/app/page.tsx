@@ -162,6 +162,39 @@ export default function HomePage() {
             </p>
           )}
         </div>
+        {/* Mobile Widgets (Hidden on Desktop) */}
+        <div className="lg:hidden mt-8 space-y-6">
+          <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide px-1">
+            <div className="flex-shrink-0 w-[280px]">
+              <WeatherWidget />
+            </div>
+            <div className="flex-shrink-0 w-[280px] bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-50 pb-3">
+                <h3 className="font-black text-xs text-gray-900 flex items-center space-x-2 uppercase">
+                  <TrendingUp className="w-4 h-4 text-green-600" />
+                  <span>Xu hướng</span>
+                </h3>
+              </div>
+              <ul className="space-y-4">
+                {[
+                  { tag: '#SauRiengRi6', count: '1.2k bài viết' },
+                  { tag: '#PhanBonHuuCo', count: '850 bài viết' },
+                  { tag: '#LúaĐôngXuân', count: '2.4k bài viết' },
+                ].map((trend, i) => (
+                  <li key={i} className="flex flex-col group cursor-pointer">
+                    <span className="text-[11px] font-black text-gray-800 group-hover:text-green-600 transition-colors">
+                      {trend.tag}
+                    </span>
+                    <span className="text-[9px] text-gray-400 font-bold uppercase">{trend.count}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex-shrink-0 w-[280px]">
+              <Leaderboard />
+            </div>
+          </div>
+        </div>
       </main>
 
       {/* Sidebar (Desktop Only) */}
