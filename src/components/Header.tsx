@@ -19,6 +19,24 @@ export default function Header() {
   const [showRecents, setShowRecents] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY.current && currentScrollY > 64) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('recent_searches');
@@ -50,7 +68,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
+    <header className={`sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full md:translate-y-0'}`}>
       <div className="container flex h-16 items-center justify-between px-4 md:px-6 max-w-6xl mx-auto relative">
         
         {/* Desktop & Normal mobile logo */}
@@ -162,7 +180,7 @@ export default function Header() {
         <div className={`flex items-center space-x-3 ${isSearchOpen ? 'hidden md:flex' : 'flex'}`}>
           <Link 
             href="/posts/create" 
-            className="flex items-center space-x-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-sm transition-colors min-h-[44px] flex items-center justify-center"
+            className="hidden md:flex items-center space-x-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-sm transition-colors min-h-[44px] justify-center"
           >
             <span>➕</span>
             <span className="hidden sm:inline">Viết bài</span>
@@ -171,7 +189,7 @@ export default function Header() {
           {session && <NotificationBell />}
 
           {mounted && session ? (
-            <Link href="/profile" className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-all p-1 hover:bg-gray-50 rounded-2xl min-h-[44px]">
+            <Link href="/profile" className="hidden md:flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-all p-1 hover:bg-gray-50 rounded-2xl min-h-[44px]">
               <Image 
                 src={session.user?.image || 'https://api.dicebear.com/7.x/avataaars/svg'} 
                 className="h-9 w-9 rounded-2xl bg-green-100 shadow-sm object-cover" 
@@ -187,12 +205,12 @@ export default function Header() {
               </div>
             </Link>
           ) : mounted ? (
-            <Link href="/login" className="flex items-center space-x-2 bg-gray-900 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-2xl transition-all shadow-lg shadow-gray-900/10 min-h-[44px]">
+            <Link href="/login" className="hidden md:flex items-center space-x-2 bg-gray-900 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-2xl transition-all shadow-lg shadow-gray-900/10 min-h-[44px]">
               <LogIn className="w-3.5 h-3.5" />
               <span>Đăng nhập</span>
             </Link>
           ) : (
-            <div className="h-9 w-24 bg-gray-50 rounded-2xl animate-pulse" />
+            <div className="hidden md:block h-9 w-24 bg-gray-50 rounded-2xl animate-pulse" />
           )}
         </div>
       </div>

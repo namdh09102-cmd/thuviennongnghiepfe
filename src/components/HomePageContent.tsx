@@ -27,6 +27,10 @@ export default function HomePageContent() {
   const { data: categories } = useSWR('/api/categories', fetcher, { dedupingInterval: 3600000 });
   const categoryList = Array.isArray(categories) ? categories : [];
 
+  // Fetch Trending Tags
+  const { data: trendingTags } = useSWR('/api/tags/trending', fetcher, { dedupingInterval: 3600000 });
+  const tagList = Array.isArray(trendingTags) ? trendingTags : [];
+
   // Fetch Sidebar Data
   const { data: trendingPostsData } = useSWR('/api/posts?sort=comments&limit=5', fetcher);
   const { data: topExperts } = useSWR('/api/users?role=expert&limit=3', fetcher);
@@ -118,18 +122,14 @@ export default function HomePageContent() {
 
         {/* Mobile "Chủ đề hot" Tags (Hidden on Desktop) */}
         <div className="lg:hidden flex items-center space-x-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
-          {categoryList.map((cat: any) => (
-            <button
-              key={cat.id}
-              onClick={() => handleCategorySelect(cat.slug)}
-              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
-                activeCategory === cat.slug
-                  ? 'bg-green-600 text-white shadow-md shadow-green-600/20'
-                  : 'bg-white text-gray-500 border border-gray-100'
-              }`}
+          {tagList.map((tag: any) => (
+            <Link
+              key={tag.id}
+              href={`/search?q=${encodeURIComponent(tag.name)}`}
+              className="whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all bg-white text-gray-500 border border-gray-100 hover:bg-green-50 hover:text-green-600"
             >
-              #{cat.name.replace(/\s+/g, '')}
-            </button>
+              #{tag.name.replace(/\s+/g, '')}
+            </Link>
           ))}
         </div>
 
