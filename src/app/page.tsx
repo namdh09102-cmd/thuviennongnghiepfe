@@ -14,6 +14,7 @@ import { HelpCircle, Layout, TrendingUp, Users, MessageSquare, Calendar } from '
 import AdSlot from '../components/AdSlot';
 import { useAuthStore } from '../store/authStore';
 import WeatherWidget from '../components/WeatherWidget';
+import Leaderboard from '../components/Leaderboard';
 
 interface Post {
   id: string;
@@ -289,6 +290,8 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        <Leaderboard />
 
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
           <h3 className="font-bold text-sm text-gray-900 mb-3 flex items-center space-x-2">

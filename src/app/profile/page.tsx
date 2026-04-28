@@ -1,126 +1,124 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '../../store/authStore';
-import { useRouter } from 'next/navigation';
-import { axiosInstance } from '../../lib/axios';
-import PostCard from '../../components/PostCard';
-import { CheckCircle, LogOut } from 'lucide-react';
+import React from 'react';
+import { useGamificationStore } from '../../store/gamificationStore';
+import BadgeCard from '../../components/BadgeCard';
+import { Award, Flame, MessageSquare, ClipboardCheck, Sparkles } from 'lucide-react';
 
-interface UserProfile {
-  id: string;
-  username: string;
-  role: 'FARMER' | 'EXPERT' | 'ADMIN';
-  isVerifiedExpert: boolean;
-  posts: any[];
-  _count: {
-    followers: number;
-    following: number;
-    posts: number;
-  };
-}
+export default function UserProfilePage() {
+  const { currentUser, addPoints } = useGamificationStore();
 
-export default function MyProfilePage() {
-  const { user, isAuthenticated, logout } = useAuthStore();
-  const router = useRouter();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-
-    const fetchMyProfile = async () => {
-      try {
-        const res = await axiosInstance.get(`/users/${user?.username}`);
-        setProfile(res.data);
-        setLoading(false);
-      } catch (error) {
-        setProfile({
-          id: user?.id || '1',
-          username: user?.username || 'User',
-          role: user?.role || 'FARMER',
-          isVerifiedExpert: user?.isVerifiedExpert || false,
-          posts: [],
-          _count: { followers: 0, following: 0, posts: 0 }
-        });
-        setLoading(false);
-      }
-    };
-
-    fetchMyProfile();
-  }, [isAuthenticated, router, user]);
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
-
-  if (loading) {
-    return (
-      <div className="max-w-2xl mx-auto space-y-4 py-4">
-        <div className="h-32 bg-gray-200 rounded-2xl animate-pulse w-full mt-4" />
-      </div>
-    );
-  }
-
-  if (!profile) return null;
+  // Tính Level theo công thức cơ bản: Level = Floor(Points / 50) + 1
+  const level = Math.floor(currentUser.points / 50) + 1;
+  const pointsToNextLevel = 50 - (currentUser.points % 50);
+  const progressPercent = Math.round(((currentUser.points % 50) / 50) * 100);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 py-4">
-      <div className="bg-white rounded-3xl border shadow-sm p-6 flex flex-col items-center text-center relative">
-        <button 
-          onClick={handleLogout}
-          className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors"
-          title="Đăng xuất"
-        >
-          <LogOut className="h-5 w-5" />
-        </button>
-
-        <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center font-extrabold text-green-700 text-2xl shadow-sm">
-          {profile.username[0].toUpperCase()}
-        </div>
-        
-        <div className="flex items-center space-x-1 mt-3">
-          <h2 className="text-xl font-bold text-gray-900">@{profile.username}</h2>
-          {profile.isVerifiedExpert && (
-            <CheckCircle className="h-5 w-5 text-blue-500 fill-blue-50" />
-          )}
+    <div className="max-w-4xl mx-auto py-6 px-4 space-y-6 animate-in fade-in duration-300">
+      {/* Profile Card */}
+      <div className="bg-gradient-to-br from-emerald-800 via-green-700 to-emerald-900 text-white p-6 rounded-3xl shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center gap-6">
+        <div className="absolute right-0 top-0 opacity-5 text-[120px] font-black rotate-12 select-none">
+          🌱
         </div>
 
-        <span className="text-xs font-medium px-2.5 py-1 bg-gray-100 rounded-full mt-1 text-gray-600">
-          {profile.role}
-        </span>
+        <div className="text-5xl md:text-6xl bg-white/10 backdrop-blur-md h-20 w-20 rounded-full flex items-center justify-center border border-white/20 shadow-inner animate-bounce duration-1000">
+          {currentUser.avatar}
+        </div>
 
-        <div className="flex space-x-6 mt-6 text-sm text-gray-600">
-          <div className="flex flex-col">
-            <span className="font-bold text-gray-900">{profile._count.posts}</span>
-            <span className="text-xs text-gray-400">Bài viết</span>
+        <div className="flex-1 text-center md:text-left">
+          <h1 className="text-xl font-black">{currentUser.username}</h1>
+          <div className="flex items-center justify-center md:justify-start space-x-2 mt-1">
+            <span className="text-[10px] font-bold px-2 py-0.5 bg-yellow-400 text-emerald-950 rounded-full shadow-sm flex items-center space-x-0.5">
+              <Sparkles className="h-3 w-3" />
+              <span>Cấp {level}</span>
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 bg-white/15 text-emerald-100 rounded-full border border-white/10">
+              {currentUser.role}
+            </span>
           </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-gray-900">{profile._count.followers}</span>
-            <span className="text-xs text-gray-400">Followers</span>
+
+          {/* Thanh cấp độ */}
+          <div className="mt-4 max-w-xs mx-auto md:mx-0">
+            <div className="flex items-center justify-between text-[9px] font-bold text-emerald-100 mb-1">
+              <span>Tiến trình cấp {level + 1}</span>
+              <span>{currentUser.points % 50}/50</span>
+            </div>
+            <div className="w-full bg-black/20 h-2 rounded-full overflow-hidden border border-white/5">
+              <div style={{ width: `${progressPercent}%` }} className="bg-yellow-400 h-full shadow-lg transition-all duration-500"></div>
+            </div>
+            <span className="text-[8px] text-yellow-300 mt-1 block">Cần thêm {pointsToNextLevel} điểm để lên cấp.</span>
           </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-gray-900">{profile._count.following}</span>
-            <span className="text-xs text-gray-400">Following</span>
-          </div>
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-sm px-5 py-4 rounded-2xl border border-white/10 text-center shadow-md">
+          <span className="text-[9px] font-bold text-green-200 uppercase tracking-wider">Điểm hoạt động</span>
+          <span className="block text-3xl font-black text-yellow-300 mt-0.5">{currentUser.points}</span>
+          <button
+            onClick={() => {
+              addPoints(1);
+              alert('Bạn được +1 điểm đăng nhập hàng ngày!');
+            }}
+            className="text-[8px] font-bold mt-2 px-2.5 py-1 bg-white text-emerald-950 rounded-lg hover:bg-yellow-400 transition-colors duration-200"
+          >
+            Điểm danh +1đ
+          </button>
         </div>
       </div>
 
-      <div>
-        <h3 className="font-bold text-base text-gray-900 mb-3">Bài viết của bạn</h3>
-        {profile.posts && profile.posts.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
-            {profile.posts.map((post: any) => (
-              <PostCard key={post.id} post={post} />
-            ))}
+      {/* Huy hiệu (Badges) */}
+      <div className="bg-white p-6 border border-gray-100 rounded-3xl shadow-sm space-y-4">
+        <h2 className="text-sm font-black text-gray-900 flex items-center space-x-2">
+          <Award className="h-4.5 w-4.5 text-yellow-500" />
+          <span>Huy hiệu của tôi ({currentUser.badges.length})</span>
+        </h2>
+
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+          {currentUser.badges.map(badge => (
+            <BadgeCard key={badge.id} badge={badge} />
+          ))}
+        </div>
+      </div>
+
+      {/* Hoạt động & Thống kê */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-4 border border-gray-100 rounded-2xl shadow-sm flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm">
+              <Flame className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <span className="block text-[9px] font-bold text-gray-400 uppercase">Bài viết</span>
+              <span className="text-base font-black text-gray-800">{currentUser.activitiesCount.posts}</span>
+            </div>
           </div>
-        ) : (
-          <p className="text-xs text-gray-400 text-center py-6 bg-white border rounded-2xl">Bạn chưa đăng bài viết nào.</p>
-        )}
+          <span className="text-[9px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+10đ/bài</span>
+        </div>
+
+        <div className="bg-white p-4 border border-gray-100 rounded-2xl shadow-sm flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="h-9 w-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
+              <MessageSquare className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <span className="block text-[9px] font-bold text-gray-400 uppercase">Câu trả lời</span>
+              <span className="text-base font-black text-gray-800">{currentUser.activitiesCount.answers}</span>
+            </div>
+          </div>
+          <span className="text-[9px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+5đ/lượt</span>
+        </div>
+
+        <div className="bg-white p-4 border border-gray-100 rounded-2xl shadow-sm flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="h-9 w-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm">
+              <ClipboardCheck className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <span className="block text-[9px] font-bold text-gray-400 uppercase">Hữu ích nhất</span>
+              <span className="text-base font-black text-gray-800">{currentUser.activitiesCount.bestAnswers}</span>
+            </div>
+          </div>
+          <span className="text-[9px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+15đ/lượt</span>
+        </div>
       </div>
     </div>
   );
