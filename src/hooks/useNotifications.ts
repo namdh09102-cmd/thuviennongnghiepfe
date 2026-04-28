@@ -30,7 +30,7 @@ export function useNotifications() {
         schema: 'public', 
         table: 'notifications',
         filter: `user_id=eq.${userId}`
-      }, (payload) => {
+      }, (payload: any) => {
         mutate();
         // Browser Notification / Toast logic could go here
         if ('Notification' in window && Notification.permission === 'granted') {
