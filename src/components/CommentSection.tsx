@@ -1,25 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import useSWR from 'swr';
 import { useSession } from 'next-auth/react';
-import { formatDistanceToNow } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import { MessageSquare, Send, ChevronDown, User } from 'lucide-react';
-
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
-interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  author: {
-    username: string;
-    full_name: string;
-    avatar_url: string;
-  };
-  replies?: Comment[];
-}
+import { MessageSquare, SortAsc, SortDesc, Loader2, RefreshCw } from 'lucide-react';
+import { useComments } from '@/hooks/useComments';
+import CommentItem from './CommentItem';
+import CommentForm from './CommentForm';
 
 interface CommentSectionProps {
   postSlug: string;
@@ -27,138 +13,113 @@ interface CommentSectionProps {
 
 export default function CommentSection({ postSlug }: CommentSectionProps) {
   const { data: session } = useSession();
-  const { data: comments, mutate } = useSWR(`/api/posts/${postSlug}/comments`, fetcher);
-  const [newComment, setNewComment] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sortBy, setSortBy] = useState('newest');
+  const { 
+    comments, 
+    isLoading, 
+    isReachingEnd, 
+    loadMore, 
+    addComment,
+    mutate 
+  } = useComments(postSlug, sortBy);
 
-  const handleSubmit = async (e: React.FormEvent, parentId?: string) => {
-    e.preventDefault();
-    if (!session) return alert('Vui lòng đăng nhập!');
-    if (!newComment.trim()) return;
+  const [hasNewComments, setHasNewComments] = useState(false);
 
-    setIsSubmitting(true);
-    try {
-      const res = await fetch(`/api/posts/${postSlug}/comments`, {
-        method: 'POST',
-        body: JSON.stringify({ content: newComment, parentId }),
-      });
-      if (res.ok) {
-        setNewComment('');
-        mutate();
-      }
-    } catch (e) {
-      console.error('Comment failed');
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleMainSubmit = async (content: string) => {
+    if (!session) return alert('Vui lòng đăng nhập để bình luận!');
+    await addComment(content);
+  };
+
+  const handleReplySubmit = async (content: string, parentId: string) => {
+    if (!session) return alert('Vui lòng đăng nhập để phản hồi!');
+    await addComment(content, parentId);
   };
 
   return (
-    <div className="mt-12 pt-8 border-t border-gray-100">
-      <h3 className="text-xl font-black text-gray-900 flex items-center space-x-2 mb-8">
-        <MessageSquare className="w-6 h-6 text-green-600" />
-        <span>Bình luận ({comments?.length || 0})</span>
-      </h3>
+    <div className="mt-16 pt-12 border-t border-gray-100 space-y-10">
+      {/* Header & Sort */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h3 className="text-xl font-black text-gray-900 flex items-center space-x-3">
+          <MessageSquare className="w-6 h-6 text-green-600" />
+          <span>Thảo luận ({comments?.length || 0})</span>
+        </h3>
 
-      {/* Form bình luận */}
-      {session ? (
-        <form onSubmit={handleSubmit} className="mb-10">
-          <div className="flex space-x-4">
-            <div className="flex-shrink-0">
-              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">
-                {session.user?.name?.[0].toUpperCase() || 'U'}
-              </div>
-            </div>
-            <div className="flex-grow space-y-3">
-              <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Chia sẻ ý kiến của bạn..."
-                className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all min-h-[100px] resize-none"
-              />
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-xl flex items-center space-x-2 transition-all disabled:opacity-50"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Gửi bình luận</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </form>
-      ) : (
-        <div className="bg-gray-50 rounded-2xl p-8 text-center mb-10 border border-dashed border-gray-200">
-          <p className="text-sm text-gray-500 font-medium mb-4">Bạn cần đăng nhập để tham gia thảo luận</p>
-          <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-8 rounded-xl transition-all">
-            Đăng nhập ngay
+        <div className="flex items-center space-x-2 bg-gray-50 p-1 rounded-2xl border border-gray-100 self-start sm:self-auto">
+          <button 
+            onClick={() => setSortBy('newest')}
+            className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${sortBy === 'newest' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            Mới nhất
+          </button>
+          <button 
+            onClick={() => setSortBy('popular')}
+            className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${sortBy === 'popular' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            Nổi bật
           </button>
         </div>
+      </div>
+
+      {/* Main Form */}
+      <div className="animate-in slide-in-from-top-4 duration-500">
+        {session ? (
+          <CommentForm onSubmit={handleMainSubmit} placeholder="Bạn đang nghĩ gì về kiến thức này?" />
+        ) : (
+          <div className="bg-gradient-to-br from-green-600 to-teal-700 p-8 rounded-[32px] text-center text-white shadow-xl shadow-green-900/10">
+            <h4 className="font-black text-lg mb-2">Tham gia thảo luận cùng bà con!</h4>
+            <p className="text-xs text-white/70 font-medium mb-6">Đăng nhập để chia sẻ kinh nghiệm và đặt câu hỏi cho chuyên gia.</p>
+            <button className="bg-white text-green-700 font-black text-xs px-10 py-3 rounded-2xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest">
+              Đăng nhập ngay
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Realtime Notification */}
+      {hasNewComments && (
+        <button 
+          onClick={() => { mutate(); setHasNewComments(false); }}
+          className="w-full py-3 bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-widest rounded-2xl border border-green-100 flex items-center justify-center space-x-2 animate-bounce"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span>Có bình luận mới, nhấn để tải lại</span>
+        </button>
       )}
 
-      {/* Danh sách bình luận */}
-      <div className="space-y-6">
-        {comments?.map((comment: Comment) => (
-          <div key={comment.id} className="group">
-            <div className="flex space-x-4">
-              <img
-                src={comment.author.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'}
-                alt={comment.author.full_name}
-                className="h-10 w-10 rounded-full bg-gray-100"
-              />
-              <div className="flex-grow">
-                <div className="bg-gray-50 group-hover:bg-gray-100/50 transition-colors p-4 rounded-2xl rounded-tl-none">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-black text-xs text-gray-900">{comment.author.full_name}</span>
-                    <span className="text-[10px] text-gray-400 font-medium">
-                      {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: vi })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700 leading-relaxed">{comment.content}</p>
-                </div>
-                
-                <div className="flex items-center space-x-4 mt-2 ml-2">
-                  <button className="text-[10px] font-black text-gray-500 hover:text-green-600 uppercase tracking-wider">Thích</button>
-                  <button className="text-[10px] font-black text-gray-500 hover:text-green-600 uppercase tracking-wider">Phản hồi</button>
-                </div>
-
-                {/* Replies */}
-                {comment.replies && comment.replies.length > 0 && (
-                  <div className="mt-4 ml-8 space-y-4 border-l-2 border-gray-50 pl-6">
-                    {comment.replies.map((reply) => (
-                      <div key={reply.id} className="flex space-x-3">
-                        <img
-                          src={reply.author.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Reply'}
-                          alt={reply.author.full_name}
-                          className="h-8 w-8 rounded-full bg-gray-100"
-                        />
-                        <div className="flex-grow bg-gray-50/50 p-3 rounded-2xl rounded-tl-none">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-black text-xs text-gray-900">{reply.author.full_name}</span>
-                            <span className="text-[10px] text-gray-400">
-                              {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true, locale: vi })}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-700 leading-relaxed">{reply.content}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+      {/* Comments List */}
+      <div className="space-y-8">
+        {comments.map((comment) => (
+          <CommentItem 
+            key={comment.id} 
+            comment={comment} 
+            onReply={handleReplySubmit}
+            currentUser={session?.user}
+          />
         ))}
 
-        {comments?.length === 0 && (
-          <div className="text-center py-10">
-            <div className="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
+            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Đang tải thảo luận...</p>
+          </div>
+        )}
+
+        {!isLoading && comments.length === 0 && (
+          <div className="text-center py-20 bg-gray-50/50 rounded-[40px] border border-dashed border-gray-200">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
               <MessageSquare className="w-8 h-8 text-gray-200" />
             </div>
-            <p className="text-sm text-gray-400 font-medium">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+            <p className="text-xs text-gray-400 font-medium italic">Chưa có thảo luận nào. Hãy là người đầu tiên chia sẻ!</p>
           </div>
+        )}
+
+        {!isReachingEnd && !isLoading && (
+          <button 
+            onClick={() => loadMore()}
+            className="w-full py-4 text-[10px] font-black text-gray-400 hover:text-green-600 uppercase tracking-widest bg-white border border-gray-100 rounded-2xl hover:border-green-100 hover:bg-green-50/30 transition-all shadow-sm"
+          >
+            Xem thêm bình luận
+          </button>
         )}
       </div>
     </div>

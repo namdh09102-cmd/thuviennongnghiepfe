@@ -6,6 +6,11 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
+  const { searchParams } = new URL(req.url);
+  const sort = searchParams.get('sort') || 'newest';
+  const page = parseInt(searchParams.get('page') || '0');
+  const limit = parseInt(searchParams.get('limit') || '20');
+
   const { data: post } = await supabaseAdmin
     .from('posts')
     .select('id')
@@ -14,14 +19,30 @@ export async function GET(
 
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const { data, error } = await supabaseAdmin
+  const from = page * limit;
+  const to = from + limit - 1;
+
+  let query = supabaseAdmin
     .from('comments')
     .select(`
       *,
-      author:profiles(username, full_name, avatar_url)
+      author:profiles(username, full_name, avatar_url, role),
+      replies:comments(
+        *,
+        author:profiles(username, full_name, avatar_url, role)
+      )
     `)
     .eq('post_id', post.id)
-    .order('created_at', { ascending: true });
+    .is('parent_id', null)
+    .range(from, to);
+
+  if (sort === 'popular') {
+    query = query.order('votes', { ascending: false });
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
+
+  const { data, error } = await query;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
