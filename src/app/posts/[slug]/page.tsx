@@ -82,6 +82,7 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
 
   const relatedPosts = await getRelatedPosts(post.category.id, post.slug);
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thuviennongnghiepfe.vercel.app';
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -93,7 +94,7 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
     author: {
       '@type': 'Person',
       name: post.author.full_name,
-      url: `${API_URL}/profile/${post.author.username}`,
+      url: `${baseUrl}/profile/${post.author.username}`,
     },
   };
 
