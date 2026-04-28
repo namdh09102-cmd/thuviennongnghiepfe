@@ -3,9 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ReactQueryProvider from "../lib/react-query";
 import Header from "../components/Header";
-import BottomTabBar from "../components/BottomTabBar";
 import OfflineBanner from "../components/OfflineBanner";
 import ToastContainer from "../components/ToastContainer";
+import BottomNav from "../components/BottomNav";
 import { SessionProvider } from "next-auth/react";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -28,10 +28,10 @@ export default function RootLayout({
             <OfflineBanner />
             <ToastContainer />
             <Header />
-            <main className="flex-1 container mx-auto px-4 py-6 pb-24 md:pb-6 max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
+            <main className="flex-1 container mx-auto px-4 py-6 pb-24 lg:pb-12 max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
               {children}
             </main>
-            <BottomTabBar />
+            <BottomNav />
           </ReactQueryProvider>
         </SessionProvider>
       </body>

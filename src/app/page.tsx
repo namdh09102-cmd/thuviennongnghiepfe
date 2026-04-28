@@ -1,329 +1,151 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import React, { useState, useEffect, useRef } from 'react';
+import useSWRInfinite from 'swr/infinite';
 import { useInView } from 'react-intersection-observer';
-import { axiosInstance } from '../lib/axios';
-import CategoryPills from '../components/CategoryPills';
-import PostCard from '../components/PostCard';
-import PostListItem from '../components/PostListItem';
-import SkeletonCard from '../components/SkeletonCard';
-import Image from 'next/image';
-import Link from 'next/link';
-import { HelpCircle, Layout, TrendingUp, Users, MessageSquare, Calendar } from 'lucide-react';
-import AdSlot from '../components/AdSlot';
-import { useAuthStore } from '../store/authStore';
-import WeatherWidget from '../components/WeatherWidget';
-import Leaderboard from '../components/Leaderboard';
+import PostCard from '@/components/PostCard';
+import FilterTabs from '@/components/FilterTabs';
+import SkeletonCard from '@/components/SkeletonCard';
+import { TrendingUp, Layout, Sparkles, Filter } from 'lucide-react';
+import Leaderboard from '@/components/Leaderboard';
+import WeatherWidget from '@/components/WeatherWidget';
 
-interface Post {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  viewCount: number;
-  likeCount: number;
-  commentCount: number;
-  createdAt: string;
-  tags: string[];
-  author: {
-    username: string;
-    role: string;
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+export default function HomePage() {
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeSort, setActiveSort] = useState('latest');
+  
+  // Fetch Categories
+  const { data: categories } = useSWRInfinite(
+    (index) => index === 0 ? '/api/categories' : null,
+    fetcher
+  );
+
+  const getKey = (pageIndex: number, previousPageData: any) => {
+    if (previousPageData && !previousPageData.data.length) return null;
+    return `/api/posts?page=${pageIndex + 1}&category=${activeCategory || ''}&sort=${activeSort}&limit=10`;
   };
-}
 
-const MOCK_POSTS: Post[] = [
-  {
-    id: '1',
-    title: 'Kỹ thuật trồng Dưa lưới trong nhà màng đạt năng suất cao',
-    slug: 'ky-thuat-trong-dua-luoi-nha-mang',
-    content: 'Dưa lưới là loại cây trồng có giá trị kinh tế cao. Bài viết này chia sẻ kỹ thuật chăm sóc, bón phân...',
-    viewCount: 1250,
-    likeCount: 45,
-    commentCount: 12,
-    createdAt: new Date().toISOString(),
-    tags: ['Trồng trọt', 'Dưa lưới'],
-    author: { username: 'expert_viet', role: 'EXPERT' }
-  },
-  {
-    id: '2',
-    title: 'Phòng trừ bệnh đạo ôn trên lúa vụ Hè Thu',
-    slug: 'phong-tru-dao-on-lua-he-thu',
-    content: 'Bệnh đạo ôn là mối đe dọa lớn. Hướng dẫn sử dụng chế phẩm sinh học an toàn...',
-    viewCount: 890,
-    likeCount: 32,
-    commentCount: 8,
-    createdAt: new Date().toISOString(),
-    tags: ['Sâu bệnh', 'Lúa'],
-    author: { username: 'farmer_minh', role: 'FARMER' }
-  },
-  {
-    id: '3',
-    title: 'Bón phân NPK thế nào cho đúng cách?',
-    slug: 'bon-phan-npk-dung-cach',
-    content: 'Cách tính tỷ lệ NPK phù hợp cho từng giai đoạn sinh trưởng của cây ăn quả.',
-    viewCount: 2300,
-    likeCount: 110,
-    commentCount: 24,
-    createdAt: new Date().toISOString(),
-    tags: ['Phân bón'],
-    author: { username: 'nongnghiep_admin', role: 'ADMIN' }
-  },
-  {
-    id: '4',
-    title: 'Mô hình chăn nuôi bò thịt công nghệ cao',
-    slug: 'chan-nuoi-bo-thit-cong-nghe-cao',
-    content: 'Chia sẻ kinh nghiệm xây dựng chuồng trại và khẩu phần thức ăn cho bò.',
-    viewCount: 540,
-    likeCount: 15,
-    commentCount: 3,
-    createdAt: new Date().toISOString(),
-    tags: ['Chăn nuôi'],
-    author: { username: 'expert_viet', role: 'EXPERT' }
-  }
-];
-
-export default function Home() {
+  const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(getKey, fetcher);
+  
+  const posts = data ? data.map((page) => page.data).flat() : [];
+  const isReachingEnd = data && data[data.length - 1]?.data.length < 10;
+  
   const { ref, inView } = useInView();
-  const { isAuthenticated, user } = useAuthStore();
-
-  const fetchPosts = async ({ pageParam = 1 }) => {
-    try {
-      const res = await axiosInstance.get(`/posts?page=${pageParam}&limit=10`);
-      if (!res.data || !res.data.posts || res.data.posts.length === 0) {
-        return { posts: MOCK_POSTS, nextCursor: null };
-      }
-      return {
-        posts: res.data.posts,
-        nextCursor: res.data.pagination.page < res.data.pagination.totalPages ? res.data.pagination.page + 1 : null
-      };
-    } catch (error) {
-      return { posts: MOCK_POSTS, nextCursor: null };
-    }
-  };
-
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    status,
-  } = useInfiniteQuery({
-    queryKey: ['posts'],
-    queryFn: fetchPosts,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-  });
 
   useEffect(() => {
-    if (inView && hasNextPage) {
-      fetchNextPage();
+    if (inView && !isReachingEnd && !isValidating) {
+      setSize(size + 1);
     }
-  }, [inView, hasNextPage, fetchNextPage]);
+  }, [inView, isReachingEnd, isValidating, setSize, size]);
 
-  const allPosts = data?.pages.flatMap((page) => page.posts) || [];
-  const heroPost = allPosts[0];
-  const gridPosts = allPosts.slice(1);
+  const categoryList = categories?.[0] || [];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      {/* Cột Trái: Danh mục & Lối tắt (Desktop) */}
-      <aside className="hidden lg:block lg:col-span-3 sticky top-20 self-start space-y-4">
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-          <h3 className="font-bold text-sm text-gray-900 mb-3 flex items-center space-x-2">
-            <Layout className="h-4 w-4 text-green-600" />
-            <span>Khám phá</span>
-          </h3>
-          <nav className="space-y-1 text-xs font-medium">
-            <Link href="/" className="flex items-center space-x-3 px-3 py-2 rounded-xl bg-green-50 text-green-700 transition-colors">
-              <span>🏠</span>
-              <span>Trang chủ</span>
-            </Link>
-            <Link href="/hoi-dap" className="flex items-center space-x-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-green-600 transition-colors">
-              <span>❓</span>
-              <span>Hỏi đáp chuyên gia</span>
-            </Link>
-            <Link href="/posts" className="flex items-center space-x-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-green-600 transition-colors">
-              <span>📚</span>
-              <span>Cẩm nang nhà nông</span>
-            </Link>
-            <Link href="/san-pham" className="flex items-center space-x-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-green-600 transition-colors">
-              <span>🏪</span>
-              <span>Tra cứu vật tư</span>
-            </Link>
-            <Link href="/lich-mua-vu" className="flex items-center space-x-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-green-600 transition-colors">
-              <span>📅</span>
-              <span>Lịch mùa vụ</span>
-            </Link>
-          </nav>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* Main Feed */}
+      <main className="lg:col-span-8 space-y-6">
+        {/* Header Section */}
+        <div className="space-y-1">
+          <h1 className="text-2xl font-black text-gray-900 flex items-center space-x-2">
+            <Sparkles className="w-6 h-6 text-amber-500 fill-amber-500" />
+            <span>Dành cho bạn hôm nay</span>
+          </h1>
+          <p className="text-xs font-medium text-gray-400">
+            Cập nhật kiến thức nông nghiệp mới nhất từ chuyên gia và cộng đồng.
+          </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-          <h3 className="font-bold text-sm text-gray-900 mb-3 flex items-center space-x-2">
-            <TrendingUp className="h-4 w-4 text-green-600" />
-            <span>Chủ đề hot</span>
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {['Lúa', 'Sầu riêng', 'Phân bón', 'Rau sạch', 'Thủy sản'].map(tag => (
-              <Link key={tag} href={`/search?q=${tag}`} className="text-[11px] bg-gray-50 hover:bg-green-50 text-gray-600 hover:text-green-600 px-2.5 py-1 rounded-lg border border-gray-100 transition-colors">
-                #{tag}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </aside>
-
-      {/* Cột Giữa: Feed chính */}
-      <main className="col-span-1 lg:col-span-6 space-y-4">
-        {/* Khung tạo bài viết nhanh (Tinhte Style) */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center space-x-3">
-          <div className="h-9 w-9 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-            U
-          </div>
-          <Link href="/posts/create" className="flex-1 bg-gray-50 hover:bg-gray-100 border border-gray-100 rounded-xl px-4 py-2 text-left text-xs text-gray-400 cursor-pointer transition-colors">
-            Bạn muốn chia sẻ điều gì hôm nay?
-          </Link>
-        </div>
-
-        <div className="lg:hidden">
-          <CategoryPills />
-        </div>
-
-        {status === 'pending' ? (
-          <div className="h-48 bg-gray-200 rounded-2xl animate-pulse w-full" />
-        ) : heroPost ? (
-          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-green-900 to-teal-800 text-white shadow-md mb-4">
-            <Link href={`/posts/${heroPost.slug}`} className="block relative h-48 md:h-60 w-full opacity-30">
-              <Image
-                src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=1000&q=80"
-                alt={heroPost.title}
-                fill
-                className="object-cover"
-                priority
-              />
-            </Link>
-            <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
-              <span className="bg-green-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
-                {heroPost.tags?.[0] || 'Nổi bật'}
-              </span>
-              <Link href={`/posts/${heroPost.slug}`}>
-                <h2 className="text-base md:text-xl font-bold mt-2 leading-tight hover:text-green-400 transition-colors">
-                  {heroPost.title}
-                </h2>
-              </Link>
-              <div className="flex items-center space-x-2 mt-3 text-[10px] text-gray-300">
-                <span className="font-medium">@{heroPost.author.username}</span>
-                <span>•</span>
-                <span>{heroPost.viewCount} lượt xem</span>
-              </div>
+        {/* Filters */}
+        <div className="space-y-4">
+          <FilterTabs 
+            categories={categoryList} 
+            activeCategory={activeCategory}
+            onSelectCategory={(slug) => {
+              setActiveCategory(slug);
+              setSize(1);
+            }}
+          />
+          
+          <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+            <div className="flex items-center space-x-6 text-[11px] font-black uppercase tracking-wider">
+              <button 
+                onClick={() => setActiveSort('latest')}
+                className={`transition-all ${activeSort === 'latest' ? 'text-green-600 border-b-2 border-green-600 pb-2' : 'text-gray-400'}`}
+              >
+                Mới nhất
+              </button>
+              <button 
+                onClick={() => setActiveSort('hot')}
+                className={`transition-all ${activeSort === 'hot' ? 'text-green-600 border-b-2 border-green-600 pb-2' : 'text-gray-400'}`}
+              >
+                Hot nhất
+              </button>
+            </div>
+            <div className="flex items-center space-x-1 text-gray-400 text-[10px] font-bold uppercase">
+              <Filter className="w-3 h-3" />
+              <span>Sắp xếp</span>
             </div>
           </div>
-        ) : null}
+        </div>
 
-        <div>
-          {status === 'pending'
-            ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-32 bg-gray-100 rounded-2xl animate-pulse mb-3" />)
-            : gridPosts.map((post) => <PostListItem key={post.id} post={post} />)}
+        {/* Post List */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
           
-          <div ref={ref} className="flex justify-center pt-4">
-            {isFetchingNextPage && (
-              <div className="space-y-3 w-full">
-                <div className="h-32 bg-gray-100 rounded-2xl animate-pulse" />
-                <div className="h-32 bg-gray-100 rounded-2xl animate-pulse" />
-              </div>
-            )}
-          </div>
+          {(isLoading || isValidating) && Array(4).fill(0).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+
+        {/* Load More Trigger */}
+        <div ref={ref} className="h-20 flex items-center justify-center">
+          {isValidating && !isLoading && (
+            <div className="flex items-center space-x-2 text-xs font-bold text-green-600">
+              <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-bounce" />
+              <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-bounce [animation-delay:0.2s]" />
+              <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-bounce [animation-delay:0.4s]" />
+            </div>
+          )}
+          {isReachingEnd && posts.length > 0 && (
+            <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">
+              Bạn đã xem hết bài viết hôm nay
+            </p>
+          )}
         </div>
       </main>
 
-      {/* Cột Phải: Xu hướng & Chuyên gia (Desktop) */}
-      <aside className="hidden lg:block lg:col-span-3 sticky top-20 self-start space-y-4">
-        {/* Widget Nhật ký Mùa vụ */}
-        <div className="bg-gradient-to-br from-green-600 to-emerald-700 rounded-2xl p-4 text-white shadow-sm">
-          <h3 className="font-bold text-sm mb-2 flex items-center space-x-2">
-            <Calendar className="h-4 w-4" />
-            <span>Nhật ký Mùa vụ</span>
-          </h3>
-          {isAuthenticated ? (
-            <div className="space-y-2.5">
-              <div className="bg-white/10 rounded-xl p-2.5 text-xs border border-white/20">
-                <p className="font-bold text-green-100">🌱 Vườn Sầu riêng Ri6</p>
-                <p className="text-[10px] opacity-90 mt-0.5">Giai đoạn: Nuôi trái non (Ngày 45)</p>
-                <div className="w-full bg-white/20 h-1.5 rounded-full mt-2">
-                  <div className="bg-yellow-400 h-1.5 rounded-full w-3/4"></div>
-                </div>
-              </div>
-              <div className="space-y-1 text-[10px] bg-black/10 rounded-xl p-2.5">
-                <p className="font-semibold text-yellow-300">🔔 Việc cần làm hôm nay:</p>
-                <p className="flex items-center space-x-1">• <span>Bón phân Kali trắng (200g/gốc)</span></p>
-                <p className="flex items-center space-x-1">• <span>Tưới nước giữ ẩm nhẹ</span></p>
-              </div>
-              <button className="w-full text-center text-[10px] font-bold bg-white text-green-700 py-2 rounded-xl shadow-sm hover:bg-gray-100 transition-colors">
-                Ghi nhật ký nhanh
-              </button>
-            </div>
-          ) : (
-            <div className="text-center py-3">
-              <p className="text-xs opacity-90">Lập lịch bón phân, chăm sóc cây trồng tự động theo mùa vụ.</p>
-              <Link href="/login" className="inline-block mt-3 text-xs font-bold bg-white text-green-700 px-4 py-2 rounded-xl shadow-sm hover:bg-gray-100 transition-colors">
-                Đăng nhập để sử dụng
-              </Link>
-            </div>
-          )}
-        </div>
-
+      {/* Sidebar (Desktop Only) */}
+      <aside className="hidden lg:block lg:col-span-4 space-y-6 sticky top-20 self-start">
         <WeatherWidget />
-
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-          <h3 className="font-bold text-sm text-gray-900 mb-3 flex items-center space-x-2">
-            <MessageSquare className="h-4 w-4 text-green-600" />
-            <span>Đang thảo luận</span>
-          </h3>
-          <div className="space-y-3">
-            {MOCK_POSTS.slice(0, 3).map(post => (
-              <div key={post.id} className="group cursor-pointer">
-                <Link href={`/posts/${post.slug}`}>
-                  <h4 className="text-xs font-medium text-gray-800 group-hover:text-green-600 line-clamp-2 transition-colors">
-                    {post.title}
-                  </h4>
-                </Link>
-                <span className="text-[10px] text-gray-400 mt-1 block">
-                  {post.commentCount} bình luận
-                </span>
-              </div>
-            ))}
+        
+        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-gray-50 pb-3">
+            <h3 className="font-black text-xs text-gray-900 flex items-center space-x-2 uppercase">
+              <TrendingUp className="w-4 h-4 text-green-600" />
+              <span>Xu hướng nông nghiệp</span>
+            </h3>
           </div>
+          <ul className="space-y-4">
+            {[
+              { tag: '#SauRiengRi6', count: '1.2k bài viết' },
+              { tag: '#PhanBonHuuCo', count: '850 bài viết' },
+              { tag: '#LúaĐôngXuân', count: '2.4k bài viết' },
+            ].map((trend, i) => (
+              <li key={i} className="flex flex-col group cursor-pointer">
+                <span className="text-[11px] font-black text-gray-800 group-hover:text-green-600 transition-colors">
+                  {trend.tag}
+                </span>
+                <span className="text-[9px] text-gray-400 font-bold uppercase">{trend.count}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <Leaderboard />
-
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-          <h3 className="font-bold text-sm text-gray-900 mb-3 flex items-center space-x-2">
-            <Users className="h-4 w-4 text-green-600" />
-            <span>Chuyên gia online</span>
-          </h3>
-          <div className="space-y-3">
-            {[
-              { name: 'TS. Nguyễn Văn A', major: 'Bảo vệ thực vật' },
-              { name: 'ThS. Trần Thị B', major: 'Đất & Phân bón' },
-            ].map((expert, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs shadow-sm">
-                    {expert.name.split(' ').pop()?.[0]}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-semibold text-gray-900">{expert.name}</h4>
-                    <span className="text-[10px] text-gray-500">{expert.major}</span>
-                  </div>
-                </div>
-                <span className="h-2 w-2 rounded-full bg-green-500 shadow-sm animate-pulse" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <AdSlot placement="sidebar" />
       </aside>
     </div>
   );

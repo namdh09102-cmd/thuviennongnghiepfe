@@ -1,84 +1,102 @@
 'use client';
 
 import React from 'react';
+import { Eye, Heart, MessageSquare, Bookmark, Clock, Award } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Heart, MessageCircle, Eye } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 interface PostCardProps {
   post: {
     id: string;
-    title: string;
     slug: string;
-    content: string;
-    viewCount: number;
-    likeCount: number;
-    commentCount: number;
-    createdAt: string;
-    tags: string[];
-    author: {
-      username: string;
-      role: string;
-    };
+    title: string;
+    excerpt: string;
+    thumbnail_url: string;
+    category: { name: string; slug: string };
+    author: { username: string; full_name: string; avatar_url: string; is_verified?: boolean };
+    published_at: string;
+    view_count: number;
+    like_count: number;
+    comment_count: number;
   };
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const imageUrl = `https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=500&q=60`;
-
   return (
-    <div className="group flex flex-col border rounded-2xl bg-white overflow-hidden hover:shadow-md transition-all duration-300">
-      <Link href={`/posts/${post.slug}`} className="relative h-40 w-full overflow-hidden">
-        <Image
-          src={imageUrl}
-          alt={post.title}
-          fill
-          sizes="(max-width: 768px) 50vw, 33vw"
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-        />
-        {post.tags && post.tags[0] && (
-          <span className="absolute top-2 left-2 bg-green-600 text-white text-[10px] font-semibold px-2 py-1 rounded-full shadow-sm">
-            {post.tags[0]}
-          </span>
-        )}
+    <article className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-green-900/5 transition-all group overflow-hidden">
+      <Link href={`/posts/${post.slug}`}>
+        <div className="relative aspect-video overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={post.thumbnail_url || 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80'}
+            alt={post.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+          <div className="absolute top-4 left-4">
+            <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-green-700 text-[10px] font-black uppercase rounded-full shadow-sm">
+              {post.category.name}
+            </span>
+          </div>
+        </div>
       </Link>
 
-      <div className="flex flex-col p-3 flex-1 justify-between">
-        <div>
+      <div className="p-5 space-y-4">
+        <div className="space-y-2">
           <Link href={`/posts/${post.slug}`}>
-            <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 group-hover:text-green-600 transition-colors">
+            <h3 className="text-sm font-black text-gray-900 line-clamp-2 leading-tight group-hover:text-green-700 transition-colors">
               {post.title}
             </h3>
           </Link>
-          <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-            {post.content}
+          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+            {post.excerpt}
           </p>
         </div>
 
-        <div className="mt-3">
-          <div className="flex items-center justify-between border-t pt-2 text-gray-400 text-[10px]">
-            <span className="font-medium text-gray-600 truncate max-w-[80px]">
-              @{post.author.username}
-            </span>
-            
-            <div className="flex items-center space-x-2">
-              <span className="flex items-center space-x-0.5">
-                <Eye className="h-3 w-3" />
-                <span>{post.viewCount}</span>
-              </span>
-              <span className="flex items-center space-x-0.5">
-                <Heart className="h-3 w-3" />
-                <span>{post.likeCount}</span>
-              </span>
-              <span className="flex items-center space-x-0.5">
-                <MessageCircle className="h-3 w-3" />
-                <span>{post.commentCount}</span>
-              </span>
+        <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={post.author.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky'}
+                alt={post.author.full_name}
+                className="w-8 h-8 rounded-full bg-gray-100"
+              />
+              {post.author.is_verified && (
+                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
+                  <Award className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
+                </div>
+              )}
             </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-900 leading-none">
+                {post.author.full_name}
+              </p>
+              <div className="flex items-center text-[9px] text-gray-400 mt-1 space-x-1">
+                <Clock className="w-2.5 h-2.5" />
+                <span>
+                  {formatDistanceToNow(new Date(post.published_at), { addSuffix: true, locale: vi })}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3 text-gray-400">
+            <div className="flex items-center space-x-1">
+              <Heart className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-bold">{post.like_count}</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-bold">{post.comment_count}</span>
+            </div>
+            <button className="hover:text-green-600 transition-colors">
+              <Bookmark className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
