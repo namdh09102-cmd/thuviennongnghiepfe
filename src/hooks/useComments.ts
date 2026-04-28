@@ -1,11 +1,8 @@
 'use client';
 
 import useSWRInfinite from 'swr/infinite';
-import { supabaseAdmin } from '@/lib/supabase'; // We'll use client-side supabase for realtime
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
 import { useEffect } from 'react';
-
-const supabase = createClientComponentClient();
 
 export function useComments(postSlug: string, sortBy: string = 'newest') {
   const getKey = (pageIndex: number, previousPageData: any) => {
