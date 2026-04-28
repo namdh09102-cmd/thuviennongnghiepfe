@@ -21,21 +21,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from('profiles')
     .select('username, created_at');
 
-  const postUrls = (posts || []).map((post) => ({
+  const postUrls = (posts || []).map((post: any) => ({
     url: `${baseUrl}/posts/${post.slug}`,
     lastModified: new Date(post.updated_at),
     changeFrequency: 'daily' as const,
     priority: 0.8,
   }));
 
-  const categoryUrls = (categories || []).map((cat) => ({
+  const categoryUrls = (categories || []).map((cat: any) => ({
     url: `${baseUrl}/posts?category=${cat.slug}`,
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
     priority: 0.7,
   }));
 
-  const profileUrls = (profiles || []).map((profile) => ({
+  const profileUrls = (profiles || []).map((profile: any) => ({
     url: `${baseUrl}/profile/${profile.username}`,
     lastModified: new Date(profile.created_at),
     changeFrequency: 'weekly' as const,
