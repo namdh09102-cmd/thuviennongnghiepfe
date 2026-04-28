@@ -83,6 +83,23 @@ export async function POST(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Gửi thông báo cho chủ bài viết (nếu không phải là chính mình)
+  const { data: postAuthor } = await supabaseAdmin
+    .from('posts')
+    .select('author_id, title')
+    .eq('id', post.id)
+    .single();
+
+  if (postAuthor && postAuthor.author_id !== (session.user as any).id) {
+    const { createNotification } = await import('@/lib/createNotification');
+    await createNotification(postAuthor.author_id, 'comment_on_post', {
+      actor_name: session.user.name || 'Một người dùng',
+      actor_avatar: session.user.image || undefined,
+      post_slug: params.slug,
+      post_title: postAuthor.title
+    });
+  }
+
   // Cập nhật số lượng comment
   await supabaseAdmin.from('posts').update({ comment_count: post.comment_count + 1 }).eq('id', post.id);
 

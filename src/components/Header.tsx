@@ -1,17 +1,14 @@
 'use client';
 
 import React from 'react';
-import { useAuthStore } from '../store/authStore';
-import { User, LogIn, Leaf } from 'lucide-react';
+import { User, LogIn, Leaf, Plus } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import NotificationBell from './NotificationBell';
 
 export default function Header() {
-  const { isAuthenticated, user } = useAuthStore();
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  const { data: session, status } = useSession();
+  const mounted = status !== 'loading';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
@@ -48,27 +45,27 @@ export default function Header() {
           </Link>
 
           {/* Thông báo (Chuông) */}
-          <button className="p-2 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors relative">
-            <span>🔔</span>
-            <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full shadow-sm" />
-          </button>
+          {session && <NotificationBell />}
 
-          {mounted && isAuthenticated ? (
-            <Link href="/profile" className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-colors">
-              <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-xs shadow-sm">
-                {user?.username?.charAt(0).toUpperCase()}
+          {mounted && session ? (
+            <Link href="/profile" className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-all p-1 hover:bg-gray-50 rounded-2xl">
+              <img 
+                src={session.user?.image || 'https://api.dicebear.com/7.x/avataaars/svg'} 
+                className="h-9 w-9 rounded-2xl bg-green-100 shadow-sm object-cover" 
+                alt={session.user?.name || ''} 
+              />
+              <div className="hidden md:block text-left">
+                <p className="text-[10px] font-black text-gray-900 leading-none">{session.user?.name}</p>
+                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Thành viên</p>
               </div>
-              <span className="text-xs font-medium hidden md:block">
-                {user?.username}
-              </span>
             </Link>
           ) : mounted ? (
-            <Link href="/login" className="flex items-center space-x-1.5 text-gray-600 hover:text-green-600 text-xs font-medium px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors">
-              <span>🔑</span>
+            <Link href="/login" className="flex items-center space-x-2 bg-gray-900 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-2xl transition-all shadow-lg shadow-gray-900/10">
+              <LogIn className="w-3.5 h-3.5" />
               <span>Đăng nhập</span>
             </Link>
           ) : (
-            <div className="h-8 w-8 bg-gray-50 rounded-full animate-pulse" />
+            <div className="h-9 w-24 bg-gray-50 rounded-2xl animate-pulse" />
           )}
         </div>
       </div>
