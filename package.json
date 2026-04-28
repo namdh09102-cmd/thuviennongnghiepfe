@@ -11,9 +11,12 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
     "@auth/supabase-adapter": "^1.11.2",
+    "@sentry/nextjs": "^10.50.0",
     "@supabase/supabase-js": "^2.105.0",
     "@tanstack/react-query": "^5.100.5",
     "@types/prismjs": "^1.26.6",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "axios": "^1.15.2",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

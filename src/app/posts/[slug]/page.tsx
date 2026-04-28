@@ -18,8 +18,9 @@ import PostContent from '@/components/PostContent';
 import CommentSection from '@/components/CommentSection';
 import PostActions from '@/components/PostActions';
 import PostCard from '@/components/PostCard';
-
 import { supabaseAdmin } from '@/lib/supabase';
+
+export const revalidate = 3600; // ISR: Revalidate every 1 hour
 
 async function getPost(slug: string) {
   if (!supabaseAdmin) {

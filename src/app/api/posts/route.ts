@@ -51,6 +51,15 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const userId = (session.user as any).id;
+  
+  // Rate limiting
+  const { postRatelimit } = await import('@/lib/ratelimit');
+  const { success } = await postRatelimit.limit(userId);
+  if (!success) {
+    return NextResponse.json({ error: 'Bạn đã đăng quá nhiều bài viết. Vui lòng thử lại sau 1 giờ.' }, { status: 429 });
+  }
+
   const body = await req.json();
   const { title, content, category_id, excerpt, thumbnail_url, tags } = body;
 
