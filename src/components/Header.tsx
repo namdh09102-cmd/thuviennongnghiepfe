@@ -57,8 +57,8 @@ export default function Header() {
         <div className={`flex items-center space-x-4 flex-1 ${isSearchOpen ? 'hidden md:flex' : 'flex'}`}>
           <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
             <Leaf className="h-6 w-6 text-green-600" />
-            <span className="font-bold text-lg bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
-              Thư viện Nông nghiệp
+            <span className="font-black text-xl bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent tracking-wider">
+              TVNN
             </span>
           </Link>
 
