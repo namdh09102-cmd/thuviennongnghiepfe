@@ -4,6 +4,7 @@ export type NotificationType =
   | 'comment_on_post' 
   | 'reply_to_comment' 
   | 'answer_to_question' 
+  | 'expert_answer' 
   | 'best_answer' 
   | 'level_up' 
   | 'badge_earned' 

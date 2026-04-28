@@ -24,9 +24,9 @@ export async function POST(req: NextRequest) {
     .eq('checked_at', today);
 
   const checkedInIds = new Set(checkedInUsers?.map((c: any) => c.user_id) || []);
-  const targetUsers = users.filter(u => !checkedInIds.has(u.id));
+  const targetUsers = users.filter((u: any) => !checkedInIds.has(u.id));
 
-  targetUsers.forEach(user => {
+  targetUsers.forEach((user: any) => {
     createNotificationAsync(
       user.id,
       'daily_reminder',

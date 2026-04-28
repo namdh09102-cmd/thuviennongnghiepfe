@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
             table: 'notifications',
             filter: `user_id=eq.${userId}`,
           },
-          (payload) => {
+          (payload: any) => {
             sendEvent({ type: 'notification', data: payload.new });
           }
         )
