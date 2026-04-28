@@ -1,17 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-// Client thông thường (thường dùng ở Client Component hoặc Public Route)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Client thông thường
+export const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null as any;
 
-// Client có quyền Admin (dùng ở Route Handler khi cần vượt qua RLS hoặc thực hiện tác vụ hệ thống)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole);
+// Client có quyền Admin
+export const supabaseAdmin = (supabaseUrl && supabaseServiceRole)
+  ? createClient(supabaseUrl, supabaseServiceRole)
+  : null as any;
 
-// Helper tạo client với Access Token của user để RLS hoạt động
+// Helper tạo client với Access Token
 export const createSupabaseUserClient = (accessToken?: string) => {
+  if (!supabaseUrl || !supabaseAnonKey) return null as any;
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: {
       headers: {
