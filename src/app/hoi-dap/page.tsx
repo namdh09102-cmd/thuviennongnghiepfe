@@ -5,6 +5,7 @@ import { MessageCircle, HelpCircle, CheckCircle, AlertCircle } from 'lucide-reac
 import { axiosInstance } from '../../lib/axios';
 import { useAuthStore } from '../../store/authStore';
 import Link from 'next/link';
+import ChatWidget from '../../components/ChatWidget';
 
 interface Author {
   id: string;
@@ -195,6 +196,7 @@ export default function QAPage() {
           </Link>
         ))}
       </div>
+      <ChatWidget />
     </div>
   );
 }
