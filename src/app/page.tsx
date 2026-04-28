@@ -40,7 +40,7 @@ export default function HomePage() {
   if (error) {
     console.error('SWR Error:', error);
   }
-  const isReachingEnd = data && data[data.length - 1]?.data.length < 10;
+  const isReachingEnd = data && Array.isArray(data[data.length - 1]?.data) && data[data.length - 1].data.length < 10;
   
   const { ref, inView } = useInView();
 

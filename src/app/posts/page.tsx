@@ -31,7 +31,7 @@ export default function PostsPage() {
   const posts = data 
     ? data.filter(page => page && Array.isArray(page.data)).map((page) => page.data).flat() 
     : [];
-  const isReachingEnd = data && data[data.length - 1]?.data.length < 12;
+  const isReachingEnd = data && Array.isArray(data[data.length - 1]?.data) && data[data.length - 1].data.length < 12;
   
   const { ref, inView } = useInView();
 
