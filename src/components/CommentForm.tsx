@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Bold, Italic, Link as LinkIcon, Send, Eye, MessageSquare } from 'lucide-react';
 
 interface CommentFormProps {
@@ -11,6 +13,9 @@ interface CommentFormProps {
 }
 
 export default function CommentForm({ onSubmit, placeholder, replyTo, initialValue = '' }: CommentFormProps) {
+  const { data: session } = useSession();
+  const router = useRouter();
+  
   const [content, setContent] = useState(initialValue);
   const [isPreview, setIsPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,6 +96,9 @@ export default function CommentForm({ onSubmit, placeholder, replyTo, initialVal
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
+          onFocus={() => {
+            if (!session) router.push('/login');
+          }}
           placeholder={placeholder || "Viết bình luận của bạn..."}
           className="w-full text-sm text-gray-700 border-none focus:ring-0 resize-none min-h-[80px] p-2"
         />
@@ -99,9 +107,12 @@ export default function CommentForm({ onSubmit, placeholder, replyTo, initialVal
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
         <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest hidden sm:inline">Ctrl + Enter để gửi nhanh</span>
         <button
-          onClick={() => handleSubmit()}
-          disabled={!content.trim() || isSubmitting}
-          className="bg-green-600 hover:bg-green-700 text-white font-black text-xs px-6 py-2.5 rounded-2xl flex items-center space-x-2 transition-all disabled:opacity-50 disabled:grayscale shadow-lg shadow-green-600/20"
+          onClick={() => {
+            if (!session) router.push('/login');
+            else handleSubmit();
+          }}
+          disabled={!!isSubmitting || !!(session && !content.trim())}
+          className={`bg-green-600 hover:bg-green-700 text-white font-black text-xs px-6 py-2.5 rounded-2xl flex items-center space-x-2 transition-all shadow-lg shadow-green-600/20 ${!session ? 'opacity-50 grayscale cursor-pointer' : ''}`}
         >
           {isSubmitting ? (
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

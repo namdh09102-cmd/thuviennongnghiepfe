@@ -22,3 +22,11 @@ export const questionRatelimit = new Ratelimit({
   analytics: true,
   prefix: "@upstash/ratelimit/question",
 });
+
+export const spamCommentRatelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(3, "1m"),
+  analytics: true,
+  prefix: "@upstash/ratelimit/spam_comment",
+});
+

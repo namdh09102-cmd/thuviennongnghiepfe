@@ -12,18 +12,21 @@ interface CommentSectionProps {
 }
 
 export default function CommentSection({ postSlug }: CommentSectionProps) {
+  const [hasNewComments, setHasNewComments] = useState(false);
   const { data: session } = useSession();
   const [sortBy, setSortBy] = useState('newest');
   const { 
     comments, 
+    totalComments,
     isLoading, 
     isReachingEnd, 
     loadMore, 
     addComment,
+    deleteComment,
+    editComment,
+    likeComment,
     mutate 
-  } = useComments(postSlug, sortBy);
-
-  const [hasNewComments, setHasNewComments] = useState(false);
+  } = useComments(postSlug, sortBy, () => setHasNewComments(true));
 
   const handleMainSubmit = async (content: string) => {
     if (!session) return alert('Vui lòng đăng nhập để bình luận!');
@@ -62,17 +65,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
 
       {/* Main Form */}
       <div className="animate-in slide-in-from-top-4 duration-500">
-        {session ? (
-          <CommentForm onSubmit={handleMainSubmit} placeholder="Bạn đang nghĩ gì về kiến thức này?" />
-        ) : (
-          <div className="bg-gradient-to-br from-green-600 to-teal-700 p-8 rounded-[32px] text-center text-white shadow-xl shadow-green-900/10">
-            <h4 className="font-black text-lg mb-2">Tham gia thảo luận cùng bà con!</h4>
-            <p className="text-xs text-white/70 font-medium mb-6">Đăng nhập để chia sẻ kinh nghiệm và đặt câu hỏi cho chuyên gia.</p>
-            <button className="bg-white text-green-700 font-black text-xs px-10 py-3 rounded-2xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest">
-              Đăng nhập ngay
-            </button>
-          </div>
-        )}
+        <CommentForm onSubmit={handleMainSubmit} placeholder="Chia sẻ ý kiến của bạn..." />
       </div>
 
       {/* Realtime Notification */}
@@ -93,6 +86,9 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
             key={comment.id} 
             comment={comment} 
             onReply={handleReplySubmit}
+            onDelete={deleteComment}
+            onEdit={editComment}
+            onVote={likeComment}
             currentUser={session?.user}
           />
         ))}
@@ -118,7 +114,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
             onClick={() => loadMore()}
             className="w-full py-4 text-[10px] font-black text-gray-400 hover:text-green-600 uppercase tracking-widest bg-white border border-gray-100 rounded-2xl hover:border-green-100 hover:bg-green-50/30 transition-all shadow-sm"
           >
-            Xem thêm bình luận
+            Xem thêm {totalComments - comments.length} bình luận
           </button>
         )}
       </div>

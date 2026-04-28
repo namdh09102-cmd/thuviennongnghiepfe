@@ -11,16 +11,31 @@ interface CommentItemProps {
   comment: any;
   onReply: (content: string, parentId: string) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
-  onVote?: (id: string) => Promise<void>;
+  onEdit?: (id: string, content: string) => Promise<void>;
+  onVote?: (id: string, action: 'like' | 'unlike') => Promise<void>;
   currentUser?: any;
 }
 
-export default function CommentItem({ comment, onReply, onDelete, onVote, currentUser }: CommentItemProps) {
+export default function CommentItem({ comment, onReply, onDelete, onEdit, onVote, currentUser }: CommentItemProps) {
   const [isReplying, setIsReplying] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
+  
+  const [isLiked, setIsLiked] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(`liked_comment_${comment.id}`) === 'true';
+    }
+    return false;
+  });
+  const [votesCount, setVotesCount] = useState(comment.votes || 0);
 
-  const canEdit = currentUser?.id === comment.author_id || currentUser?.role === 'admin';
+  const isOwner = currentUser?.id === comment.author_id;
+  const isNew = (new Date().getTime() - new Date(comment.created_at).getTime()) < 5 * 60 * 1000;
+  const canEdit = isOwner && isNew;
+  const canDelete = isOwner || currentUser?.role === 'admin';
+
   const hasReplies = comment.replies && comment.replies.length > 0;
   const visibleReplies = showAllReplies ? comment.replies : comment.replies?.slice(0, 3);
 
@@ -29,6 +44,26 @@ export default function CommentItem({ comment, onReply, onDelete, onVote, curren
     setIsReplying(false);
     setIsExpanded(true);
   };
+
+  const handleVote = async () => {
+    if (!currentUser) return alert('Vui lòng đăng nhập để thích!');
+    const action = isLiked ? 'unlike' : 'like';
+    setIsLiked(!isLiked);
+    setVotesCount((prev: number) => action === 'like' ? prev + 1 : Math.max(0, prev - 1));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`liked_comment_${comment.id}`, action === 'like' ? 'true' : 'false');
+    }
+    if (onVote) await onVote(comment.id, action);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onEdit) {
+      await onEdit(comment.id, editContent);
+      setIsEditing(false);
+    }
+  };
+
 
   return (
     <div className="group animate-in fade-in duration-300">
@@ -69,21 +104,34 @@ export default function CommentItem({ comment, onReply, onDelete, onVote, curren
                 </button>
                 <div className="absolute right-0 top-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl hidden group-hover/menu:block z-10 p-1 min-w-[120px]">
                   {canEdit && (
-                    <>
-                      <button className="w-full flex items-center space-x-2 px-3 py-2 text-[10px] font-black text-gray-600 hover:bg-gray-50 rounded-lg uppercase tracking-widest">
-                        <Edit className="w-3.5 h-3.5" />
-                        <span>Sửa</span>
-                      </button>
-                      <button 
-                        onClick={() => onDelete?.(comment.id)}
-                        className="w-full flex items-center space-x-2 px-3 py-2 text-[10px] font-black text-red-500 hover:bg-red-50 rounded-lg uppercase tracking-widest"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Xóa</span>
-                      </button>
-                    </>
+                    <button 
+                      onClick={() => setIsEditing(true)}
+                      className="w-full flex items-center space-x-2 px-3 py-2 text-[10px] font-black text-gray-600 hover:bg-gray-50 rounded-lg uppercase tracking-widest"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      <span>Sửa</span>
+                    </button>
                   )}
-                  <button className="w-full flex items-center space-x-2 px-3 py-2 text-[10px] font-black text-gray-600 hover:bg-gray-50 rounded-lg uppercase tracking-widest">
+                  {canDelete && (
+                    <button 
+                      onClick={() => {
+                        if (confirm('Bạn có chắc chắn muốn xóa bình luận này?')) {
+                          onDelete?.(comment.id);
+                        }
+                      }}
+                      className="w-full flex items-center space-x-2 px-3 py-2 text-[10px] font-black text-red-500 hover:bg-red-50 rounded-lg uppercase tracking-widest"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Xóa</span>
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => {
+                      const reason = prompt('Lý do báo cáo:\n1. Spam\n2. Nội dung xấu\n3. Sai thông tin');
+                      if (reason) alert('Cảm ơn bạn đã báo cáo. Ban quản trị sẽ kiểm duyệt nội dung này.');
+                    }}
+                    className="w-full flex items-center space-x-2 px-3 py-2 text-[10px] font-black text-gray-600 hover:bg-gray-50 rounded-lg uppercase tracking-widest"
+                  >
                     <Flag className="w-3.5 h-3.5" />
                     <span>Báo cáo</span>
                   </button>
@@ -91,19 +139,33 @@ export default function CommentItem({ comment, onReply, onDelete, onVote, curren
               </div>
             </div>
 
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-              {comment.content}
-            </p>
+            {isEditing ? (
+              <form onSubmit={handleEditSubmit} className="mt-2">
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                />
+                <div className="flex space-x-2 mt-2">
+                  <button type="submit" className="text-[10px] font-black uppercase text-green-600">Lưu</button>
+                  <button type="button" onClick={() => setIsEditing(false)} className="text-[10px] font-black uppercase text-gray-400">Hủy</button>
+                </div>
+              </form>
+            ) : (
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                {comment.content}
+              </p>
+            )}
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-6 mt-2 ml-2">
             <button 
-              onClick={() => onVote?.(comment.id)}
-              className="flex items-center space-x-1.5 text-[10px] font-black text-gray-400 hover:text-green-600 uppercase tracking-widest transition-colors"
+              onClick={handleVote}
+              className={`flex items-center space-x-1.5 text-[10px] font-black uppercase tracking-widest transition-colors ${isLiked ? 'text-green-600 font-bold' : 'text-gray-400 hover:text-green-600'}`}
             >
               <ThumbsUp className="w-3.5 h-3.5" />
-              <span>{comment.votes || 0}</span>
+              <span>{votesCount}</span>
             </button>
             
             <button 

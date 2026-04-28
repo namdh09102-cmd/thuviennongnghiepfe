@@ -4,10 +4,10 @@ import useSWRInfinite from 'swr/infinite';
 import { supabase } from '@/lib/supabase';
 import { useEffect } from 'react';
 
-export function useComments(postSlug: string, sortBy: string = 'newest') {
+export function useComments(postSlug: string, sortBy: string = 'newest', onNewComment?: () => void) {
   const getKey = (pageIndex: number, previousPageData: any) => {
     if (previousPageData && !previousPageData.length) return null;
-    return `/api/posts/${postSlug}/comments?page=${pageIndex}&sort=${sortBy}&limit=20`;
+    return `/api/posts/${postSlug}/comments?page=${pageIndex}&sort=${sortBy}&limit=10`;
   };
 
   const { data, error, size, setSize, mutate, isLoading } = useSWRInfinite(
@@ -15,9 +15,10 @@ export function useComments(postSlug: string, sortBy: string = 'newest') {
     (url: string) => fetch(url).then(res => res.json())
   );
 
-  const comments = data ? data.flat() : [];
-  const isEmpty = data?.[0]?.length === 0;
-  const isReachingEnd = isEmpty || (data && data[data.length - 1]?.length < 20);
+  const comments = data ? data.map((page: any) => page.data).flat().filter(Boolean) : [];
+  const totalComments = data?.[0]?.total || 0;
+  const isEmpty = comments.length === 0;
+  const isReachingEnd = isEmpty || comments.length >= totalComments;
 
   // Realtime subscription
   useEffect(() => {
@@ -26,10 +27,13 @@ export function useComments(postSlug: string, sortBy: string = 'newest') {
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
-        table: 'comments',
-        filter: `post_slug=eq.${postSlug}` // This assumes we have post_slug in comments or we filter by post_id
+        table: 'comments'
       }, () => {
-        mutate();
+        if (onNewComment) {
+          onNewComment();
+        } else {
+          mutate();
+        }
       })
       .subscribe();
 
@@ -64,12 +68,55 @@ export function useComments(postSlug: string, sortBy: string = 'newest') {
     }
   };
 
+  const deleteComment = async (id: string) => {
+    try {
+      const res = await fetch(`/api/comments/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      mutate();
+    } catch (e) {
+      alert('Không thể xóa bình luận');
+    }
+  };
+
+  const editComment = async (id: string, content: string) => {
+    try {
+      const res = await fetch(`/api/comments/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ content }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Không thể sửa bình luận');
+      }
+      mutate();
+    } catch (e: any) {
+      alert(e.message || 'Không thể sửa bình luận');
+    }
+  };
+
+  const likeComment = async (id: string, action: 'like' | 'unlike') => {
+    try {
+      const res = await fetch(`/api/comments/${id}/like`, {
+        method: 'POST',
+        body: JSON.stringify({ action }),
+      });
+      if (!res.ok) throw new Error();
+      mutate();
+    } catch (e) {
+      console.error('Like action failed');
+    }
+  };
+
   return {
     comments,
+    totalComments,
     isLoading,
     isReachingEnd,
     loadMore: () => setSize(size + 1),
     addComment,
+    deleteComment,
+    editComment,
+    likeComment,
     mutate
   };
 }
