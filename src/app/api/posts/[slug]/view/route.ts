@@ -5,18 +5,22 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
-  const { data: post } = await supabaseAdmin
+  // Tăng view count bằng SQL function (đã định nghĩa trong Supabase)
+  // Nếu chưa định nghĩa RPC, dùng tạm update (không khuyến khích cho production lớn)
+  const { data, error } = await supabaseAdmin
     .from('posts')
-    .select('id, view_count')
+    .select('view_count')
     .eq('slug', params.slug)
     .single();
 
-  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (error) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
 
-  await supabaseAdmin
+  const { error: updateError } = await supabaseAdmin
     .from('posts')
-    .update({ view_count: post.view_count + 1 })
-    .eq('id', post.id);
+    .update({ view_count: (data.view_count || 0) + 1 })
+    .eq('slug', params.slug);
+
+  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
 
   return NextResponse.json({ success: true });
 }
