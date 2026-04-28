@@ -1,260 +1,213 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { LogIn, UserPlus, Mail, Lock, User, MapPin, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Loader2, Eye, EyeOff, Sprout } from 'lucide-react';
 import Link from 'next/link';
-import { Suspense } from 'react';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
-  
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Form states
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    province: 'Hà Nội'
-  });
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [generalError, setGeneralError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const provinces = ['Hà Nội', 'TP. Hồ Chí Minh', 'Đà Nẵng', 'Cần Thơ', 'Lâm Đồng', 'Đắk Lắk'];
+  const validate = () => {
+    let valid = true;
+    setEmailError('');
+    setPasswordError('');
 
-  const validateForm = () => {
-    if (!formData.email.includes('@')) return 'Email không hợp lệ';
-    if (formData.password.length < 6) return 'Mật khẩu phải ít nhất 6 ký tự';
-    if (activeTab === 'register') {
-      if (!formData.name) return 'Vui lòng nhập họ tên';
-      if (formData.password !== formData.confirmPassword) return 'Mật khẩu xác nhận không khớp';
+    if (!email) {
+      setEmailError('Vui lòng nhập email');
+      valid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Email sai định dạng');
+      valid = false;
     }
-    return null;
+
+    if (!password) {
+      setPasswordError('Vui lòng nhập mật khẩu');
+      valid = false;
+    } else if (password.length < 6) {
+      setPasswordError('Mật khẩu phải có ít nhất 6 ký tự');
+      valid = false;
+    }
+
+    return valid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+    setGeneralError('');
+
+    if (!validate()) return;
 
     setIsLoading(true);
 
     try {
-      if (activeTab === 'login') {
-        const result = await signIn('credentials', {
-          email: formData.email,
-          password: formData.password,
-          redirect: false,
-        });
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
 
-        if (result?.error) {
-          setError('Email hoặc mật khẩu không đúng');
-        } else {
-          router.push(callbackUrl);
-          router.refresh();
-        }
+      if (result?.error) {
+        setGeneralError('Email hoặc mật khẩu không chính xác');
       } else {
-        // Handle Registration (Mock for now)
-        console.log('Registering user:', formData);
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate delay
-        alert('Đăng ký thành công! Vui lòng đăng nhập.');
-        setActiveTab('login');
+        router.push(callbackUrl);
+        router.refresh();
       }
     } catch (err) {
-      setError('Đã có lỗi xảy ra, vui lòng thử lại sau.');
+      setGeneralError('Đã có lỗi hệ thống xảy ra, vui lòng thử lại sau');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    signIn('google', { callbackUrl });
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      await signIn('google', { callbackUrl });
+    } catch (err) {
+      setGeneralError('Không thể đăng nhập bằng Google');
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
-        <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-green-100 rounded-2xl flex items-center justify-center mb-4">
-            <LogIn className="h-8 w-8 text-green-600" />
+    <div className="min-h-[80vh] flex items-center justify-center bg-transparent p-4 sm:p-6">
+      <div className="w-full max-w-[400px] bg-white p-6 sm:p-8 rounded-3xl shadow-xl border border-gray-100">
+        {/* Header Logo */}
+        <div className="text-center mb-6">
+          <div className="mx-auto h-12 w-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-3">
+            <Sprout className="h-6 w-6" />
           </div>
-          <h2 className="text-3xl font-black text-gray-900 tracking-tight">Chào mừng bạn!</h2>
-          <p className="mt-2 text-sm text-gray-500 font-medium">
-            Tham gia cộng đồng nông nghiệp thông minh Việt Nam
-          </p>
+          <h2 className="text-2xl font-black text-gray-900 leading-tight">AgriLib</h2>
+          <p className="text-xs font-semibold text-gray-400 mt-1">Cộng đồng nông dân Việt Nam</p>
         </div>
 
-        {/* Tab Selector */}
-        <div className="flex p-1 bg-gray-100 rounded-2xl">
-          <button
-            onClick={() => setActiveTab('login')}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
-              activeTab === 'login' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Đăng nhập
-          </button>
-          <button
-            onClick={() => setActiveTab('register')}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
-              activeTab === 'register' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Đăng ký
-          </button>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs flex items-center space-x-2 animate-in fade-in duration-200">
-            <AlertCircle className="h-4 w-4 flex-shrink-0" />
-            <span>{error}</span>
+        {generalError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-xs font-bold text-center animate-shake">
+            {generalError}
           </div>
         )}
 
-        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-          {activeTab === 'register' && (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email */}
+          <div className="space-y-1">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider ml-1">
+              Email
+            </label>
             <div className="relative">
-              <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
-                type="text"
-                placeholder="Họ và tên"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all bg-gray-50/50"
-                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@example.com"
+                className={`w-full pl-10 pr-4 py-3 text-sm bg-gray-50/50 border rounded-2xl focus:outline-none focus:bg-white focus:ring-2 transition-all ${
+                  emailError ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-green-200 focus:border-green-600'
+                }`}
               />
             </div>
-          )}
-
-          <div className="relative">
-            <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <input
-              type="email"
-              placeholder="Email của bạn"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all bg-gray-50/50"
-              required
-            />
+            {emailError && <p className="text-[10px] font-bold text-red-500 ml-1 mt-0.5">{emailError}</p>}
           </div>
 
-          {activeTab === 'register' && (
+          {/* Password */}
+          <div className="space-y-1">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider ml-1">
+              Mật khẩu
+            </label>
             <div className="relative">
-              <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-              <select
-                value={formData.province}
-                onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all bg-gray-50/50 appearance-none"
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className={`w-full pl-10 pr-12 py-3 text-sm bg-gray-50/50 border rounded-2xl focus:outline-none focus:bg-white focus:ring-2 transition-all ${
+                  passwordError ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-green-200 focus:border-green-600'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
               >
-                {provinces.map(p => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
-          )}
-
-          <div className="relative">
-            <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Mật khẩu"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all bg-gray-50/50"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-            >
-              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-            </button>
+            {passwordError && <p className="text-[10px] font-bold text-red-500 ml-1 mt-0.5">{passwordError}</p>}
           </div>
 
-          {activeTab === 'register' && (
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+          {/* Remember Me & Forgot Password */}
+          <div className="flex items-center justify-between py-1">
+            <label className="flex items-center space-x-2 cursor-pointer">
               <input
-                type="password"
-                placeholder="Xác nhận mật khẩu"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all bg-gray-50/50"
-                required
-              />
-            </div>
-          )}
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
                 type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
                 className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-[10px] text-gray-600 font-bold uppercase">
-                Ghi nhớ đăng nhập
-              </label>
-            </div>
-
-            <div className="text-[10px] font-bold uppercase">
-              <Link href="#" className="text-green-600 hover:text-green-500">
-                Quên mật khẩu?
-              </Link>
-            </div>
+              <span className="text-[11px] font-bold text-gray-600 uppercase">Ghi nhớ đăng nhập</span>
+            </label>
+            <Link href="#" className="text-[11px] font-bold text-green-600 uppercase hover:underline">
+              Quên mật khẩu?
+            </Link>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-black rounded-2xl text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 shadow-lg shadow-green-600/30 transition-all active:scale-95 disabled:opacity-70 disabled:active:scale-100"
-            >
-              {isLoading ? (
-                <Loader2 className="animate-spin h-5 w-5" />
-              ) : (
-                activeTab === 'login' ? 'ĐĂNG NHẬP' : 'ĐĂNG KÝ NGAY'
-              )}
-            </button>
-          </div>
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white text-sm font-black rounded-2xl shadow-lg shadow-green-600/20 transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                <span>Đang đăng nhập...</span>
+              </>
+            ) : (
+              'ĐĂNG NHẬP'
+            )}
+          </button>
         </form>
 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
-            </div>
-            <div className="relative flex justify-center text-[10px] font-bold uppercase">
-              <span className="px-2 bg-white text-gray-400">Hoặc tiếp tục với</span>
-            </div>
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-100"></div>
           </div>
-
-          <div className="mt-6 grid grid-cols-1 gap-3">
-            <button
-              onClick={handleGoogleLogin}
-              className="w-full inline-flex justify-center py-3 px-4 rounded-2xl shadow-sm bg-white border border-gray-200 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all active:scale-95"
-            >
-              <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="h-5 w-5 mr-2" alt="Google" />
-              <span>Đăng nhập bằng Google</span>
-            </button>
+          <div className="relative flex justify-center text-[10px] font-black uppercase">
+            <span className="px-2 bg-white text-gray-400">Hoặc</span>
           </div>
         </div>
 
-        <p className="mt-6 text-center text-[10px] text-gray-400 font-bold uppercase leading-relaxed">
-          Bằng cách đăng nhập, bạn đồng ý với <Link href="#" className="text-gray-600 underline">Điều khoản dịch vụ</Link> và <Link href="#" className="text-gray-600 underline">Chính sách bảo mật</Link> của chúng tôi.
+        {/* Google Button */}
+        <button
+          onClick={handleGoogleLogin}
+          disabled={isLoading}
+          className="w-full py-3 px-4 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 text-sm font-bold rounded-2xl shadow-sm transition-all active:scale-95 flex items-center justify-center"
+        >
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="h-5 w-5 mr-2" alt="Google" />
+          <span>Đăng nhập bằng Google</span>
+        </button>
+
+        {/* Register Link */}
+        <p className="mt-6 text-center text-xs font-bold text-gray-400 uppercase">
+          Chưa có tài khoản?{' '}
+          <Link href="/register" className="text-green-600 hover:underline font-black ml-1">
+            Đăng ký ngay
+          </Link>
         </p>
       </div>
     </div>
