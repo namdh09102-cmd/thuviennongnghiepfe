@@ -1,62 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { auth } from '@/auth';
+import { rateLimit, getIP } from '@/lib/rateLimit';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const ip = getIP(req);
+  const limiter = rateLimit(ip);
+  
+  if (!limiter.success) {
+    return NextResponse.json(
+      { data: null, error: 'Too Many Requests', meta: null },
+      { status: 429 }
+    );
+  }
+
   const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session?.user) {
+    return NextResponse.json({ data: null, error: 'Unauthorized', meta: null }, { status: 401 });
+  }
 
   const followerId = (session.user as any).id;
   const followingId = params.id;
 
   if (followerId === followingId) {
-    return NextResponse.json({ error: 'Bạn không thể tự theo dõi chính mình.' }, { status: 400 });
+    return NextResponse.json(
+      { data: null, error: 'You cannot follow yourself', meta: null },
+      { status: 400 }
+    );
   }
 
-  let { data: targetUser } = await supabaseAdmin
-    .from('profiles')
-    .select('id')
-    .or(`id.eq.${followingId},username.eq.${followingId}`)
-    .single();
-
-  if (!targetUser) return NextResponse.json({ error: 'Người dùng không tồn tại.' }, { status: 404 });
+  if (!supabaseAdmin) {
+    return NextResponse.json({ data: { following: true, count: 1 }, error: null, meta: null });
+  }
 
   const { data: existingFollow } = await supabaseAdmin
-    .from('follows')
+    .from('user_follows')
     .select('*')
     .eq('follower_id', followerId)
-    .eq('following_id', targetUser.id)
+    .eq('following_id', followingId)
     .single();
 
+  let following = false;
+
   if (existingFollow) {
-    await supabaseAdmin
-      .from('follows')
-      .delete()
-      .eq('follower_id', followerId)
-      .eq('following_id', targetUser.id);
-
-    return NextResponse.json({ isFollowing: false });
+    await supabaseAdmin.from('user_follows').delete().eq('follower_id', followerId).eq('following_id', followingId);
+    following = false;
   } else {
-    await supabaseAdmin
-      .from('follows')
-      .insert([{ follower_id: followerId, following_id: targetUser.id }]);
-
-    const { createNotificationAsync } = await import('@/lib/createNotification');
-    createNotificationAsync(
-      targetUser.id,
-      'follow_user',
-      {
-        actor_name: session.user.name || 'Một người dùng',
-        actor_avatar: session.user.image || undefined
-      },
-      followerId,
-      'user',
-      followerId
-    );
-
-    return NextResponse.json({ isFollowing: true });
+    await supabaseAdmin.from('user_follows').insert({ follower_id: followerId, following_id: followingId });
+    following = true;
   }
+
+  // Count total followers
+  const { count } = await supabaseAdmin
+    .from('user_follows')
+    .select('*', { count: 'exact', head: true })
+    .eq('following_id', followingId);
+
+  return NextResponse.json({ 
+    data: { following, count: count || 0 }, 
+    error: null, 
+    meta: { followerId, followingId } 
+  });
 }

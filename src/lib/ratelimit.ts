@@ -1,32 +1,34 @@
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
+import { NextResponse } from 'next/server';
 
-// Create a new ratelimiter, that allows 10 requests per 1 hour
-export const postRatelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "1h"),
-  analytics: true,
-  prefix: "@upstash/ratelimit/post",
-});
+const ipCache = new Map<string, { count: number; resetTime: number }>();
 
-export const commentRatelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(30, "1h"),
-  analytics: true,
-  prefix: "@upstash/ratelimit/comment",
-});
+export function rateLimit(ip: string, limit = 60, windowMs = 60000) {
+  const now = Date.now();
+  const cacheEntry = ipCache.get(ip);
 
-export const questionRatelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, "1h"),
-  analytics: true,
-  prefix: "@upstash/ratelimit/question",
-});
+  if (!cacheEntry) {
+    ipCache.set(ip, { count: 1, resetTime: now + windowMs });
+    return { success: true, remaining: limit - 1 };
+  }
 
-export const spamCommentRatelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(3, "1m"),
-  analytics: true,
-  prefix: "@upstash/ratelimit/spam_comment",
-});
+  if (now > cacheEntry.resetTime) {
+    ipCache.set(ip, { count: 1, resetTime: now + windowMs });
+    return { success: true, remaining: limit - 1 };
+  }
 
+  cacheEntry.count += 1;
+
+  if (cacheEntry.count > limit) {
+    return { success: false, remaining: 0 };
+  }
+
+  return { success: true, remaining: limit - cacheEntry.count };
+}
+
+export function getIP(req: Request): string {
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  return '127.0.0.1';
+}

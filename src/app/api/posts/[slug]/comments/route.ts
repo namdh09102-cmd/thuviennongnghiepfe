@@ -1,195 +1,128 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { auth } from '@/auth';
+import { rateLimit, getIP } from '@/lib/rateLimit';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
-  const { searchParams } = new URL(req.url);
-  const sort = searchParams.get('sort') || 'newest';
-  const page = parseInt(searchParams.get('page') || '0');
-  const limit = parseInt(searchParams.get('limit') || '10');
+  const ip = getIP(req);
+  const limiter = rateLimit(ip);
+  
+  if (!limiter.success) {
+    return NextResponse.json(
+      { data: null, error: 'Too Many Requests', meta: null },
+      { status: 429 }
+    );
+  }
 
-  const { data: post } = await supabaseAdmin
+  const { searchParams } = new URL(req.url);
+  const limit = parseInt(searchParams.get('limit') || '20');
+  const { slug } = params;
+
+  if (!supabaseAdmin) {
+    return NextResponse.json({ data: [], error: null, meta: null });
+  }
+
+  const { data: post, error: postError } = await supabaseAdmin
     .from('posts')
     .select('id')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single();
 
-  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (postError || !post) {
+    return NextResponse.json({ data: null, error: 'Post not found', meta: null }, { status: 404 });
+  }
 
-  const from = page * limit;
-  const to = from + limit - 1;
-
-  let query = supabaseAdmin
+  const { data: comments, error } = await supabaseAdmin
     .from('comments')
     .select(`
       *,
-      author:profiles(username, full_name, avatar_url, role),
-      replies:comments(
-        *,
-        author:profiles(username, full_name, avatar_url, role)
-      )
-    `, { count: 'exact' })
+      author:profiles(full_name, avatar_url, username)
+    `)
     .eq('post_id', post.id)
-    .is('parent_id', null)
-    .eq('is_hidden', false) // Don't show hidden/pending comments
-    .range(from, to);
+    .eq('is_hidden', false)
+    .order('created_at', { ascending: false })
+    .limit(limit);
 
-  if (sort === 'popular') {
-    query = query.order('votes', { ascending: false });
-  } else {
-    query = query.order('created_at', { ascending: false });
+  if (error) {
+    return NextResponse.json({ data: null, error: error.message, meta: null }, { status: 500 });
   }
 
-  const { data, count, error } = await query;
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json({
-    data,
-    total: count
-  });
+  return NextResponse.json({ data: comments || [], error: null, meta: { limit } });
 }
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const userId = (session.user as any).id;
-
-  // 1. Rate limiting (3 comment/phút/user)
-  const { spamCommentRatelimit } = await import('@/lib/ratelimit');
-  const { success } = await spamCommentRatelimit.limit(userId);
-  if (!success) {
-    return NextResponse.json({ error: 'Bạn bình luận quá nhanh. Vui lòng thử lại sau 1 phút.' }, { status: 429 });
-  }
-
-  const body = await req.json();
-  const { content, parent_id } = body;
-
-  if (!content || content.trim() === '') {
-    return NextResponse.json({ error: 'Nội dung không được để trống' }, { status: 400 });
-  }
-
-  // 2. Block external links (whitelist internal)
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const urls = content.match(urlRegex);
-  if (urls) {
-    const whitelist = ['localhost', 'thuviennongnghiepfe.vercel.app', 'thuviennongnghiep.vn'];
-    for (const url of urls) {
-      try {
-        const hostname = new URL(url).hostname;
-        if (!whitelist.includes(hostname)) {
-          return NextResponse.json({ error: 'Không được chèn link ngoài vào bình luận.' }, { status: 400 });
-        }
-      } catch (e) {
-        // Invalid URL
-      }
-    }
-  }
-
-  // 3. User mới (< 7 ngày, < 5 điểm) -> pending (is_hidden = true)
-  const { data: userProfile } = await supabaseAdmin
-    .from('profiles')
-    .select('points, created_at')
-    .eq('id', userId)
-    .single();
-
-  const userAgeInDays = userProfile?.created_at
-    ? (Date.now() - new Date(userProfile.created_at).getTime()) / (1000 * 60 * 60 * 24)
-    : 0;
-  const userPoints = userProfile?.points || 0;
-  const isPending = userAgeInDays < 7 || userPoints < 5;
-
-  const { data: post } = await supabaseAdmin
-    .from('posts')
-    .select('id, comment_count')
-    .eq('slug', params.slug)
-    .single();
-
-  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-
-  const { data, error } = await supabaseAdmin
-    .from('comments')
-    .insert([{
-      post_id: post.id,
-      author_id: userId,
-      content,
-      parent_id,
-      is_hidden: isPending
-    }])
-    .select(`
-      *,
-      author:profiles(username, full_name, avatar_url)
-    `)
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  if (isPending) {
-    return NextResponse.json({ 
-      message: 'Bình luận của bạn đang chờ kiểm duyệt do tài khoản mới.', 
-      data: { ...data, is_hidden: true } 
-    });
-  }
-
-
-  // Gửi thông báo cho chủ bài viết (nếu không phải là chính mình)
-  const { data: postAuthor } = await supabaseAdmin
-    .from('posts')
-    .select('author_id, title')
-    .eq('id', post.id)
-    .single();
-
-  const { createNotificationAsync } = await import('@/lib/createNotification');
-
-  if (postAuthor && postAuthor.author_id !== userId) {
-    createNotificationAsync(
-      postAuthor.author_id, 
-      'comment_on_post', 
-      {
-        actor_name: session.user.name || 'Một người dùng',
-        actor_avatar: session.user.image || undefined,
-        post_slug: params.slug,
-        post_title: postAuthor.title
-      },
-      userId,
-      'post',
-      post.id
+  const ip = getIP(req);
+  const limiter = rateLimit(ip);
+  
+  if (!limiter.success) {
+    return NextResponse.json(
+      { data: null, error: 'Too Many Requests', meta: null },
+      { status: 429 }
     );
   }
 
-  // Nếu là reply, gửi thông báo cho chủ của bình luận cha
-  if (parent_id) {
-    const { data: parentComment } = await supabaseAdmin
-      .from('comments')
-      .select('author_id')
-      .eq('id', parent_id)
-      .single();
-
-    if (parentComment && parentComment.author_id !== userId) {
-      createNotificationAsync(
-        parentComment.author_id,
-        'reply_to_comment',
-        {
-          actor_name: session.user.name || 'Một người dùng',
-          actor_avatar: session.user.image || undefined,
-          post_slug: params.slug
-        },
-        userId,
-        'comment',
-        data.id
-      );
-    }
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ data: null, error: 'Unauthorized', meta: null }, { status: 401 });
   }
 
-  // Cập nhật số lượng comment
-  await supabaseAdmin.from('posts').update({ comment_count: post.comment_count + 1 }).eq('id', post.id);
+  const userId = (session.user as any).id;
+  const { slug } = params;
 
-  return NextResponse.json(data);
+  const body = await req.json();
+  let { content, parent_id } = body;
+
+  if (!content || typeof content !== 'string') {
+    return NextResponse.json({ data: null, error: 'Invalid content', meta: null }, { status: 400 });
+  }
+
+  if (content.length > 2000) {
+    return NextResponse.json({ data: null, error: 'Content exceeds 2000 characters', meta: null }, { status: 400 });
+  }
+
+  if (!supabaseAdmin) {
+    return NextResponse.json({ data: { content }, error: null, meta: null });
+  }
+
+  // Sanitize content
+  const cleanContent = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const { data: post, error: postError } = await supabaseAdmin
+    .from('posts')
+    .select('id')
+    .eq('slug', slug)
+    .single();
+
+  if (postError || !post) {
+    return NextResponse.json({ data: null, error: 'Post not found', meta: null }, { status: 404 });
+  }
+
+  const { data: comment, error } = await supabaseAdmin
+    .from('comments')
+    .insert({
+      post_id: post.id,
+      user_id: userId,
+      parent_id: parent_id || null,
+      content: cleanContent
+    })
+    .select(`
+      *,
+      author:profiles(full_name, avatar_url, username)
+    `)
+    .single();
+
+  if (error) {
+    return NextResponse.json({ data: null, error: error.message, meta: null }, { status: 500 });
+  }
+
+  // Update comment count
+  await supabaseAdmin.rpc('increment_comment_count', { post_id_param: post.id });
+
+  return NextResponse.json({ data: comment, error: null, meta: { created: true } });
 }
