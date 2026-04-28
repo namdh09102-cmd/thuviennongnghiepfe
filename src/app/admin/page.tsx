@@ -1,251 +1,205 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ShieldAlert, Users, FileText, Package, Check, X, Trash2, Award, TrendingUp, BarChart2 } from 'lucide-react';
+import React from 'react';
+import useSWR from 'swr';
+import { 
+  Users, 
+  FileText, 
+  MessageSquare, 
+  HelpCircle, 
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+  Eye
+} from 'lucide-react';
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  AreaChart,
+  Area
+} from 'recharts';
 
-interface User {
-  id: string;
-  name: string;
-  role: 'FARMER' | 'EXPERT' | 'ADMIN';
-  isVerified: boolean;
-  email: string;
-}
-
-interface PendingPost {
-  id: string;
-  title: string;
-  author: string;
-  category: string;
-  date: string;
-}
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'posts' | 'products'>('stats');
+  const { data, isLoading } = useSWR('/api/admin/stats', fetcher);
 
-  // Mock States
-  const [users, setUsers] = useState<User[]>([
-    { id: 'u1', name: 'Nguyễn Văn Tám', role: 'FARMER', isVerified: false, email: 'van.tam@gmail.com' },
-    { id: 'u2', name: 'KS. Trần Thị Mai', role: 'EXPERT', isVerified: true, email: 'mai.bvtv@syngenta.vn' },
-    { id: 'u3', name: 'Lão nông Tư Đờn', role: 'FARMER', isVerified: false, email: 'tudon30nam@gmail.com' },
-    { id: 'u4', name: 'Nam Nguyễn', role: 'ADMIN', isVerified: true, email: 'admin@thuviennongnghiep.vn' },
-  ]);
+  if (isLoading) return <div className="animate-pulse space-y-8">
+    <div className="grid grid-cols-4 gap-6">
+      {[1,2,3,4].map(i => <div key={i} className="h-32 bg-gray-100 rounded-[32px]" />)}
+    </div>
+    <div className="h-[400px] bg-gray-100 rounded-[40px]" />
+  </div>;
 
-  const [pendingPosts, setPendingPosts] = useState<PendingPost[]>([
-    { id: 'pp1', title: 'Trị rầy phấn trắng trên cây ổi?', author: 'Út Hiền', category: 'Sâu bệnh', date: '2026-04-28' },
-    { id: 'pp2', title: 'Giá hồ tiêu hôm nay tại Chư Sê', author: 'Nhà vườn Lê Nam', category: 'Trồng trọt', date: '2026-04-27' },
-  ]);
-
-  const handleVerifyExpert = (id: string) => {
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, role: 'EXPERT', isVerified: !u.isVerified } : u));
-  };
-
-  const handleDeleteUser = (id: string) => {
-    if (confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
-      setUsers(prev => prev.filter(u => u.id !== id));
-    }
-  };
-
-  const handleApprovePost = (id: string) => {
-    setPendingPosts(prev => prev.filter(p => p.id !== id));
-    alert('Đã duyệt bài viết thành công!');
-  };
-
-  const handleRejectPost = (id: string) => {
-    setPendingPosts(prev => prev.filter(p => p.id !== id));
-    alert('Đã từ chối bài viết.');
-  };
+  const stats = [
+    { label: 'Thành viên', value: data?.stats?.users || 0, icon: Users, color: 'blue', trend: '+12%' },
+    { label: 'Bài viết', value: data?.stats?.posts || 0, icon: FileText, color: 'green', trend: '+5.4%' },
+    { label: 'Bình luận', value: data?.stats?.comments || 0, icon: MessageSquare, color: 'amber', trend: '-2%' },
+    { label: 'Hỏi đáp', value: data?.stats?.questions || 0, icon: HelpCircle, color: 'purple', trend: '+18%' },
+  ];
 
   return (
-    <div className="max-w-6xl mx-auto py-6 px-4 grid grid-cols-1 md:grid-cols-12 gap-6">
-      {/* Sidebar Menu */}
-      <div className="md:col-span-3 bg-white p-4 border border-gray-100 rounded-3xl shadow-sm space-y-1 sticky top-20 h-fit">
-        <div className="flex items-center space-x-2 px-3 py-2 border-b border-gray-50 pb-3 mb-2">
-          <ShieldAlert className="h-5 w-5 text-emerald-600" />
-          <span className="font-black text-sm text-gray-900">Admin Panel</span>
+    <div className="space-y-8">
+      {/* Welcome Section */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-black text-gray-900 leading-none mb-2">Chào buổi sáng, Admin!</h1>
+          <p className="text-sm text-gray-500 font-medium">Dưới đây là tóm tắt hoạt động của hệ thống hôm nay.</p>
         </div>
+        <div className="flex items-center space-x-3 bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
+          <button className="px-4 py-2 bg-gray-50 text-gray-900 text-[10px] font-black rounded-xl uppercase tracking-widest">7 Ngày</button>
+          <button className="px-4 py-2 text-gray-400 text-[10px] font-black rounded-xl uppercase tracking-widest">30 Ngày</button>
+        </div>
+      </div>
 
-        {[
-          { id: 'stats', name: 'Thống kê chung', icon: BarChart2 },
-          { id: 'users', name: 'Thành viên', icon: Users },
-          { id: 'posts', name: 'Kiểm duyệt bài', icon: FileText },
-        ].map(tab => {
-          const Icon = tab.icon;
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((s) => {
+          const Icon = s.icon;
           return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeTab === tab.id 
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20' 
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-emerald-600'
-              }`}
-            >
-              <Icon className="h-4 w-4 flex-shrink-0" />
-              <span>{tab.name}</span>
-            </button>
+            <div key={s.label} className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-gray-200/50 transition-all group">
+              <div className="flex items-start justify-between mb-4">
+                <div className={`p-3 rounded-2xl bg-${s.color}-50 text-${s.color}-600 group-hover:scale-110 transition-transform`}>
+                  <Icon className="w-6 h-6" />
+                </div>
+                <div className={`flex items-center space-x-1 text-xs font-black ${s.trend.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
+                  <span>{s.trend}</span>
+                  {s.trend.startsWith('+') ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                </div>
+              </div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
+              <h3 className="text-2xl font-black text-gray-900">{s.value.toLocaleString()}</h3>
+            </div>
           );
         })}
       </div>
 
-      {/* Main Content */}
-      <div className="md:col-span-9 space-y-6">
-        
-        {/* 1. THỐNG KÊ CHUNG */}
-        {activeTab === 'stats' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white p-5 border border-gray-100 rounded-3xl shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">Tổng thành viên</span>
-                  <Users className="h-5 w-5 text-blue-500" />
-                </div>
-                <span className="text-2xl font-black text-gray-900 mt-1 block">1,248</span>
-                <span className="text-[9px] text-green-600 font-semibold flex items-center mt-1">
-                  <TrendingUp className="h-3 w-3 mr-0.5" /> +12% tuần qua
-                </span>
-              </div>
-
-              <div className="bg-white p-5 border border-gray-100 rounded-3xl shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">Bài đăng duyệt</span>
-                  <FileText className="h-5 w-5 text-green-500" />
-                </div>
-                <span className="text-2xl font-black text-gray-900 mt-1 block">3,412</span>
-                <span className="text-[9px] text-green-600 font-semibold flex items-center mt-1">
-                  <TrendingUp className="h-3 w-3 mr-0.5" /> +8% tuần qua
-                </span>
-              </div>
-
-              <div className="bg-white p-5 border border-gray-100 rounded-3xl shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">Lượt hỏi chuyên gia</span>
-                  <ShieldAlert className="h-5 w-5 text-amber-500" />
-                </div>
-                <span className="text-2xl font-black text-gray-900 mt-1 block">56</span>
-                <span className="text-[9px] text-red-600 font-semibold flex items-center mt-1">
-                  {pendingPosts.length} đang chờ duyệt
-                </span>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 border border-gray-100 rounded-3xl shadow-sm space-y-2">
-              <h3 className="text-xs font-bold text-gray-800">Báo cáo hoạt động gần đây</h3>
-              <p className="text-[11px] text-gray-400">Chưa có báo cáo vi phạm nào.</p>
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* DAU Chart */}
+        <div className="lg:col-span-8 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-lg font-black text-gray-900 flex items-center space-x-2">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+              <span>Lưu lượng truy cập (DAU)</span>
+            </h3>
+            <div className="flex items-center space-x-2 text-xs font-bold text-gray-400">
+              <span className="w-3 h-3 bg-green-500 rounded-full" />
+              <span>Người dùng hoạt động</span>
             </div>
           </div>
-        )}
-
-        {/* 2. QUẢN LÝ THÀNH VIÊN */}
-        {activeTab === 'users' && (
-          <div className="bg-white p-6 border border-gray-100 rounded-3xl shadow-sm space-y-4 animate-in fade-in duration-200">
-            <h2 className="text-sm font-black text-gray-900 border-b pb-2">Danh sách thành viên</h2>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left border-collapse">
-                <thead>
-                  <tr className="border-b text-gray-400 text-[10px] uppercase font-bold">
-                    <th className="py-2">Tên</th>
-                    <th className="py-2">Email</th>
-                    <th className="py-2">Vai trò</th>
-                    <th className="py-2 text-right">Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map(user => (
-                    <tr key={user.id} className="border-b hover:bg-gray-50/40 transition-colors">
-                      <td className="py-3 font-bold text-gray-800 flex items-center space-x-1.5">
-                        <span>{user.name}</span>
-                        {user.isVerified && (
-                          <Award className="h-3.5 w-3.5 text-amber-500 fill-amber-100" />
-                        )}
-                      </td>
-                      <td className="py-3 text-gray-500">{user.email}</td>
-                      <td className="py-3">
-                        <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] ${
-                          user.role === 'ADMIN' ? 'bg-red-50 text-red-700' :
-                          user.role === 'EXPERT' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                          'bg-gray-50 text-gray-600'
-                        }`}>
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="py-3 text-right space-x-1">
-                        {user.role !== 'ADMIN' && (
-                          <button
-                            onClick={() => handleVerifyExpert(user.id)}
-                            className={`p-1.5 rounded-lg border text-[9px] font-bold transition-colors ${
-                              user.isVerified 
-                                ? 'bg-amber-50 border-amber-200 text-amber-700' 
-                                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-                            }`}
-                            title={user.isVerified ? 'Gỡ tích Chuyên gia' : 'Duyệt Chuyên gia'}
-                          >
-                            Expert
-                          </button>
-                        )}
-                        {user.role !== 'ADMIN' && (
-                          <button
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="p-1.5 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg text-red-500 transition-all"
-                            title="Xóa thành viên"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data?.dauData}>
+                <defs>
+                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#16a34a" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#16a34a" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                <XAxis 
+                  dataKey="day" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fontSize: 10, fontWeight: 700, fill: '#9ca3af'}} 
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fontSize: 10, fontWeight: 700, fill: '#9ca3af'}} 
+                />
+                <Tooltip 
+                  contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                  itemStyle={{fontSize: '12px', fontWeight: 900, color: '#16a34a'}}
+                />
+                <Area type="monotone" dataKey="value" stroke="#16a34a" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-        )}
+        </div>
 
-        {/* 3. KIỂM DUYỆT BÀI VIẾT */}
-        {activeTab === 'posts' && (
-          <div className="bg-white p-6 border border-gray-100 rounded-3xl shadow-sm space-y-4 animate-in fade-in duration-200">
-            <h2 className="text-sm font-black text-gray-900 border-b pb-2">Bài đăng đang chờ duyệt</h2>
-            
-            {pendingPosts.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-8">Đã duyệt hết tất cả nội dung.</p>
-            ) : (
-              <div className="space-y-3">
-                {pendingPosts.map(post => (
-                  <div key={post.id} className="p-4 bg-gray-50 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-xs font-bold text-gray-800">{post.title}</h3>
-                      <div className="flex items-center space-x-2 text-[9px] text-gray-400 mt-1 font-medium">
-                        <span>Tác giả: <b>{post.author}</b></span>
-                        <span>•</span>
-                        <span>Danh mục: <b>{post.category}</b></span>
-                        <span>•</span>
-                        <span>{post.date}</span>
-                      </div>
-                    </div>
+        {/* Hot Posts Sidebar */}
+        <div className="lg:col-span-4 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm flex flex-col">
+          <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center space-x-2">
+            <Eye className="w-5 h-5 text-amber-500" />
+            <span>Bài viết Hot nhất</span>
+          </h3>
+          <div className="flex-1 space-y-6">
+            {data?.hotPosts?.map((post: any, index: number) => (
+              <div key={post.id} className="flex items-start space-x-4 group">
+                <div className="w-8 h-8 bg-gray-50 rounded-xl flex items-center justify-center text-xs font-black text-gray-400 group-hover:bg-green-600 group-hover:text-white transition-all">
+                  {index + 1}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-xs font-black text-gray-900 line-clamp-1 group-hover:text-green-700 transition-colors">{post.title}</h4>
+                  <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">{post.view_count.toLocaleString()} Lượt xem</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button className="w-full mt-8 bg-gray-50 hover:bg-gray-100 text-gray-900 text-[10px] font-black py-4 rounded-2xl uppercase tracking-widest transition-all">
+            Xem tất cả bài viết
+          </button>
+        </div>
+      </div>
 
-                    <div className="flex items-center space-x-2 flex-shrink-0">
-                      <button
-                        onClick={() => handleApprovePost(post.id)}
-                        className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm flex items-center space-x-1 text-[10px] font-bold transition-colors"
-                      >
-                        <Check className="h-3.5 w-3.5" />
-                        <span>Duyệt</span>
-                      </button>
-                      <button
-                        onClick={() => handleRejectPost(post.id)}
-                        className="p-2 bg-white hover:bg-red-50 border border-red-200 text-red-500 rounded-xl shadow-sm flex items-center space-x-1 text-[10px] font-bold transition-all"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                        <span>Từ chối</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+      {/* Processing Queue */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
+          <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center space-x-2">
+            <Clock className="w-5 h-5 text-red-500" />
+            <span>Chờ phê duyệt ({data?.pendingPosts?.length || 0})</span>
+          </h3>
+          <div className="space-y-4">
+            {data?.pendingPosts?.map((post: any) => (
+              <div key={post.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-green-100 transition-all">
+                <div className="min-w-0 flex-1 mr-4">
+                  <h4 className="text-xs font-black text-gray-900 line-clamp-1">{post.title}</h4>
+                  <p className="text-[10px] font-bold text-gray-400 mt-1">Gửi bởi: Chuyên gia ID #{post.author_id.slice(0, 5)}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button className="px-3 py-1.5 bg-green-600 text-white text-[9px] font-black rounded-lg uppercase tracking-widest">Duyệt</button>
+                  <button className="px-3 py-1.5 bg-white text-gray-400 text-[9px] font-black rounded-lg uppercase tracking-widest border">Bỏ qua</button>
+                </div>
+              </div>
+            ))}
+            {data?.pendingPosts?.length === 0 && (
+              <div className="text-center py-10">
+                <p className="text-xs text-gray-400 font-medium italic">Không có bài viết nào đang chờ.</p>
               </div>
             )}
           </div>
-        )}
+        </div>
 
+        <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
+          <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center space-x-2">
+            <TrendingUp className="w-5 h-5 text-blue-500" />
+            <span>Hoạt động gần đây</span>
+          </h3>
+          <div className="space-y-6">
+            {[1,2,3].map(i => (
+              <div key={i} className="flex items-start space-x-4">
+                <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center">
+                  <Users className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-700">
+                    <span className="font-black text-gray-900">Nguyễn Văn A</span> vừa tham gia cộng đồng.
+                  </p>
+                  <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-widest">5 PHÚT TRƯỚC</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
