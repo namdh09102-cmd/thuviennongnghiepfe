@@ -7,6 +7,9 @@ import { Award, CheckCircle, MapPin, Calendar, FileText, Users } from 'lucide-re
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import JsonLd from '@/components/JsonLd';
+import ProfileHeader from '@/components/ProfileHeader';
+import ActivityHeatmap from '@/components/ActivityHeatmap';
+import BadgeCard from '@/components/BadgeCard';
 
 async function getProfile(username: string) {
   const { data, error } = await supabaseAdmin

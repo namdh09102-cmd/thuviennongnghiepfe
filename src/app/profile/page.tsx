@@ -161,7 +161,7 @@ export default function MyProfilePage() {
                     </div>
                     <h4 className="font-black text-gray-900 mb-3">{answer.question_title}</h4>
                     <p className="text-sm text-gray-600 line-clamp-2 bg-gray-50 p-4 rounded-2xl border border-gray-100 italic">
-                      "{answer.content}"
+                      &quot;{answer.content}&quot;
                     </p>
                   </div>
                 ))}
