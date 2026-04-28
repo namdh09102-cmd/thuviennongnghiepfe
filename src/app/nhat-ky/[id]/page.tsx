@@ -24,19 +24,13 @@ export default function JournalDetailPage() {
   const [note, setNote] = useState('');
   const [cost, setCost] = useState('');
 
-  if (!season) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-sm text-gray-400">Mùa vụ không tồn tại.</p>
-        <Link href="/nhat-ky" className="text-emerald-600 text-xs font-bold mt-2 inline-block">Quay lại</Link>
-      </div>
-    );
-  }
-
   // 3. Summary sidebar calculations
-  const totalCost = seasonEntries.reduce((sum, entry) => sum + entry.cost, 0);
+  const totalCost = useMemo(() => {
+    return seasonEntries.reduce((sum, entry) => sum + entry.cost, 0);
+  }, [seasonEntries]);
   
   const progressPercent = useMemo(() => {
+    if (!season) return 0;
     const start = new Date(season.startDate).getTime();
     const now = new Date().getTime();
     const harvestTime = start + season.expectedHarvestDays * 24 * 60 * 60 * 1000;
@@ -47,6 +41,7 @@ export default function JournalDetailPage() {
   }, [season]);
 
   const daysRemaining = useMemo(() => {
+    if (!season) return 0;
     const start = new Date(season.startDate).getTime();
     const harvestTime = start + season.expectedHarvestDays * 24 * 60 * 60 * 1000;
     const diff = harvestTime - new Date().getTime();
@@ -63,6 +58,15 @@ export default function JournalDetailPage() {
     });
     return Object.entries(dataMap).map(([week, value]) => ({ week, cost: value / 1000 })).reverse();
   }, [seasonEntries]);
+
+  if (!season) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-sm text-gray-400">Mùa vụ không tồn tại.</p>
+        <Link href="/nhat-ky" className="text-emerald-600 text-xs font-bold mt-2 inline-block">Quay lại</Link>
+      </div>
+    );
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
