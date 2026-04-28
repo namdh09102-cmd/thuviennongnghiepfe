@@ -89,31 +89,36 @@ export default function CropCalendarPage() {
   const [province, setProvince] = useState('An Giang');
   const [startDate, setStartDate] = useState('');
   const [completedActions, setCompletedActions] = useState<number[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // 6. Lưu và tải từ localStorage
+  // 6. Tải từ localStorage khi mount
   useEffect(() => {
-    const saved = localStorage.getItem('crop_calendar_data');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setCrop(parsed.crop || 'Lúa');
-        setProvince(parsed.province || 'An Giang');
-        setStartDate(parsed.startDate || new Date().toISOString().split('T')[0]);
-        setCompletedActions(parsed.completedActions || []);
-      } catch (e) {
-        console.error('Error loading localStorage data:', e);
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('crop_calendar_data');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.crop) setCrop(parsed.crop);
+          if (parsed.province) setProvince(parsed.province);
+          if (parsed.startDate) setStartDate(parsed.startDate);
+          if (parsed.completedActions) setCompletedActions(parsed.completedActions);
+        } catch (e) {
+          console.error('Error loading localStorage data:', e);
+        }
+      } else {
+        setStartDate(new Date().toISOString().split('T')[0]);
       }
-    } else {
-      setStartDate(new Date().toISOString().split('T')[0]);
+      setIsLoaded(true);
     }
   }, []);
 
+  // Lưu vào localStorage khi state thay đổi (chỉ sau khi đã load xong)
   useEffect(() => {
-    if (startDate) {
+    if (isLoaded && typeof window !== 'undefined' && startDate) {
       const data = { crop, province, startDate, completedActions };
       localStorage.setItem('crop_calendar_data', JSON.stringify(data));
     }
-  }, [crop, province, startDate, completedActions]);
+  }, [crop, province, startDate, completedActions, isLoaded]);
 
   const currentCropData = CROP_DATA[crop] || CROP_DATA['Lúa'];
 

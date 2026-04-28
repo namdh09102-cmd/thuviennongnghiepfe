@@ -31,6 +31,39 @@ export default function PostsPage() {
   const posts = data 
     ? data.filter(page => page && Array.isArray(page.data)).map((page) => page.data).flat() 
     : [];
+
+  const MOCK_POSTS = [
+    {
+      id: 'mock1',
+      slug: 'ky-thuat-trong-dua-luoi-nha-mang',
+      title: 'Kỹ thuật trồng dưa lưới nhà màng đạt chuẩn',
+      excerpt: 'Hướng dẫn kỹ thuật trồng dưa lưới trong nhà màng đạt chuẩn cho năng suất cao.',
+      thumbnail_url: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&w=800&q=80',
+      author: { full_name: 'Chuyên Gia Nông Nghiệp', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Expert' },
+      published_at: new Date().toISOString()
+    },
+    {
+      id: 'mock2',
+      slug: 'phong-tru-dao-on-lua-he-thu',
+      title: 'Biện pháp phòng trừ đạo ôn lúa hè thu',
+      excerpt: 'Chi tiết các biện pháp canh tác và sử dụng thuốc BVTV hợp lý.',
+      thumbnail_url: 'https://images.unsplash.com/photo-1530836361253-efad5c4ff877?auto=format&fit=crop&w=800&q=80',
+      author: { full_name: 'Chuyên Gia Nông Nghiệp', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Expert' },
+      published_at: new Date().toISOString()
+    },
+    {
+      id: 'mock3',
+      slug: 'bon-phan-npk-dung-cach',
+      title: 'Hướng dẫn bón phân NPK đúng cách cho cây trồng',
+      excerpt: 'Quy trình bón phân NPK theo nguyên tắc 4 đúng.',
+      thumbnail_url: 'https://images.unsplash.com/photo-1615678815958-5910c6811c25?auto=format&fit=crop&w=800&q=80',
+      author: { full_name: 'Chuyên Gia Nông Nghiệp', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Expert' },
+      published_at: new Date().toISOString()
+    }
+  ];
+
+  const displayPosts = posts.length > 0 ? posts : MOCK_POSTS;
+
   const isReachingEnd = data && Array.isArray(data[data.length - 1]?.data) && data[data.length - 1].data.length < 12;
   
   const { ref, inView } = useInView();
@@ -80,7 +113,7 @@ export default function PostsPage() {
 
       {/* Posts Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {posts.map((post) => (
+        {displayPosts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))}
         
@@ -89,7 +122,7 @@ export default function PostsPage() {
         ))}
       </div>
 
-      {!isLoading && posts.length === 0 && (
+      {!isLoading && displayPosts.length === 0 && (
         <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
           <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">
             Chưa có bài viết nào trong danh mục này
