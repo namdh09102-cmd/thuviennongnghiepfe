@@ -11,7 +11,8 @@ import {
   Sparkles,
   Filter,
   Trash2,
-  Calendar
+  Calendar,
+  ExternalLink
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
