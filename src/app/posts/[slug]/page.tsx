@@ -19,23 +19,37 @@ import CommentSection from '@/components/CommentSection';
 import PostActions from '@/components/PostActions';
 import PostCard from '@/components/PostCard';
 
-const API_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+import { supabaseAdmin } from '@/lib/supabase';
 
 async function getPost(slug: string) {
-  const res = await fetch(`${API_URL}/api/posts/${slug}`, {
-    cache: 'no-store',
-  });
-  if (!res.ok) return null;
-  return res.json();
+  const { data, error } = await supabaseAdmin
+    .from('posts')
+    .select(`
+      *,
+      author:profiles(username, full_name, avatar_url, role, bio, points, is_verified),
+      category:categories(id, name, slug)
+    `)
+    .eq('slug', slug)
+    .single();
+
+  if (error) return null;
+  return data;
 }
 
 async function getRelatedPosts(categoryId: number, currentSlug: string) {
-  const res = await fetch(`${API_URL}/api/posts?category=${categoryId}&limit=4`, {
-    cache: 'no-store',
-  });
-  if (!res.ok) return [];
-  const json = await res.json();
-  return json.data.filter((p: any) => p.slug !== currentSlug);
+  const { data, error } = await supabaseAdmin
+    .from('posts')
+    .select(`
+      *,
+      author:profiles(username, full_name, avatar_url),
+      category:categories(name, slug)
+    `)
+    .eq('category_id', categoryId)
+    .neq('slug', currentSlug)
+    .eq('status', 'published')
+    .limit(4);
+
+  return data || [];
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
