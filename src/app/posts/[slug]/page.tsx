@@ -88,7 +88,7 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
   const post = await getPost(params.slug);
   if (!post) notFound();
 
-  const relatedPosts = await getRelatedPosts(post.category.id, post.slug);
+  const relatedPosts = post.category ? await getRelatedPosts(post.category.id, post.slug) : [];
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thuviennongnghiepfe.vercel.app';
   const jsonLd = {
@@ -117,10 +117,14 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
       <nav className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-wider text-gray-400 mb-8 overflow-x-auto whitespace-nowrap pb-2">
         <Link href="/" className="hover:text-green-600 transition-colors">Trang chủ</Link>
         <ChevronRight className="w-3 h-3" />
-        <Link href={`/posts?category=${post.category.slug}`} className="hover:text-green-600 transition-colors">
-          {post.category.name}
-        </Link>
-        <ChevronRight className="w-3 h-3" />
+        {post.category && (
+          <>
+            <Link href={`/posts?category=${post.category.slug}`} className="hover:text-green-600 transition-colors">
+              {post.category.name}
+            </Link>
+            <ChevronRight className="w-3 h-3" />
+          </>
+        )}
         <span className="text-gray-900 truncate max-w-[200px]">{post.title}</span>
       </nav>
 
