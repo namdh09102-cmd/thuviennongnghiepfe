@@ -29,6 +29,8 @@ export default function HomePage() {
     return `/api/posts?page=${pageIndex + 1}&category=${activeCategory || ''}&sort=${activeSort}&limit=10`;
   };
 
+  const categoryList = Array.isArray(categories?.[0]) ? categories[0] : [];
+
   const { data, size, setSize, isLoading, isValidating, error } = useSWRInfinite(getKey, fetcher);
   
   const posts = data 
@@ -48,7 +50,6 @@ export default function HomePage() {
     }
   }, [inView, isReachingEnd, isValidating, setSize, size]);
 
-  const categoryList = categories?.[0] || [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

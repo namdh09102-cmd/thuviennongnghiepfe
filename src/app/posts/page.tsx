@@ -18,6 +18,8 @@ export default function PostsPage() {
     (index) => index === 0 ? '/api/categories' : null,
     fetcher
   );
+  
+  const categoryList = Array.isArray(categories?.[0]) ? categories[0] : [];
 
   const getKey = (pageIndex: number, previousPageData: any) => {
     if (previousPageData && !previousPageData.data.length) return null;
@@ -26,7 +28,9 @@ export default function PostsPage() {
 
   const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(getKey, fetcher);
   
-  const posts = data ? data.map((page) => page.data).flat() : [];
+  const posts = data 
+    ? data.filter(page => page && Array.isArray(page.data)).map((page) => page.data).flat() 
+    : [];
   const isReachingEnd = data && data[data.length - 1]?.data.length < 12;
   
   const { ref, inView } = useInView();
@@ -37,7 +41,6 @@ export default function PostsPage() {
     }
   }, [inView, isReachingEnd, isValidating, setSize, size]);
 
-  const categoryList = categories?.[0] || [];
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
