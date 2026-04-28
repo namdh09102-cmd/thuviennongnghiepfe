@@ -14,7 +14,7 @@ import {
   Pin
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { vi } from 'vi'; // wait, it's 'date-fns/locale'
+import { vi } from 'date-fns/locale';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
