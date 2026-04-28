@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!post) return { title: 'Không tìm thấy bài viết' };
 
   return {
-    title: `${post.title} | Thư viện Nông nghiệp`,
+    title: `${post.title} | Thuviennongnghiep`,
     description: post.excerpt,
     openGraph: {
       title: post.title,

@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   if (!question) return { title: 'Không tìm thấy câu hỏi' };
 
   return {
-    title: `${question.title} | Hỏi đáp AgriLib`,
+    title: `${question.title} | Hỏi đáp Thuviennongnghiep`,
     description: question.content.substring(0, 155),
   };
 }

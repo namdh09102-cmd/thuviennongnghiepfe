@@ -23,7 +23,7 @@ export default function Header() {
               Thư viện Nông nghiệp
             </span>
             <span className="font-bold text-lg bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent sm:hidden">
-              AgriLib
+              Thuviennongnghiep
             </span>
           </Link>
 

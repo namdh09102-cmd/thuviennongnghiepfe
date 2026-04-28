@@ -31,8 +31,8 @@ export async function generateMetadata({ params }: { params: { username: string 
   if (!profile) return { title: 'Người dùng không tồn tại' };
 
   return {
-    title: `${profile.full_name} (@${profile.username}) | AgriLib`,
-    description: profile.bio || `Hồ sơ nông dân AgriLib của ${profile.full_name}.`,
+    title: `${profile.full_name} (@${profile.username}) | Thuviennongnghiep`,
+    description: profile.bio || `Hồ sơ nông dân Thuviennongnghiep của ${profile.full_name}.`,
   };
 }
 

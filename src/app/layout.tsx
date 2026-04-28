@@ -12,8 +12,8 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "Thư viện Nông nghiệp AgriLib - Cộng đồng nông dân Việt Nam",
-    template: "%s | AgriLib"
+    default: "Thư viện Nông nghiệp Thuviennongnghiep - Cộng đồng nông dân Việt Nam",
+    template: "%s | Thuviennongnghiep"
   },
   description: "Chia sẻ kiến thức, kỹ thuật canh tác và giải đáp thắc mắc nông nghiệp chuẩn chuyên gia. Cộng đồng kết nối nông dân và chuyên gia hàng đầu Việt Nam.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://thuviennongnghiepfe.vercel.app'),
@@ -21,16 +21,16 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: "Thư viện Nông nghiệp AgriLib",
+    title: "Thư viện Nông nghiệp Thuviennongnghiep",
     description: "Cộng đồng chia sẻ kiến thức nông nghiệp hàng đầu Việt Nam",
     url: '/',
-    siteName: 'AgriLib',
+    siteName: 'Thuviennongnghiep',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'AgriLib - Thư viện Nông nghiệp',
+        alt: 'Thuviennongnghiep - Thư viện Nông nghiệp',
       },
     ],
     locale: 'vi_VN',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Thư viện Nông nghiệp AgriLib",
+    title: "Thư viện Nông nghiệp Thuviennongnghiep",
     description: "Cộng đồng chia sẻ kiến thức nông nghiệp hàng đầu Việt Nam",
     images: ['/og-image.png'],
   },
