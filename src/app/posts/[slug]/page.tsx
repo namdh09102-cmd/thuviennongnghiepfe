@@ -22,7 +22,63 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export const revalidate = 3600; // ISR: Revalidate every 1 hour
 
+const MOCK_POSTS: Record<string, any> = {
+  'ky-thuat-trong-dua-luoi-nha-mang': {
+    id: 'mock-1',
+    slug: 'ky-thuat-trong-dua-luoi-nha-mang',
+    title: 'Kỹ thuật trồng dưa lưới nhà màng đạt năng suất cao',
+    excerpt: 'Chia sẻ chi tiết quy trình trồng dưa lưới trong nhà màng từ giai đoạn ươm hạt đến thu hoạch.',
+    content: `<p>Trồng dưa lưới trong nhà màng đang là hướng đi mang lại hiệu quả kinh tế cao cho bà con nông dân. Bài viết này AgriLib xin chia sẻ trọn bộ kỹ thuật trồng dưa lưới đạt chuẩn.</p>
+              <h2>1. Chuẩn bị nhà màng và giá thể</h2>
+              <p>Nhà màng cần đảm bảo độ thông thoáng, che chắn được côn trùng gây hại. Giá thể lý tưởng gồm xơ dừa, phân hữu cơ hoai mục và tro trấu tỷ lệ 7:2:1.</p>
+              <h2>2. Chăm sóc và bón phân</h2>
+              <p>Cần tuân thủ nghiêm ngặt lịch tưới nước nhỏ giọt kết hợp dinh dưỡng NPK vi lượng theo từng thời kỳ sinh trưởng của cây.</p>`,
+    published_at: '2025-06-15T00:00:00Z',
+    thumbnail_url: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&w=1200&q=80',
+    category: { id: 1, name: 'Kỹ thuật trồng trọt', slug: 'ky-thuat' },
+    author: { username: 'chuyengia_minh', full_name: 'Nguyễn Văn Minh', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Minh', role: 'Kỹ sư Nông nghiệp', points: 120, is_verified: true },
+    tags: ['dưa lưới', 'nhà màng', 'kỹ thuật'],
+    content_length: 1200
+  },
+  'phong-tru-dao-on-lua-he-thu': {
+    id: 'mock-2',
+    slug: 'phong-tru-dao-on-lua-he-thu',
+    title: 'Biện pháp phòng trừ bệnh đạo ôn hại lúa vụ Hè Thu',
+    excerpt: 'Nhận biết sớm dấu hiệu và áp dụng các biện pháp sinh học, hóa học phòng trị bệnh đạo ôn kịp thời.',
+    content: `<p>Bệnh đạo ôn do nấm Pyricularia oryzae gây ra là nỗi ám ảnh của người trồng lúa vụ Hè Thu. Thời tiết nắng mưa xen kẽ tạo điều kiện cho bào tử nấm phát tán mạnh.</p>
+              <h2>Dấu hiệu nhận biết</h2>
+              <p>Vết bệnh ban đầu là những chấm nhỏ màu xanh xám, sau đó lan rộng thành hình thoi màu nâu xám có quầng vàng xung quanh.</p>
+              <h2>Biện pháp phòng trị</h2>
+              <p>Không bón thừa đạm, giữ mực nước ruộng hợp lý. Sử dụng thuốc đặc trị phun phòng khi lúa trổ lẹt xẹt và trổ đều.</p>`,
+    published_at: '2025-07-10T00:00:00Z',
+    thumbnail_url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
+    category: { id: 2, name: 'Phòng trừ sâu bệnh', slug: 'sau-benh' },
+    author: { username: 'ky_su_hoa', full_name: 'Lê Thị Hoa', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Hoa', role: 'Chuyên gia Bảo vệ Thực vật', points: 95, is_verified: true },
+    tags: ['lúa', 'đạo ôn', 'hè thu'],
+    content_length: 1000
+  },
+  'bon-phan-npk-dung-cach': {
+    id: 'mock-3',
+    slug: 'bon-phan-npk-dung-cach',
+    title: 'Quy tắc bón phân NPK đúng cách cho cây ăn trái',
+    excerpt: 'Bón phân theo nguyên tắc 4 đúng: đúng loại, đúng liều lượng, đúng lúc và đúng cách để tối ưu chi phí.',
+    content: `<p>Phân bón NPK cung cấp 3 nguyên tố dinh dưỡng thiết yếu cho cây trồng. Bón phân sai cách vừa gây lãng phí tiền bạc vừa làm suy thoái đất canh tác.</p>
+              <h2>Nguyên tắc 4 Đúng trong bón phân</h2>
+              <p>- Đúng loại: Phù hợp nhu cầu cây trồng.<br/>- Đúng liều: Tránh thừa gây cháy rễ.<br/>- Đúng lúc: Bón đón đầu đợt sinh trưởng.<br/>- Đúng cách: Bón theo tán cây, vùi lấp đất.</p>`,
+    published_at: '2025-08-01T00:00:00Z',
+    thumbnail_url: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1200&q=80',
+    category: { id: 3, name: 'Dinh dưỡng & Phân bón', slug: 'dinh-duong' },
+    author: { username: 'tan_npk', full_name: 'Trần Đại Tấn', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tan', role: 'Kỹ thuật viên Nông nghệ', points: 80, is_verified: false },
+    tags: ['NPK', 'phân bón', 'cây ăn trái'],
+    content_length: 800
+  }
+};
+
 async function getPost(slug: string) {
+  if (MOCK_POSTS[slug]) {
+    return MOCK_POSTS[slug];
+  }
+
   if (!supabaseAdmin) {
     console.error('Supabase Admin client not initialized. Check environment variables.');
     return null;
@@ -43,6 +99,10 @@ async function getPost(slug: string) {
 }
 
 async function getRelatedPosts(categoryId: number, currentSlug: string) {
+  if ([1, 2, 3].includes(categoryId)) {
+    return Object.values(MOCK_POSTS).filter(p => p.category.id === categoryId && p.slug !== currentSlug);
+  }
+
   if (!supabaseAdmin) return [];
 
   const { data, error } = await supabaseAdmin
@@ -55,9 +115,17 @@ async function getRelatedPosts(categoryId: number, currentSlug: string) {
     .eq('category_id', categoryId)
     .neq('slug', currentSlug)
     .eq('status', 'published')
-    .limit(4);
+    .limit(3);
 
   return data || [];
+}
+
+export async function generateStaticParams() {
+  return [
+    { slug: 'ky-thuat-trong-dua-luoi-nha-mang' },
+    { slug: 'phong-tru-dao-on-lua-he-thu' },
+    { slug: 'bon-phan-npk-dung-cach' }
+  ];
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
