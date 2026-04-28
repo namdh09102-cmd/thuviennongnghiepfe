@@ -76,9 +76,16 @@ export default function PostCard({ post }: PostCardProps) {
               <div className="flex items-center text-[9px] text-gray-400 mt-1 space-x-1">
                 <Clock className="w-2.5 h-2.5" />
                 <span>
-                  {post.published_at 
-                    ? formatDistanceToNow(new Date(post.published_at), { addSuffix: true, locale: vi })
-                    : 'Vừa xong'}
+                  {(() => {
+                    try {
+                      if (!post.published_at) return 'Vừa xong';
+                      const date = new Date(post.published_at);
+                      if (isNaN(date.getTime())) return 'Vừa xong';
+                      return formatDistanceToNow(date, { addSuffix: true, locale: vi });
+                    } catch (e) {
+                      return 'Vừa xong';
+                    }
+                  })()}
                 </span>
               </div>
             </div>

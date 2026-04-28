@@ -3,12 +3,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import useSWRInfinite from 'swr/infinite';
 import { useInView } from 'react-intersection-observer';
+import dynamic from 'next/dynamic';
 import PostCard from '@/components/PostCard';
 import FilterTabs from '@/components/FilterTabs';
 import SkeletonCard from '@/components/SkeletonCard';
 import { TrendingUp, Layout, Sparkles, Filter } from 'lucide-react';
-import Leaderboard from '@/components/Leaderboard';
-import WeatherWidget from '@/components/WeatherWidget';
+
+const Leaderboard = dynamic(() => import('@/components/Leaderboard'), { ssr: false });
+const WeatherWidget = dynamic(() => import('@/components/WeatherWidget'), { ssr: false });
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
