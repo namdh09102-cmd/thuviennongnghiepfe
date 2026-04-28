@@ -147,11 +147,11 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
               <div className="flex items-center space-x-6 text-xs font-bold text-gray-500">
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4 text-green-600" />
-                  <span>{format(new Date(post.published_at), 'dd/MM/yyyy', { locale: vi })}</span>
+                  <span>{post.published_at ? format(new Date(post.published_at), 'dd/MM/yyyy', { locale: vi }) : 'Vừa mới'}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Clock className="w-4 h-4 text-green-600" />
-                  <span>8 phút đọc</span>
+                  <span>{post.content ? Math.ceil(post.content.length / 1000) : 1} phút đọc</span>
                 </div>
               </div>
             </div>
@@ -234,7 +234,7 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
                       {p.title}
                     </h5>
                     <p className="text-[10px] text-gray-400 font-medium mt-2">
-                      {format(new Date(p.published_at), 'dd/MM/yyyy', { locale: vi })}
+                      {p.published_at ? format(new Date(p.published_at), 'dd/MM/yyyy', { locale: vi }) : 'Vừa mới'}
                     </p>
                   </div>
                 </Link>
