@@ -6,7 +6,7 @@ import Header from "../components/Header";
 import OfflineBanner from "../components/OfflineBanner";
 import ToastContainer from "../components/ToastContainer";
 import BottomNav from "../components/BottomNav";
-import { SessionProvider } from "next-auth/react";
+import AuthProvider from "../components/AuthProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-gray-50 text-gray-900 min-h-screen flex flex-col overflow-x-hidden`}>
-        <SessionProvider>
+        <AuthProvider>
           <ReactQueryProvider>
             <OfflineBanner />
             <ToastContainer />
@@ -33,7 +33,7 @@ export default function RootLayout({
             </main>
             <BottomNav />
           </ReactQueryProvider>
-        </SessionProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -7,6 +7,11 @@ import Link from 'next/link';
 
 export default function Header() {
   const { isAuthenticated, user } = useAuthStore();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
@@ -48,7 +53,7 @@ export default function Header() {
             <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full shadow-sm" />
           </button>
 
-          {isAuthenticated ? (
+          {mounted && isAuthenticated ? (
             <Link href="/profile" className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-colors">
               <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-xs shadow-sm">
                 {user?.username?.charAt(0).toUpperCase()}
@@ -57,11 +62,13 @@ export default function Header() {
                 {user?.username}
               </span>
             </Link>
-          ) : (
+          ) : mounted ? (
             <Link href="/login" className="flex items-center space-x-1.5 text-gray-600 hover:text-green-600 text-xs font-medium px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors">
               <span>🔑</span>
               <span>Đăng nhập</span>
             </Link>
+          ) : (
+            <div className="h-8 w-8 bg-gray-50 rounded-full animate-pulse" />
           )}
         </div>
       </div>
