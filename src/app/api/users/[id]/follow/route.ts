@@ -44,6 +44,19 @@ export async function POST(
       .from('follows')
       .insert([{ follower_id: followerId, following_id: targetUser.id }]);
 
+    const { createNotificationAsync } = await import('@/lib/createNotification');
+    createNotificationAsync(
+      targetUser.id,
+      'follow_user',
+      {
+        actor_name: session.user.name || 'Một người dùng',
+        actor_avatar: session.user.image || undefined
+      },
+      followerId,
+      'user',
+      followerId
+    );
+
     return NextResponse.json({ isFollowing: true });
   }
 }

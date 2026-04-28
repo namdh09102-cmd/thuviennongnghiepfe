@@ -27,5 +27,30 @@ export async function POST(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Gửi thông báo cho chủ câu hỏi
+  const { data: question } = await supabaseAdmin
+    .from('questions')
+    .select('author_id, title')
+    .eq('id', params.id)
+    .single();
+
+  if (question && question.author_id !== (session.user as any).id) {
+    const isExpert = (session.user as any).role === 'expert';
+    const { createNotificationAsync } = await import('@/lib/createNotification');
+    createNotificationAsync(
+      question.author_id,
+      'expert_answer',
+      {
+        actor_name: session.user.name || 'Một người dùng',
+        actor_avatar: session.user.image || undefined,
+        question_id: params.id,
+        question_title: question.title
+      },
+      (session.user as any).id,
+      'question',
+      params.id
+    );
+  }
+
   return NextResponse.json(data);
 }

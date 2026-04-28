@@ -28,9 +28,17 @@ export default function NotificationBell() {
       case 'comment_on_post':
       case 'reply_to_comment':
         return <MessageSquare className="w-4 h-4 text-blue-500" />;
-      case 'answer_to_question':
+      case 'like_post':
+        return <Bell className="w-4 h-4 text-red-500" />;
+      case 'follow_user':
+        return <User className="w-4 h-4 text-blue-600" />;
+      case 'expert_answer':
       case 'best_answer':
+      case 'post_approved':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'post_rejected':
+      case 'daily_reminder':
+        return <Bell className="w-4 h-4 text-amber-500" />;
       case 'level_up':
         return <Sparkles className="w-4 h-4 text-yellow-500" />;
       case 'badge_earned':
@@ -41,9 +49,10 @@ export default function NotificationBell() {
   };
 
   const getLink = (notification: any) => {
-    const { data, type } = notification;
-    if (type.includes('post')) return `/posts/${data.post_slug}`;
-    if (type.includes('question')) return `/hoi-dap/${data.question_id}`;
+    const { data, type, entity_type, entity_id } = notification;
+    if (type.includes('post') || entity_type === 'post') return `/posts/${data?.post_slug || entity_id}`;
+    if (type.includes('question') || entity_type === 'question') return `/hoi-dap/${data?.question_id || entity_id}`;
+    if (type === 'follow_user') return `/profile/${data?.actor_username || ''}`;
     if (type.includes('badge') || type.includes('level')) return `/profile`;
     return '#';
   };
@@ -111,16 +120,19 @@ export default function NotificationBell() {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0 space-y-1">
-                  <p className="text-xs text-gray-700 leading-relaxed">
-                    <span className="font-black text-gray-900">{n.data?.actor_name}</span>
+                  <p className="text-xs text-gray-700 leading-relaxed group-hover:text-gray-900 transition-colors">
+                    <span className="font-black">{n.actor?.full_name || n.data?.actor_name || 'Hệ thống'}</span>
                     {' '}
                     {n.type === 'comment_on_post' && `đã bình luận bài viết "${n.data?.post_title}"`}
                     {n.type === 'reply_to_comment' && 'đã phản hồi bình luận của bạn'}
-                    {n.type === 'answer_to_question' && `đã trả lời câu hỏi "${n.data?.question_title}"`}
-                    {n.type === 'best_answer' && 'đánh dấu câu trả lời của bạn là hữu ích nhất'}
+                    {n.type === 'like_post' && `đã thích bài viết của bạn: "${n.data?.post_title}"`}
+                    {n.type === 'follow_user' && 'đã bắt đầu theo dõi bạn'}
+                    {n.type === 'expert_answer' && `chuyên gia đã trả lời câu hỏi "${n.data?.question_title}"`}
+                    {n.type === 'post_approved' && `Bài viết "${n.data?.post_title}" đã được duyệt`}
+                    {n.type === 'post_rejected' && `Bài viết "${n.data?.post_title}" đã bị từ chối`}
+                    {n.type === 'daily_reminder' && n.data?.reason}
                     {n.type === 'level_up' && `Chúc mừng! Bạn đã lên cấp ${n.data?.level}`}
                     {n.type === 'badge_earned' && `Bạn đã nhận được huy hiệu "${n.data?.badge_name}"`}
-                    {n.type === 'post_approved' && `Bài viết "${n.data?.post_title}" đã được duyệt`}
                   </p>
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                     {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: vi })}

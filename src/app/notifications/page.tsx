@@ -12,7 +12,8 @@ import {
   Filter,
   Trash2,
   Calendar,
-  ExternalLink
+  ExternalLink,
+  Users
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -22,22 +23,47 @@ export default function NotificationsPage() {
   const { notifications, markAsRead, markAllAsRead, isLoading } = useNotifications();
   const [filter, setFilter] = useState('all');
 
-  const filteredNotifications = notifications.filter((n: any) => {
+  const notificationsList = Array.isArray(notifications) ? notifications : (notifications?.data || []);
+
+  const groupedNotifications = notificationsList.reduce((groups: any, n: any) => {
+    const date = format(new Date(n.created_at), 'dd MMMM, yyyy', { locale: vi });
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(n);
+    return groups;
+  }, {});
+
+  const filteredNotifications = notificationsList.filter((n: any) => {
     if (filter === 'all') return true;
     if (filter === 'unread') return !n.is_read;
-    if (filter === 'social') return n.type.includes('comment') || n.type.includes('reply');
-    if (filter === 'system') return n.type.includes('level') || n.type.includes('badge') || n.type.includes('approved');
+    if (filter === 'social') return ['comment_on_post', 'reply_to_comment', 'like_post', 'follow_user'].includes(n.type);
+    if (filter === 'system') return ['level_up', 'badge_earned', 'post_approved', 'post_rejected', 'daily_reminder'].includes(n.type);
     return true;
   });
+
+  // Re-group after filter
+  const filteredGrouped = filteredNotifications.reduce((groups: any, n: any) => {
+    const date = format(new Date(n.created_at), 'dd MMMM, yyyy', { locale: vi });
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(n);
+    return groups;
+  }, {});
 
   const getIcon = (type: string) => {
     switch (type) {
       case 'comment_on_post':
       case 'reply_to_comment':
         return <MessageSquare className="w-5 h-5 text-blue-500" />;
-      case 'answer_to_question':
+      case 'like_post':
+        return <Bell className="w-5 h-5 text-red-500" />;
+      case 'follow_user':
+        return <Users className="w-5 h-5 text-blue-600" />;
+      case 'expert_answer':
       case 'best_answer':
+      case 'post_approved':
         return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'post_rejected':
+      case 'daily_reminder':
+        return <Bell className="w-5 h-5 text-amber-500" />;
       case 'level_up':
         return <Sparkles className="w-5 h-5 text-yellow-500" />;
       case 'badge_earned':
@@ -48,9 +74,10 @@ export default function NotificationsPage() {
   };
 
   const getLink = (notification: any) => {
-    const { data, type } = notification;
-    if (type.includes('post')) return `/posts/${data.post_slug}`;
-    if (type.includes('question')) return `/hoi-dap/${data.question_id}`;
+    const { data, type, entity_type, entity_id } = notification;
+    if (type.includes('post') || entity_type === 'post') return `/posts/${data?.post_slug || entity_id}`;
+    if (type.includes('question') || entity_type === 'question') return `/hoi-dap/${data?.question_id || entity_id}`;
+    if (type === 'follow_user') return `/profile/${data?.actor_username || ''}`;
     if (type.includes('badge') || type.includes('level')) return `/profile`;
     return '#';
   };
@@ -96,61 +123,76 @@ export default function NotificationsPage() {
       </div>
 
       {/* List */}
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
-        {filteredNotifications.length > 0 ? (
-          <div className="divide-y divide-gray-50">
-            {filteredNotifications.map((n: any) => (
-              <div 
-                key={n.id}
-                className={`group flex items-start space-x-6 p-8 hover:bg-gray-50 transition-all relative ${!n.is_read ? 'bg-green-50/20' : ''}`}
-              >
-                <div className="relative flex-shrink-0">
-                  <img src={n.data?.actor_avatar || 'https://api.dicebear.com/7.x/avataaars/svg'} className="w-14 h-14 rounded-2xl bg-gray-100 shadow-sm" alt="" />
-                  <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-2 shadow-md border border-gray-50">
-                    {getIcon(n.type)}
-                  </div>
-                </div>
-
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center space-x-2">
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span>{format(new Date(n.created_at), 'HH:mm - dd/MM/yyyy', { locale: vi })}</span>
-                    </span>
-                    {!n.is_read && (
-                      <button 
-                        onClick={() => markAsRead(n.id)}
-                        className="text-[10px] font-black text-green-600 hover:underline uppercase tracking-widest"
-                      >
-                        Đánh dấu đã đọc
-                      </button>
-                    )}
-                  </div>
-
-                  <p className="text-sm text-gray-700 leading-relaxed font-medium">
-                    <span className="font-black text-gray-900">{n.data?.actor_name}</span>
-                    {' '}
-                    {n.type === 'comment_on_post' && `đã bình luận bài viết "${n.data?.post_title}"`}
-                    {n.type === 'reply_to_comment' && 'đã phản hồi bình luận của bạn'}
-                    {n.type === 'answer_to_question' && `đã trả lời câu hỏi "${n.data?.question_title}"`}
-                    {n.type === 'best_answer' && 'đánh dấu câu trả lời của bạn là hữu ích nhất'}
-                    {n.type === 'level_up' && `Chúc mừng! Bạn đã lên cấp ${n.data?.level}`}
-                    {n.type === 'badge_earned' && `Bạn đã nhận được huy hiệu "${n.data?.badge_name}"`}
-                    {n.type === 'post_approved' && `Bài viết "${n.data?.post_title}" đã được duyệt`}
-                  </p>
-
-                  <Link 
-                    href={getLink(n)}
-                    onClick={() => markAsRead(n.id)}
-                    className="inline-flex items-center space-x-2 text-[10px] font-black text-green-600 uppercase tracking-widest hover:translate-x-1 transition-transform"
-                  >
-                    <span>Xem chi tiết</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </Link>
-                </div>
+      <div className="space-y-6">
+        {Object.keys(filteredGrouped).length > 0 ? (
+          Object.entries(filteredGrouped).map(([date, items]: [string, any]) => (
+            <div key={date} className="space-y-4">
+              <div className="flex items-center space-x-4 px-4">
+                <div className="h-px flex-1 bg-gray-100" />
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{date}</span>
+                <div className="h-px flex-1 bg-gray-100" />
               </div>
-            ))}
-          </div>
+              
+              <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
+                {items.map((n: any) => (
+                  <div 
+                    key={n.id}
+                    className={`group flex items-start space-x-6 p-8 hover:bg-gray-50 transition-all relative ${!n.is_read ? 'bg-green-50/20' : ''}`}
+                  >
+                    <div className="relative flex-shrink-0">
+                      <img 
+                        src={n.actor?.avatar_url || n.data?.actor_avatar || 'https://api.dicebear.com/7.x/avataaars/svg'} 
+                        className="w-14 h-14 rounded-2xl bg-gray-100 shadow-sm object-cover" 
+                        alt="" 
+                      />
+                      <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-2 shadow-md border border-gray-50">
+                        {getIcon(n.type)}
+                      </div>
+                    </div>
+
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center space-x-2">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>{format(new Date(n.created_at), 'HH:mm', { locale: vi })}</span>
+                        </span>
+                        {!n.is_read && (
+                          <button 
+                            onClick={() => markAsRead(n.id)}
+                            className="text-[10px] font-black text-green-600 hover:underline uppercase tracking-widest"
+                          >
+                            Đánh dấu đã đọc
+                          </button>
+                        )}
+                      </div>
+
+                      <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                        <span className="font-black text-gray-900">{n.actor?.full_name || n.data?.actor_name || 'Hệ thống'}</span>
+                        {' '}
+                        {n.type === 'comment_on_post' && `đã bình luận bài viết "${n.data?.post_title}"`}
+                        {n.type === 'reply_to_comment' && 'đã phản hồi bình luận của bạn'}
+                        {n.type === 'like_post' && `đã thích bài viết của bạn: "${n.data?.post_title}"`}
+                        {n.type === 'follow_user' && 'đã bắt đầu theo dõi bạn'}
+                        {n.type === 'expert_answer' && `chuyên gia đã trả lời câu hỏi "${n.data?.question_title}"`}
+                        {n.type === 'post_approved' && `Bài viết "${n.data?.post_title}" đã được duyệt và công khai`}
+                        {n.type === 'post_rejected' && `Bài viết "${n.data?.post_title}" đã bị từ chối: ${n.data?.reason || ''}`}
+                        {n.type === 'daily_reminder' && n.data?.reason}
+                      </p>
+
+                      <Link 
+                        href={getLink(n)}
+                        onClick={() => markAsRead(n.id)}
+                        className="inline-flex items-center space-x-2 text-[10px] font-black text-green-600 uppercase tracking-widest hover:translate-x-1 transition-transform"
+                      >
+                        <span>Xem chi tiết</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
         ) : (
           <div className="py-32 text-center space-y-6">
             <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto shadow-inner">

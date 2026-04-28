@@ -56,6 +56,8 @@ export const metadata: Metadata = {
   },
 };
 
+import PushNotificationManager from "../components/PushNotificationManager";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -66,6 +68,7 @@ export default function RootLayout({
       <body className={`${inter.className} bg-gray-50 text-gray-900 min-h-screen flex flex-col overflow-x-hidden`}>
         <AuthProvider>
           <ReactQueryProvider>
+            <PushNotificationManager />
             <OfflineBanner />
             <ToastContainer />
             <Header />

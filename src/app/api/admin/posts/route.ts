@@ -82,6 +82,32 @@ export async function PATCH(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Gửi thông báo cho từng tác giả
+  if (status && (status === 'published' || status === 'rejected')) {
+    const { createNotificationAsync } = await import('@/lib/createNotification');
+    
+    // Lấy thông tin tác giả và tiêu đề bài viết
+    const { data: updatedPosts } = await supabaseAdmin
+      .from('posts')
+      .select('author_id, title, slug')
+      .in('id', ids);
+
+    updatedPosts?.forEach((post: any) => {
+      createNotificationAsync(
+        post.author_id,
+        status === 'published' ? 'post_approved' : 'post_rejected',
+        {
+          post_title: post.title,
+          post_slug: post.slug,
+          reason: status === 'rejected' ? 'Bài viết không phù hợp với tiêu chuẩn cộng đồng.' : undefined
+        },
+        (session.user as any).id,
+        'post',
+        undefined
+      );
+    });
+  }
+
   return NextResponse.json({ success: true, data });
 }
 

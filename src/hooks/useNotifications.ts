@@ -47,18 +47,45 @@ export function useNotifications() {
   }, [userId, mutate]);
 
   const markAsRead = async (id: string) => {
-    await fetch(`/api/notifications?id=${id}`, { method: 'PATCH' });
-    mutate();
+    try {
+      await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+      mutate();
+    } catch (e) {
+      console.error('Failed to mark notification as read');
+    }
   };
 
   const markAllAsRead = async () => {
-    await fetch(`/api/notifications/mark-all`, { method: 'POST' });
-    mutate();
+    try {
+      await fetch(`/api/notifications/read-all`, { method: 'PATCH' });
+      mutate();
+    } catch (e) {
+      console.error('Failed to mark all as read');
+    }
   };
 
+  // SSE Stream integration (optional alternative to Supabase Realtime)
+  useEffect(() => {
+    if (!userId) return;
+
+    const eventSource = new EventSource('/api/notifications/stream');
+    
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'notification') {
+        mutate();
+        // Toast logic
+      }
+    };
+
+    return () => eventSource.close();
+  }, [userId, mutate]);
+
   return {
-    notifications,
-    unreadCount,
+    notifications: notifications?.data || notifications, // Handle paginated response
+    unreadCount: Array.isArray(notifications?.data) 
+      ? notifications.data.filter((n: any) => !n.is_read).length 
+      : (Array.isArray(notifications) ? notifications.filter((n: any) => !n.is_read).length : 0),
     isLoading,
     markAsRead,
     markAllAsRead,

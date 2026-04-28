@@ -146,14 +146,46 @@ export async function POST(
     .eq('id', post.id)
     .single();
 
-  if (postAuthor && postAuthor.author_id !== (session.user as any).id) {
-    const { createNotification } = await import('@/lib/createNotification');
-    await createNotification(postAuthor.author_id, 'comment_on_post', {
-      actor_name: session.user.name || 'Một người dùng',
-      actor_avatar: session.user.image || undefined,
-      post_slug: params.slug,
-      post_title: postAuthor.title
-    });
+  const { createNotificationAsync } = await import('@/lib/createNotification');
+
+  if (postAuthor && postAuthor.author_id !== userId) {
+    createNotificationAsync(
+      postAuthor.author_id, 
+      'comment_on_post', 
+      {
+        actor_name: session.user.name || 'Một người dùng',
+        actor_avatar: session.user.image || undefined,
+        post_slug: params.slug,
+        post_title: postAuthor.title
+      },
+      userId,
+      'post',
+      post.id
+    );
+  }
+
+  // Nếu là reply, gửi thông báo cho chủ của bình luận cha
+  if (parent_id) {
+    const { data: parentComment } = await supabaseAdmin
+      .from('comments')
+      .select('author_id')
+      .eq('id', parent_id)
+      .single();
+
+    if (parentComment && parentComment.author_id !== userId) {
+      createNotificationAsync(
+        parentComment.author_id,
+        'reply_to_comment',
+        {
+          actor_name: session.user.name || 'Một người dùng',
+          actor_avatar: session.user.image || undefined,
+          post_slug: params.slug
+        },
+        userId,
+        'comment',
+        data.id
+      );
+    }
   }
 
   // Cập nhật số lượng comment
