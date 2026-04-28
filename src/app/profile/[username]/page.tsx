@@ -69,10 +69,10 @@ export default async function ProfilePage({ params }: { params: { username: stri
               <span>Huy hiệu đạt được</span>
             </h3>
             <div className="grid grid-cols-3 gap-4">
-              {profile.badges?.slice(0, 6).map((badge: any) => (
+              {(profile.badges || []).slice(0, 6).map((badge: any) => (
                 <BadgeCard key={badge.id} badge={badge} />
               ))}
-              {!profile.badges?.length && (
+              {(!profile.badges || profile.badges.length === 0) && (
                 <div className="col-span-full py-6 text-center">
                   <p className="text-[10px] text-gray-400 italic">Chưa có huy hiệu nào.</p>
                 </div>
