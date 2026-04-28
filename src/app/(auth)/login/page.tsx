@@ -91,7 +91,7 @@ function LoginContent() {
           <div className="mx-auto h-12 w-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-3">
             <Sprout className="h-6 w-6" />
           </div>
-          <h2 className="text-2xl font-black text-gray-900 leading-tight">AgriLib</h2>
+          <h2 className="text-xl font-black text-gray-900 leading-tight">Thư viện Nông nghiệp</h2>
           <p className="text-xs font-semibold text-gray-400 mt-1">Cộng đồng nông dân Việt Nam</p>
         </div>
 

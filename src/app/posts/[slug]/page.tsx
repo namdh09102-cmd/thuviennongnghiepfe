@@ -29,7 +29,7 @@ const MOCK_POSTS: Record<string, any> = {
     slug: 'ky-thuat-trong-dua-luoi-nha-mang',
     title: 'Kỹ thuật trồng dưa lưới nhà màng đạt năng suất cao',
     excerpt: 'Chia sẻ chi tiết quy trình trồng dưa lưới trong nhà màng từ giai đoạn ươm hạt đến thu hoạch.',
-    content: `<p>Trồng dưa lưới trong nhà màng đang là hướng đi mang lại hiệu quả kinh tế cao cho bà con nông dân. Bài viết này AgriLib xin chia sẻ trọn bộ kỹ thuật trồng dưa lưới đạt chuẩn.</p>
+    content: `<p>Trồng dưa lưới trong nhà màng đang là hướng đi mang lại hiệu quả kinh tế cao cho bà con nông dân. Bài viết này Thư viện Nông nghiệp xin chia sẻ trọn bộ kỹ thuật trồng dưa lưới đạt chuẩn.</p>
               <h2>1. Chuẩn bị nhà màng và giá thể</h2>
               <p>Nhà màng cần đảm bảo độ thông thoáng, che chắn được côn trùng gây hại. Giá thể lý tưởng gồm xơ dừa, phân hữu cơ hoai mục và tro trấu tỷ lệ 7:2:1.</p>
               <h2>2. Chăm sóc và bón phân</h2>
