@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+
 import { Camera, Save, ArrowLeft, Loader2, Check, MapPin, Sprout } from 'lucide-react';
 import useSWR from 'swr';
 
@@ -89,10 +91,13 @@ export default function EditProfilePage() {
         {/* Avatar Section */}
         <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm flex flex-col items-center">
           <div className="relative group cursor-pointer">
-            <img 
+            <Image 
               src={formData.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'} 
               className="w-32 h-32 rounded-[32px] border-4 border-gray-50 bg-gray-50 object-cover" 
               alt="Avatar" 
+              width={128}
+              height={128}
+              unoptimized
             />
             <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-[32px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
               <Camera className="w-8 h-8 text-white" />

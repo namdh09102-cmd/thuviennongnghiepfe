@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
+export const revalidate = 3600; // Cache 1 hour
+
 const MOCK_CATEGORIES = [
   { id: 1, name: 'Kỹ thuật trồng trọt', slug: 'ky-thuat', icon: '🌱', description: 'Kiến thức canh tác', sort_order: 1, is_active: true },
   { id: 2, name: 'Phòng trừ sâu bệnh', slug: 'sau-benh', icon: '🐛', description: 'Nhận biết và điều trị sâu bệnh', sort_order: 2, is_active: true },

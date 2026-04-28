@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, LogIn, Leaf, Plus, Search, X } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import NotificationBell from './NotificationBell';
 import { useRouter } from 'next/navigation';
@@ -174,10 +175,14 @@ export default function Header() {
 
           {mounted && session ? (
             <Link href="/profile" className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-all p-1 hover:bg-gray-50 rounded-2xl min-h-[44px]">
-              <img 
+              <Image 
                 src={session.user?.image || 'https://api.dicebear.com/7.x/avataaars/svg'} 
                 className="h-9 w-9 rounded-2xl bg-green-100 shadow-sm object-cover" 
-                alt={session.user?.name || ''} 
+                alt={session.user?.name || 'Avatar'} 
+                width={80}
+                height={80}
+                placeholder="blur"
+                blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
               />
               <div className="hidden md:block text-left">
                 <p className="text-[10px] font-black text-gray-900 leading-none">{session.user?.name}</p>

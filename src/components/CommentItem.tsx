@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ThumbsUp, Reply, MoreHorizontal, Flag, Edit, Trash2, Award, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import Image from 'next/image';
 import CommentForm from './CommentForm';
 
 interface CommentItemProps {
@@ -34,10 +35,14 @@ export default function CommentItem({ comment, onReply, onDelete, onVote, curren
       <div className="flex space-x-4">
         {/* Avatar */}
         <div className="flex-shrink-0">
-          <img 
+          <Image 
             src={comment.author?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'} 
-            className="w-10 h-10 rounded-2xl bg-gray-100 shadow-sm border border-white" 
-            alt={comment.author?.full_name} 
+            className="w-10 h-10 rounded-2xl bg-gray-100 shadow-sm border border-white object-cover" 
+            alt={comment.author?.full_name || 'Avatar'} 
+            width={80}
+            height={80}
+            placeholder="blur"
+            blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
           />
         </div>
 

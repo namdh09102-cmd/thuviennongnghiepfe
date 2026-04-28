@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Bell, CheckCheck, ExternalLink, MessageSquare, Award, CheckCircle, User, Sparkles } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
+import Image from 'next/image';
 import { vi } from 'date-fns/locale';
 import Link from 'next/link';
 
@@ -96,7 +97,15 @@ export default function NotificationBell() {
                 className={`flex items-start space-x-4 p-5 hover:bg-gray-50 transition-colors group ${!n.is_read ? 'bg-green-50/30' : ''}`}
               >
                 <div className="relative flex-shrink-0">
-                  <img src={n.data?.actor_avatar || 'https://api.dicebear.com/7.x/avataaars/svg'} className="w-10 h-10 rounded-2xl bg-gray-100" alt="" />
+                  <Image 
+                    src={n.data?.actor_avatar || 'https://api.dicebear.com/7.x/avataaars/svg'} 
+                    className="w-10 h-10 rounded-2xl bg-gray-100 object-cover" 
+                    alt={n.data?.actor_name || 'Avatar'} 
+                    width={80}
+                    height={80}
+                    placeholder="blur"
+                    blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
+                  />
                   <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-sm border border-gray-50">
                     {getIcon(n.type)}
                   </div>

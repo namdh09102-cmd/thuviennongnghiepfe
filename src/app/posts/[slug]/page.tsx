@@ -1,6 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { 
   ChevronRight, 
@@ -207,10 +208,14 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
             <div className="flex flex-wrap items-center gap-6 py-6 border-y border-gray-100">
               <div className="flex items-center space-x-3">
                 <div className="relative">
-                  <img
+                  <Image
                     src={post.author.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Author'}
                     alt={post.author.full_name}
-                    className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
+                    className="w-12 h-12 rounded-full border-2 border-white shadow-sm object-cover"
+                    width={80}
+                    height={80}
+                    placeholder="blur"
+                    blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
                   />
                   {post.author.is_verified && (
                     <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
@@ -237,10 +242,15 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
             </div>
 
             <div className="relative aspect-[16/9] rounded-[40px] overflow-hidden shadow-2xl shadow-green-900/10 group">
-              <img
+              <Image
                 src={post.thumbnail_url}
                 alt={post.title}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                width={800}
+                height={450}
+                priority
+                placeholder="blur"
+                blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>
@@ -275,10 +285,14 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
         <aside className="lg:col-span-4 space-y-10">
           {/* Author Card */}
           <div className="bg-white border border-gray-100 rounded-[32px] p-8 shadow-sm text-center">
-            <img
+            <Image
               src={post.author.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Author'}
               alt={post.author.full_name}
-              className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-green-50 shadow-md"
+              className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-green-50 shadow-md object-cover"
+              width={160}
+              height={160}
+              placeholder="blur"
+              blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
             />
             <h4 className="font-black text-lg text-gray-900 mb-1">{post.author.full_name}</h4>
             <p className="text-xs text-gray-500 font-medium mb-4">{post.author.bio || 'Chuyên gia tư vấn kỹ thuật nông nghiệp tại Thư viện Nông nghiệp.'}</p>
@@ -307,7 +321,15 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
               {relatedPosts.map((p: any) => (
                 <Link key={p.id} href={`/posts/${p.slug}`} className="flex space-x-4 group">
                   <div className="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-gray-100">
-                    <img src={p.thumbnail_url} alt={p.title} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                    <Image 
+                      src={p.thumbnail_url} 
+                      alt={p.title} 
+                      className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+                      width={400}
+                      height={225}
+                      placeholder="blur"
+                      blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
+                    />
                   </div>
                   <div className="flex flex-col justify-center min-w-0">
                     <h5 className="font-black text-sm text-gray-900 line-clamp-2 leading-tight group-hover:text-green-700 transition-colors">

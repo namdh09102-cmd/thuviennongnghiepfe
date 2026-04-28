@@ -5,6 +5,7 @@ import { Award, CheckCircle, MapPin, Calendar, FileText, Users, Edit3, UserPlus,
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface ProfileHeaderProps {
   profile: any;
@@ -28,10 +29,14 @@ export default function ProfileHeader({ profile, isOwn = false }: ProfileHeaderP
           <div className="flex flex-col md:flex-row md:items-end space-y-4 md:space-y-0 md:space-x-6">
             {/* Avatar */}
             <div className="relative group/avatar">
-              <img 
+              <Image 
                 src={profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'} 
-                className="w-32 h-32 md:w-40 md:h-40 rounded-[32px] md:rounded-[48px] border-8 border-white shadow-xl bg-white transition-transform group-hover/avatar:scale-105" 
-                alt={profile.full_name} 
+                className="w-32 h-32 md:w-40 md:h-40 rounded-[32px] md:rounded-[48px] border-8 border-white shadow-xl bg-white transition-transform group-hover/avatar:scale-105 object-cover" 
+                alt={profile.full_name || 'Avatar'} 
+                width={160}
+                height={160}
+                placeholder="blur"
+                blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
               />
               {profile.is_verified && (
                 <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1.5 shadow-lg border border-blue-50">

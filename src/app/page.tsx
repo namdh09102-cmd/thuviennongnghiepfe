@@ -23,7 +23,8 @@ export default function HomePage() {
   // Fetch Categories
   const { data: categories } = useSWRInfinite(
     (index) => index === 0 ? '/api/categories' : null,
-    fetcher
+    fetcher,
+    { dedupingInterval: 3600000 } // Cache for 1 hour
   );
 
   const getKey = (pageIndex: number, previousPageData: any) => {
@@ -33,7 +34,9 @@ export default function HomePage() {
 
   const categoryList = Array.isArray(categories?.[0]) ? categories[0] : [];
 
-  const { data, size, setSize, isLoading, isValidating, error } = useSWRInfinite(getKey, fetcher);
+  const { data, size, setSize, isLoading, isValidating, error } = useSWRInfinite(getKey, fetcher, {
+    dedupingInterval: 300000 // Cache for 5 minutes
+  });
   
   const posts = data 
     ? data.filter(page => page && Array.isArray(page.data)).map((page) => page.data).flat() 

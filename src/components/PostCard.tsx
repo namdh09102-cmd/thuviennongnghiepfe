@@ -3,6 +3,7 @@
 import React from 'react';
 import { Eye, Heart, MessageSquare, Bookmark, Clock, Award } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -28,11 +29,14 @@ export default function PostCard({ post }: PostCardProps) {
       <Link href={`/posts/${post.slug}`}>
         <div className="relative aspect-video overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={post.thumbnail_url || 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80'}
             alt={post.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            width={400}
+            height={225}
+            placeholder="blur"
+            blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
           />
           <div className="absolute top-4 left-4">
             <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-green-700 text-[10px] font-black uppercase rounded-full shadow-sm">
@@ -58,10 +62,14 @@ export default function PostCard({ post }: PostCardProps) {
           <div className="flex items-center space-x-2">
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={post.author?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky'}
                 alt={post.author?.full_name || 'Tác giả'}
-                className="w-8 h-8 rounded-full bg-gray-100"
+                className="w-8 h-8 rounded-full bg-gray-100 object-cover"
+                width={80}
+                height={80}
+                placeholder="blur"
+                blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
               />
               {post.author?.is_verified && (
                 <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">

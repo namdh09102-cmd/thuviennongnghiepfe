@@ -9,7 +9,7 @@ import BottomNav from "../components/BottomNav";
 import FabButton from "../components/FabButton";
 import AuthProvider from "../components/AuthProvider";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   title: {

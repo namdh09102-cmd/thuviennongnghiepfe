@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
+
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Save, Send, Eye, EyeOff, Image as ImageIcon, Tag, Loader2, AlertCircle, X, UploadCloud } from 'lucide-react';
@@ -188,7 +190,14 @@ export default function PostEditor() {
       {isPreview ? (
         <div className="space-y-6 border border-gray-200 p-6 rounded-3xl bg-gray-50/50 animate-in fade-in duration-300">
           {thumbnail && (
-            <img src={thumbnail} alt="Preview" className="w-full h-64 object-cover rounded-2xl shadow-sm" />
+            <Image 
+              src={thumbnail} 
+              alt="Preview" 
+              className="w-full h-64 object-cover rounded-2xl shadow-sm" 
+              width={400}
+              height={225}
+              unoptimized
+            />
           )}
           <div className="border-b border-gray-200 pb-4">
             <div className="flex items-center gap-2 mb-2">
@@ -221,7 +230,14 @@ export default function PostEditor() {
             </label>
             {thumbnail ? (
               <div className="relative rounded-2xl overflow-hidden group shadow-sm border">
-                <img src={thumbnail} alt="Thumbnail Preview" className="w-full h-48 object-cover" />
+                <Image 
+                  src={thumbnail} 
+                  alt="Thumbnail Preview" 
+                  className="w-full h-48 object-cover" 
+                  width={400}
+                  height={225}
+                  unoptimized
+                />
                 <button
                   type="button"
                   onClick={() => setThumbnail(null)}
