@@ -265,7 +265,7 @@ export default function Home() {
           ) : (
             <div className="text-center py-3">
               <p className="text-xs opacity-90">Lập lịch bón phân, chăm sóc cây trồng tự động theo mùa vụ.</p>
-              <Link href="/auth/login" className="inline-block mt-3 text-xs font-bold bg-white text-green-700 px-4 py-2 rounded-xl shadow-sm hover:bg-gray-100 transition-colors">
+              <Link href="/login" className="inline-block mt-3 text-xs font-bold bg-white text-green-700 px-4 py-2 rounded-xl shadow-sm hover:bg-gray-100 transition-colors">
                 Đăng nhập để sử dụng
               </Link>
             </div>

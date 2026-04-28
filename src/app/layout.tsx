@@ -6,6 +6,7 @@ import Header from "../components/Header";
 import BottomTabBar from "../components/BottomTabBar";
 import OfflineBanner from "../components/OfflineBanner";
 import ToastContainer from "../components/ToastContainer";
+import { SessionProvider } from "next-auth/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,15 +23,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-gray-50 text-gray-900 min-h-screen flex flex-col overflow-x-hidden`}>
-        <ReactQueryProvider>
-          <OfflineBanner />
-          <ToastContainer />
-          <Header />
-          <main className="flex-1 container mx-auto px-4 py-6 pb-24 md:pb-6 max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
-            {children}
-          </main>
-          <BottomTabBar />
-        </ReactQueryProvider>
+        <SessionProvider>
+          <ReactQueryProvider>
+            <OfflineBanner />
+            <ToastContainer />
+            <Header />
+            <main className="flex-1 container mx-auto px-4 py-6 pb-24 md:pb-6 max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
+              {children}
+            </main>
+            <BottomTabBar />
+          </ReactQueryProvider>
+        </SessionProvider>
       </body>
     </html>
   );
