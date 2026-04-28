@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     .eq('status', 'published')
     .range(from, to);
 
-  if (category) {
+  if (category && category !== 'all') {
     const { data: catData } = await supabaseAdmin
       .from('categories')
       .select('id')
@@ -36,7 +36,13 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  if (sort === 'hot') {
+  if (sort === 'comments') {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    query = query
+      .order('comment_count', { ascending: false })
+      .gte('created_at', sevenDaysAgo.toISOString());
+  } else if (sort === 'hot') {
     query = query.order('view_count', { ascending: false });
   } else {
     query = query.order('published_at', { ascending: false });

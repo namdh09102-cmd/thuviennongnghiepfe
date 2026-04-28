@@ -15,29 +15,37 @@ interface FilterTabsProps {
 }
 
 export default function FilterTabs({ categories, activeCategory, onSelectCategory }: FilterTabsProps) {
+  const currentCat = activeCategory || 'all';
+
   return (
-    <div className="flex overflow-x-auto pb-4 scrollbar-hide space-x-2 sticky top-[60px] bg-gray-50/90 backdrop-blur-md z-10 py-3 -mx-4 px-4 sm:mx-0 sm:px-0">
+    <div className="flex overflow-x-auto scrollbar-hide sticky top-[60px] bg-gray-50/90 backdrop-blur-md z-10 py-2 border-b border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0 space-x-8">
       <button
-        onClick={() => onSelectCategory(null)}
-        className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-          activeCategory === null
-            ? 'bg-green-600 text-white shadow-lg shadow-green-600/20 scale-105'
-            : 'bg-white text-gray-500 border border-gray-100 hover:border-green-200'
+        onClick={() => onSelectCategory('all')}
+        className={`whitespace-nowrap pb-3 text-xs font-bold uppercase tracking-wider transition-all relative ${
+          currentCat === 'all'
+            ? 'text-green-600'
+            : 'text-gray-400 hover:text-gray-600'
         }`}
       >
         Tất cả
+        {currentCat === 'all' && (
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 rounded-full animate-fade-in" />
+        )}
       </button>
       {categories.map((cat) => (
         <button
           key={cat.id}
           onClick={() => onSelectCategory(cat.slug)}
-          className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-            activeCategory === cat.slug
-              ? 'bg-green-600 text-white shadow-lg shadow-green-600/20 scale-105'
-              : 'bg-white text-gray-500 border border-gray-100 hover:border-green-200'
+          className={`whitespace-nowrap pb-3 text-xs font-bold uppercase tracking-wider transition-all relative ${
+            currentCat === cat.slug
+              ? 'text-green-600'
+              : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           {cat.name}
+          {currentCat === cat.slug && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 rounded-full animate-fade-in" />
+          )}
         </button>
       ))}
     </div>
