@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User, LogIn, Leaf, Plus, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import NotificationBell from './NotificationBell';
 import { useRouter } from 'next/navigation';
 
@@ -18,6 +18,7 @@ export default function Header() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showRecents, setShowRecents] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
@@ -189,19 +190,52 @@ export default function Header() {
           {session && <NotificationBell />}
 
           {mounted && session ? (
-            <Link href="/profile" className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-all p-1 hover:bg-gray-50 rounded-2xl min-h-[44px]">
-              <Image 
-                src={session.user?.image || 'https://api.dicebear.com/7.x/avataaars/svg'} 
-                className="h-9 w-9 rounded-2xl bg-green-100 shadow-sm object-cover" 
-                alt={session.user?.name || 'Avatar'} 
-                width={80}
-                height={80}
-              />
-              <div className="hidden md:block text-left">
-                <p className="text-[10px] font-black text-gray-900 leading-none">{session.user?.name}</p>
-                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Thành viên</p>
-              </div>
-            </Link>
+            <div className="relative">
+              <button 
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} 
+                className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-all p-1 hover:bg-gray-50 rounded-2xl min-h-[44px] focus:outline-none"
+              >
+                <Image 
+                  src={session.user?.image || 'https://api.dicebear.com/7.x/avataaars/svg'} 
+                  className="h-9 w-9 rounded-2xl bg-green-100 shadow-sm object-cover" 
+                  alt={session.user?.name || 'Avatar'} 
+                  width={80}
+                  height={80}
+                />
+                <div className="hidden md:block text-left">
+                  <p className="text-[10px] font-black text-gray-900 leading-none">{session.user?.name}</p>
+                  <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Thành viên</p>
+                </div>
+              </button>
+
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in duration-150">
+                  <Link 
+                    href="/profile" 
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="block px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 hover:text-green-600 transition-colors"
+                  >
+                    Trang cá nhân
+                  </Link>
+                  <Link 
+                    href="/settings/profile" 
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="block px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 hover:text-green-600 transition-colors"
+                  >
+                    Cài đặt
+                  </Link>
+                  <button 
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      signOut();
+                    }}
+                    className="w-full text-left block px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors border-t border-gray-50 mt-1 pt-2"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <Link href="/login" className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-all p-1 hover:bg-gray-50 rounded-2xl min-h-[44px]">
               <div className="h-9 w-9 rounded-2xl bg-gray-100 flex items-center justify-center shadow-sm">
