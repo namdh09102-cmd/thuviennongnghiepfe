@@ -65,12 +65,16 @@ export async function GET(
       console.error('Category lookup failed:', e);
     }
 
-    // Default fallbacks
-    if (!postObj.author) {
-      postObj.author = { full_name: 'Thành viên TVNN', avatar_url: '', role: 'Thành viên' };
-    }
-    if (!postObj.category) {
-      postObj.category = { name: 'Chưa phân loại', slug: 'uncategorized' };
+    // Fix corrupted Cloudinary prefix URLs
+    if (postObj.thumbnail_url && postObj.thumbnail_url.includes('res.cloudinary.com/demo/image/fetch')) {
+      const parts = postObj.thumbnail_url.split('fetch/');
+      if (parts.length > 1) {
+        const configAndUrl = parts[1];
+        const urlIndex = configAndUrl.indexOf('http');
+        if (urlIndex !== -1) {
+          postObj.thumbnail_url = decodeURIComponent(configAndUrl.substring(urlIndex));
+        }
+      }
     }
 
     return NextResponse.json(

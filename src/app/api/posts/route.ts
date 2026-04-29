@@ -140,9 +140,24 @@ export async function GET(req: NextRequest) {
 
         const posts = rawPosts.map((p: any) => {
           const user = userMap.get(p.author_id) || null;
+          
+          // Fix corrupted Cloudinary prefix URLs
+          let finalThumbnail = p.thumbnail_url || '';
+          if (finalThumbnail.includes('res.cloudinary.com/demo/image/fetch')) {
+            const parts = finalThumbnail.split('fetch/');
+            if (parts.length > 1) {
+              const configAndUrl = parts[1];
+              const urlIndex = configAndUrl.indexOf('http');
+              if (urlIndex !== -1) {
+                finalThumbnail = decodeURIComponent(configAndUrl.substring(urlIndex));
+              }
+            }
+          }
+
           return {
             ...p,
             id: p._id?.toString(),
+            thumbnail_url: finalThumbnail,
             author: p.author || (user ? {
               full_name: user.name || user.email || 'Người dùng',
               username: user.email?.split('@')[0] || 'member',
