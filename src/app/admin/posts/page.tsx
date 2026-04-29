@@ -102,6 +102,7 @@ export default function AdminPostsPage() {
                   checked={selectedIds.length > 0 && selectedIds.length === data?.data?.length}
                 />
               </th>
+              <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest w-24">ID</th>
               <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Tiêu đề & Tác giả</th>
               <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Danh mục</th>
               <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Trạng thái</th>
@@ -119,6 +120,9 @@ export default function AdminPostsPage() {
                     checked={selectedIds.includes(post.id)}
                     onChange={() => toggleSelect(post.id)}
                   />
+                </td>
+                <td className="p-6">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase" title={post.id}>#{post.id.split('-')[0]}</span>
                 </td>
                 <td className="p-6">
                   <div className="flex flex-col">

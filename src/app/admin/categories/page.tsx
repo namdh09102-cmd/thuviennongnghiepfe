@@ -115,12 +115,12 @@ export default function AdminCategoriesPage() {
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Danh sách hiện tại</span>
             </div>
             <div className="divide-y divide-gray-50">
-              {categories?.map((cat: any) => (
+              {categories?.data?.map((cat: any) => (
                 <div key={cat.id} className="p-6 flex items-center justify-between hover:bg-gray-50/50 transition-all group">
                   <div className="flex items-center space-x-6">
                     <GripVertical className="w-5 h-5 text-gray-200 cursor-grab active:cursor-grabbing" />
                     <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-xl shadow-sm border border-white">
-                      {cat.icon}
+                      {cat.icon || cat.emoji || '🌱'}
                     </div>
                     <div>
                       <h4 className="text-sm font-black text-gray-900">{cat.name}</h4>
@@ -129,6 +129,10 @@ export default function AdminCategoriesPage() {
                   </div>
                   <div className="flex items-center space-x-6">
                     <div className="text-right">
+                      <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Số bài</p>
+                      <span className="text-xs font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg">{cat.posts?.[0]?.count || 0} bài</span>
+                    </div>
+                    <div className="text-right">
                       <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Thứ tự</p>
                       <span className="text-xs font-black text-gray-900">{cat.sort_order}</span>
                     </div>
@@ -136,7 +140,7 @@ export default function AdminCategoriesPage() {
                       <button 
                         onClick={() => {
                           setEditingId(cat.id);
-                          setFormData({ name: cat.name, slug: cat.slug, icon: cat.icon, sort_order: cat.sort_order });
+                          setFormData({ name: cat.name, slug: cat.slug, icon: cat.icon || cat.emoji || '🌱', sort_order: cat.sort_order });
                         }}
                         className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all"
                       >
