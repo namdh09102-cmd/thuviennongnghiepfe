@@ -315,7 +315,7 @@ export default function HomePageContent() {
           </div>
 
           {isInitialLoading ? (
-            <div className="grid grid-cols-2 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
               {Array(6).fill(0).map((_, i) => <PostCardSkeleton key={i} />)}
             </div>
           ) : posts.length === 0 ? (
@@ -349,7 +349,7 @@ export default function HomePageContent() {
           ) : (
             <div className="space-y-6">
               {/* Part 1: 2-Column Grid on Mobile & Desktop for top posts (e.g., first 4 posts) */}
-              <div className="grid grid-cols-2 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                 {posts.slice(0, 4).map((post: any, idx: number) => (
                   <PostCard key={`grid-${post.id}-${idx}`} post={post} prefetch={idx < 2} />
                 ))}

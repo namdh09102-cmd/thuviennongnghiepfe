@@ -27,8 +27,8 @@ export default function AdminDashboard() {
   const { data, isLoading } = useSWR('/api/admin/stats', fetcher);
 
   if (isLoading) return <div className="animate-pulse space-y-8">
-    <div className="grid grid-cols-4 gap-6">
-      {[1,2,3,4].map(i => <div key={i} className="h-32 bg-gray-100 rounded-[32px]" />)}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {[1,2,3,4].map(i => <div key={i} className="h-32 bg-emerald-50/50 rounded-[32px] animate-pulse" />)}
     </div>
     <div className="h-[400px] bg-gray-100 rounded-[40px]" />
   </div>;
