@@ -46,4 +46,9 @@ const PostSchema: Schema = new Schema({
   updated_at: { type: Date, default: Date.now }
 });
 
+// MongoDB Indexes for performance
+PostSchema.index({ slug: 1 }, { unique: true });
+PostSchema.index({ category_id: 1, status: 1, created_at: -1 });
+PostSchema.index({ status: 1, created_at: -1 });
+
 export default mongoose.models.Post || mongoose.model<IPost>('Post', PostSchema);

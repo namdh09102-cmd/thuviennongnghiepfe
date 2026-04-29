@@ -169,6 +169,10 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({
           data: posts,
+          page,
+          limit,
+          total: totalPosts,
+          hasMore: page * limit < totalPosts,
           error: null,
           meta: {
             page,
