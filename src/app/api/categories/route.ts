@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('categories')
-    .select('*')
+    .select('id, name, slug, description, sort_order')
     .eq('is_hidden', false)
     .order('sort_order', { ascending: true });
 

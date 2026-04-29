@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
 
     const [profilesRes, categoriesRes] = await Promise.all([
       supabaseAdmin.from('profiles').select('id, username, full_name, avatar_url').in('id', authorIds),
-      supabaseAdmin.from('categories').select('id, name, slug, emoji').in('id', catIds),
+      supabaseAdmin.from('categories').select('id, name, slug').in('id', catIds),
     ]);
 
     const profileMap = new Map(profilesRes.data?.map((u: any) => [u.id, u]) || []);
