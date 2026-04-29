@@ -163,6 +163,45 @@ export default function HomePageContent() {
         </div>
       )}
 
+      {/* ── BLOCK A: TVNN EXPERTS (Stories Style) ──────────────────────────── */}
+      <section className="w-full">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-green-600" /> Chuyên gia TVNN
+          </h2>
+          <span className="text-[10px] font-bold text-green-600 cursor-pointer hover:underline uppercase tracking-wider">Xem tất cả</span>
+        </div>
+        
+        <div className="flex items-center gap-3 overflow-x-auto pb-3 -mx-4 px-4 flex-nowrap scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          {/* Card 1: Tạo câu hỏi */}
+          <Link href="/hoi-dap" className="flex-shrink-0 w-28 h-40 rounded-2xl bg-gradient-to-br from-green-600 to-teal-500 p-3 flex flex-col justify-between text-white shadow-md cursor-pointer group relative overflow-hidden">
+            <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center font-black text-base shadow-sm">
+              +
+            </div>
+            <span className="text-xs font-black leading-tight">Tạo câu hỏi mới</span>
+          </Link>
+          
+          {/* Mock Expert Cards */}
+          {[
+            { name: 'GS.TS Nguyễn Văn A', color: 'from-amber-500 to-orange-600', title: 'Chia sẻ về Sầu Riêng' },
+            { name: 'Kỹ sư Trần Văn B', color: 'from-sky-500 to-indigo-600', title: 'Xử lý phèn lúa' },
+            { name: 'TS. Lê Thị C', color: 'from-rose-500 to-pink-600', title: 'Nuôi tôm thẻ' },
+            { name: 'Chuyên gia Mai D', color: 'from-emerald-500 to-teal-600', title: 'Trồng rau thủy canh' },
+          ].map((expert, idx) => (
+            <div key={idx} className={`flex-shrink-0 w-28 h-40 rounded-2xl bg-gradient-to-br ${expert.color} p-3 flex flex-col justify-between text-white shadow-md relative group overflow-hidden`}>
+              <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-all" />
+              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center font-black text-xs text-gray-800 overflow-hidden border border-white/40 shadow-sm relative">
+                <Image src={`https://api.dicebear.com/7.x/avataaars/svg?seed=Expert${idx}`} alt={expert.name} fill className="object-cover" />
+              </div>
+              <div className="relative z-10">
+                <span className="text-[8px] font-black uppercase tracking-widest bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded">Chuyên gia</span>
+                <p className="text-[10px] font-black mt-1 leading-tight line-clamp-2">{expert.title}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── HERO SECTION ──────────────────────────────────────────────────────── */}
       <section>
         {heroLoading ? (
@@ -276,8 +315,8 @@ export default function HomePageContent() {
           </div>
 
           {isInitialLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Array(5).fill(0).map((_, i) => <PostCardSkeleton key={i} />)}
+            <div className="grid grid-cols-2 gap-4 md:gap-6">
+              {Array(6).fill(0).map((_, i) => <PostCardSkeleton key={i} />)}
             </div>
           ) : posts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-[32px] border border-gray-100 shadow-sm space-y-4">
@@ -308,10 +347,66 @@ export default function HomePageContent() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {posts.map((post: any, idx: number) => (
-                <PostCard key={`${post.id}-${idx}`} post={post} prefetch={idx < 4} />
-              ))}
+            <div className="space-y-6">
+              {/* Part 1: 2-Column Grid on Mobile & Desktop for top posts (e.g., first 4 posts) */}
+              <div className="grid grid-cols-2 gap-4 md:gap-6">
+                {posts.slice(0, 4).map((post: any, idx: number) => (
+                  <PostCard key={`grid-${post.id}-${idx}`} post={post} prefetch={idx < 2} />
+                ))}
+              </div>
+
+              {/* Part 2: Quick View Timeline for the remaining posts (from post index 4 onwards) */}
+              {posts.length > 4 && (
+                <div className="space-y-4">
+                  <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 pt-4 border-t border-gray-50">
+                    <Clock className="w-4 h-4 text-green-600" /> Xem nhanh
+                  </h3>
+                  <div className="flex flex-col divide-y divide-gray-100">
+                    {posts.slice(4).map((post: any, idx: number) => (
+                      <Link 
+                        href={`/posts/${post.slug}`} 
+                        key={`timeline-${post.id}-${idx}`}
+                        className="flex gap-4 py-4 group items-start"
+                      >
+                        {/* Left Timeline Bullet */}
+                        <div className="relative flex flex-col items-center flex-shrink-0 mt-1.5">
+                          <div className="w-2 h-2 rounded-full bg-green-500 border border-green-200 shadow-sm" />
+                          <div className="w-0.5 bg-gray-100 absolute top-2 bottom-[-32px] left-[3px]" />
+                        </div>
+
+                        {/* Title & Meta */}
+                        <div className="flex-1 min-w-0 space-y-1 pt-0.5">
+                          <h4 className="text-[13px] font-black text-gray-900 leading-snug line-clamp-2 group-hover:text-green-600 transition-colors">
+                            {post.title}
+                          </h4>
+                          <div className="flex items-center text-[10px] text-gray-400 font-bold gap-2">
+                            <span className="text-green-600 uppercase tracking-wider font-black text-[9px]">{post.category?.name || 'Chưa phân loại'}</span>
+                            <span>·</span>
+                            <span>{post.author?.full_name || 'Thành viên'}</span>
+                          </div>
+                        </div>
+
+                        {/* Compact Thumbnail */}
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-green-50 flex-shrink-0 relative border border-gray-50 shadow-sm">
+                          {post.thumbnail_url ? (
+                            <Image
+                              src={post.thumbnail_url}
+                              alt={post.title}
+                              fill
+                              sizes="64px"
+                              className="object-cover group-hover:scale-105 transition-transform"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-green-200">
+                              <Leaf className="w-6 h-6" />
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
