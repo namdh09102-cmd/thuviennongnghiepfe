@@ -3,25 +3,12 @@ import connectMongoDB from '@/lib/mongodb';
 import Post from '@/models/Post';
 import Question from '@/models/Question';
 import Comment from '@/models/Comment';
-import { jwtVerify } from 'jose';
+import { auth } from '@/auth';
 import mongoose from 'mongoose';
 
-async function checkAdminAuth(req: NextRequest) {
-  const adminToken = req.cookies.get('admin_token')?.value;
-  if (!adminToken) return false;
-
-  try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'default_secret_key');
-    const { payload } = await jwtVerify(adminToken, secret);
-    return payload.role === 'admin';
-  } catch (e) {
-    return false;
-  }
-}
-
 export async function GET(req: NextRequest) {
-  const isAuth = await checkAdminAuth(req);
-  if (!isAuth) {
+  const session = await auth();
+  if (!session || ((session.user as any)?.role !== 'ADMIN' && (session.user as any)?.role !== 'admin')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -42,7 +29,7 @@ export async function GET(req: NextRequest) {
     const [
       userCount,
       postCount,
-      questionCount,
+      pendingPostsCount,
       commentCount,
       pendingPosts,
       hotPosts,
@@ -51,10 +38,10 @@ export async function GET(req: NextRequest) {
       recentComments
     ] = await Promise.all([
       usersCollection.countDocuments({}),
-      Post.countDocuments({ status: 'published' }),
-      Question.countDocuments({ status: 'pending' }),
+      Post.countDocuments({}),
+      Post.countDocuments({ status: 'pending' }),
       Comment.countDocuments({}),
-      Post.find({ status: 'pending' }).limit(5).lean(),
+      Post.find({ status: 'pending' }).limit(10).lean(),
       Post.find({ status: 'published' }).sort({ view_count: -1 }).limit(5).lean(),
       usersCollection.find({ created_at: { $gte: startDate } }).toArray(),
       Post.find({ created_at: { $gte: startDate } }).lean(),
@@ -101,7 +88,7 @@ export async function GET(req: NextRequest) {
         users: userCount || 0,
         posts: postCount || 0,
         comments: commentCount || 0,
-        questions: questionCount || 0
+        questions: pendingPostsCount || 0
       },
       pendingPosts: mappedPendingPosts,
       hotPosts: mappedHotPosts,

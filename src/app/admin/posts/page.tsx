@@ -21,16 +21,41 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 export default function AdminPostsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [postToReject, setPostToReject] = useState<string[] | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
   const { data, mutate, isLoading } = useSWR(`/api/admin/posts?status=${statusFilter}`, fetcher);
 
-  const handleBulkStatus = async (newStatus: string) => {
-    if (selectedIds.length === 0) return;
+  const handleBulkStatus = async (newStatus: string, idsToUpdate = selectedIds) => {
+    if (idsToUpdate.length === 0) return;
+    
+    if (newStatus === 'rejected') {
+      setPostToReject(idsToUpdate);
+      setRejectModalOpen(true);
+      return;
+    }
+
     const res = await fetch('/api/admin/posts', {
       method: 'PATCH',
-      body: JSON.stringify({ ids: selectedIds, status: newStatus })
+      body: JSON.stringify({ ids: idsToUpdate, status: newStatus })
     });
     if (res.ok) {
       mutate();
+      setSelectedIds([]);
+    }
+  };
+
+  const handleRejectSubmit = async () => {
+    if (!postToReject) return;
+    const res = await fetch('/api/admin/posts', {
+      method: 'PATCH',
+      body: JSON.stringify({ ids: postToReject, status: 'rejected', rejectedReason: rejectionReason })
+    });
+    if (res.ok) {
+      mutate();
+      setRejectModalOpen(false);
+      setPostToReject(null);
+      setRejectionReason('');
       setSelectedIds([]);
     }
   };
@@ -141,9 +166,31 @@ export default function AdminPostsPage() {
                 </td>
                 <td className="p-6 text-right">
                   <div className="flex items-center justify-end space-x-2">
-                    <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Xem bài">
+                    {post.status === 'pending' && (
+                      <>
+                        <button 
+                          onClick={() => handleBulkStatus('published', [post.id])}
+                          className="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-widest rounded-xl border border-green-200 transition-all"
+                        >
+                          Duyệt
+                        </button>
+                        <button 
+                          onClick={() => handleBulkStatus('rejected', [post.id])}
+                          className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-widest rounded-xl border border-red-200 transition-all"
+                        >
+                          Từ chối
+                        </button>
+                      </>
+                    )}
+                    <a 
+                      href={`/posts/${post.slug}`} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" 
+                      title="Xem bài"
+                    >
                       <ExternalLink className="w-4 h-4" />
-                    </button>
+                    </a>
                     <button 
                       onClick={() => handleDelete([post.id])}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" 
@@ -192,6 +239,45 @@ export default function AdminPostsPage() {
           </div>
         )}
       </div>
+
+      {/* Rejection Modal */}
+      {rejectModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[32px] max-w-md w-full p-8 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-black text-gray-900 mb-2">Từ chối bài viết</h3>
+            <p className="text-xs font-medium text-gray-500 mb-6">
+              Vui lòng nhập lý do từ chối. Lý do này sẽ được hiển thị/gửi cho tác giả bài viết.
+            </p>
+            
+            <textarea 
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="Lý do từ chối (ví dụ: Bài viết vi phạm tiêu chuẩn cộng đồng, nội dung không đúng chủ đề...)"
+              className="w-full bg-gray-50 border-none rounded-2xl p-4 text-xs font-bold focus:ring-2 focus:ring-red-500 min-h-[120px] mb-6 resize-none"
+            />
+
+            <div className="flex items-center space-x-3">
+              <button 
+                onClick={handleRejectSubmit}
+                disabled={!rejectionReason.trim()}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-black py-3.5 rounded-2xl shadow-lg shadow-red-600/20 transition-all disabled:opacity-50 disabled:shadow-none"
+              >
+                Xác nhận Từ chối
+              </button>
+              <button 
+                onClick={() => {
+                  setRejectModalOpen(false);
+                  setPostToReject(null);
+                  setRejectionReason('');
+                }}
+                className="px-6 py-3.5 bg-gray-50 hover:bg-gray-100 text-gray-500 text-xs font-black rounded-2xl transition-all"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

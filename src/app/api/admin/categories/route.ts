@@ -1,25 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
+import { auth } from '@/auth';
 import connectMongoDB from '@/lib/mongodb';
 import Category from '@/models/Category';
+import Post from '@/models/Post';
 import mongoose from 'mongoose';
 
-async function checkAdminAuth(req: NextRequest) {
-  const adminToken = req.cookies.get('admin_token')?.value;
-  if (!adminToken) return false;
-
-  try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'default_secret_key');
-    const { payload } = await jwtVerify(adminToken, secret);
-    return payload.role === 'admin';
-  } catch (e) {
-    return false;
-  }
-}
-
 export async function POST(req: NextRequest) {
-  const isAuth = await checkAdminAuth(req);
-  if (!isAuth) {
+  const session = await auth();
+  if (!session || ((session.user as any)?.role !== 'ADMIN' && (session.user as any)?.role !== 'admin')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -41,8 +29,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const isAuth = await checkAdminAuth(req);
-  if (!isAuth) {
+  const session = await auth();
+  if (!session || ((session.user as any)?.role !== 'ADMIN' && (session.user as any)?.role !== 'admin')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -70,8 +58,8 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const isAuth = await checkAdminAuth(req);
-  if (!isAuth) {
+  const session = await auth();
+  if (!session || ((session.user as any)?.role !== 'ADMIN' && (session.user as any)?.role !== 'admin')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -81,6 +69,12 @@ export async function DELETE(req: NextRequest) {
     const id = searchParams.get('id');
 
     if (!id) return NextResponse.json({ error: 'No ID provided' }, { status: 400 });
+
+    // Check if posts are using this category
+    const usageCount = await Post.countDocuments({ category_id: id });
+    if (usageCount > 0) {
+      return NextResponse.json({ error: 'Danh mục này đang có bài viết sử dụng, không thể xóa.' }, { status: 400 });
+    }
 
     let mongoId: any = id;
     try {

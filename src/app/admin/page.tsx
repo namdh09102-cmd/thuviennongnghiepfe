@@ -37,7 +37,7 @@ export default function AdminDashboard() {
     { label: 'Thành viên', value: data?.stats?.users || 0, icon: Users, color: 'blue', trend: '+12%' },
     { label: 'Bài viết', value: data?.stats?.posts || 0, icon: FileText, color: 'green', trend: '+8%' },
     { label: 'Bình luận', value: data?.stats?.comments || 0, icon: MessageSquare, color: 'amber', trend: '+5%' },
-    { label: 'Hỏi đáp', value: data?.stats?.questions || 0, icon: HelpCircle, color: 'purple', trend: '+15%' },
+    { label: 'Chờ duyệt', value: data?.stats?.questions || 0, icon: Clock, color: 'purple', trend: '+15%' },
   ];
 
   return (

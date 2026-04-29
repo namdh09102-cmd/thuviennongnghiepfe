@@ -321,6 +321,9 @@ export async function POST(req: NextRequest) {
     .replace(/ /g, '-')
     .replace(/[^\w-]+/g, '') + '-' + Date.now();
 
+  const wordCount = content ? content.split(/\s+/).length : 0;
+  const readTime = Math.ceil(wordCount / 200) || 1;
+
   const { data, error } = await supabaseAdmin
     .from('posts')
     .insert([{
@@ -332,7 +335,8 @@ export async function POST(req: NextRequest) {
       tags,
       slug,
       author_id: (session.user as any).id,
-      status: 'pending' 
+      status: 'pending',
+      read_time: readTime
     }])
     .select()
     .single();
