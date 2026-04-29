@@ -28,14 +28,19 @@ export default {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isAdminPage = nextUrl.pathname.startsWith('/admin');
+      const isAuthRoute = nextUrl.pathname.startsWith('/admin/login') || nextUrl.pathname.startsWith('/login');
       
+      if (isAuthRoute) {
+        return true; // Don't require auth for login pages
+      }
+
       if (isAdminPage) {
         if (isLoggedIn) {
-          const role = (auth.user as any).role;
-          if (role === 'ADMIN' || role === 'MODERATOR' || role === 'expert') return true;
+          const role = (auth.user as any).role?.toLowerCase();
+          if (role === 'admin' || role === 'moderator') return true;
           return Response.redirect(new URL('/403', nextUrl));
         }
-        return false; 
+        return Response.redirect(new URL('/admin/login', nextUrl));
       }
       return true;
     },

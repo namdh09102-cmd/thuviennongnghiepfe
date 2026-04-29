@@ -1,18 +1,11 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { adminMiddleware } from './middleware/adminMiddleware';
+import NextAuth from "next-auth";
+import authConfig from "./auth.config";
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  if (pathname.startsWith('/admin')) {
-    return adminMiddleware(request);
-  }
-
-  return NextResponse.next();
-}
+// Use NextAuth middleware which triggers the 'authorized' callback in auth.config.ts
+export const { auth: middleware } = NextAuth(authConfig);
 
 export const config = {
-  matcher: ['/admin', '/admin/:path*'],
+  // Apply middleware to admin routes
+  matcher: ['/admin/:path*'],
 };
 
