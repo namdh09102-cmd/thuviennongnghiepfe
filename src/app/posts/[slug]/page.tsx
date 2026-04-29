@@ -24,9 +24,10 @@ const CommentSection = dynamic(() => import('@/components/CommentSection'), {
 });
 import PostActions from '@/components/PostActions';
 import PostCard from '@/components/PostCard';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
 import connectMongoDB from '@/lib/mongodb';
 import Post from '@/models/Post';
+import Category from '@/models/Category';
+import mongoose from 'mongoose';
 
 const MOCK_POSTS = [
   {
@@ -191,129 +192,99 @@ export const dynamicParams = true; // SSR for non-prerendered slugs
 
 async function getPost(slug: string) {
   try {
-    // MongoDB Atlas Query
-    try {
-      await connectMongoDB();
-      const mongoPost = await Post.findOne({ slug, status: 'published' }).lean();
-      if (mongoPost) {
-        return {
-          ...mongoPost,
-          id: (mongoPost as any)._id?.toString() || (mongoPost as any).id
-        };
-      }
-    } catch (mongoErr) {
-      console.error('MongoDB findOne failed in getPost, trying Supabase fallback:', mongoErr);
+    await connectMongoDB();
+
+    const mongoPost = await Post.findOne({ slug }).lean();
+    if (mongoPost) {
+      const postObj: any = { ...mongoPost, id: (mongoPost as any)._id?.toString() };
+
+      // Resolve author from users collection
+      try {
+        if (postObj.author_id) {
+          let authorQuery: any = {};
+          try {
+            authorQuery = { _id: new mongoose.Types.ObjectId(postObj.author_id) };
+          } catch { authorQuery = { email: postObj.author_id }; }
+
+          const user = await mongoose.connection.db!.collection('users').findOne(authorQuery);
+          if (user) {
+            postObj.author = {
+              full_name: user.name || user.email || 'Người dùng',
+              username: user.email?.split('@')[0] || 'member',
+              avatar_url: user.image || '',
+              bio: user.bio || '',
+              role: user.role || 'Thành viên',
+              is_verified: user.is_verified || false,
+              points: user.points || 0,
+            };
+          }
+        }
+      } catch (e) { console.error('Author resolve failed:', e); }
+
+      // Resolve category
+      try {
+        if (postObj.category_id && !postObj.category) {
+          const cat = await Category.findOne({
+            $or: [
+              { slug: postObj.category_id },
+              ...(mongoose.isValidObjectId(postObj.category_id)
+                ? [{ _id: new mongoose.Types.ObjectId(postObj.category_id) }]
+                : []),
+            ],
+          }).lean();
+          if (cat) postObj.category = { name: (cat as any).name, slug: (cat as any).slug };
+        }
+      } catch (e) { console.error('Category resolve failed:', e); }
+
+      if (!postObj.author) postObj.author = { full_name: 'Thành viên TVNN', avatar_url: '', role: 'Thành viên' };
+      if (!postObj.category) postObj.category = { name: 'Chưa phân loại', slug: 'uncategorized' };
+
+      return postObj;
     }
 
-    const client = supabaseAdmin || supabase;
-    if (!client) {
-      return MOCK_POSTS.find(p => p.slug === slug) || null;
-    }
-    
-    const { data: post, error } = await client
-      .from('posts')
-      .select('*')
-      .eq('slug', slug)
-      .eq('status', 'published')
-      .single();
-
-    if (error || !post) {
-      // Check fallback in mock posts
-      const mockPost = MOCK_POSTS.find(p => p.slug === slug);
-      if (mockPost) return mockPost;
-      return null;
-    }
-
-    // Fetch Author Profile
-    if (post.author_id) {
-      const { data: profile } = await client
-        .from('profiles')
-        .select('username, full_name, avatar_url, role, bio, points, is_verified')
-        .eq('id', post.author_id)
-        .single();
-      
-      if (profile) post.author = profile;
-    }
-
-    // Fetch Category
-    if (post.category_id) {
-      const { data: category } = await client
-        .from('categories')
-        .select('id, name, slug')
-        .eq('id', post.category_id)
-        .single();
-
-      if (category) post.category = category;
-    }
-
-    return post;
+    // Final fallback to MOCK_POSTS
+    return MOCK_POSTS.find(p => p.slug === slug) || null;
   } catch (err) {
-    console.error('Error in getPost, returning mock post if available:', err);
+    console.error('Error in getPost:', err);
     return MOCK_POSTS.find(p => p.slug === slug) || null;
   }
 }
 
-async function getRelatedPosts(categoryId: any, currentSlug: string) {
-  const client = supabaseAdmin || supabase;
-  if (!client || !categoryId) return [];
+async function getRelatedPosts(categorySlug: string, currentSlug: string) {
+  try {
+    await connectMongoDB();
 
-  const { data: related, error } = await client
-    .from('posts')
-    .select('*')
-    .eq('category_id', categoryId)
-    .neq('slug', currentSlug)
-    .eq('status', 'published')
-    .limit(4);
+    const related = await Post.find({
+      'category.slug': categorySlug,
+      slug: { $ne: currentSlug },
+      status: 'published',
+    })
+      .limit(4)
+      .lean();
 
-  if (error || !related || related.length === 0) return [];
+    if (related.length === 0) return [];
 
-  // Fetch Authors
-  const authorIds = Array.from(new Set(related.map((p: any) => p.author_id).filter(Boolean)));
-  
-  let profiles = [];
-  if (authorIds.length > 0) {
-    const { data } = await client
-      .from('profiles')
-      .select('id, username, full_name, avatar_url')
-      .in('id', authorIds);
-    profiles = data || [];
+    return related.map((p: any) => ({
+      ...p,
+      id: p._id?.toString(),
+      author: p.author || { full_name: 'Thành viên', avatar_url: '' },
+      category: p.category || { name: 'Chưa phân loại', slug: 'uncategorized' },
+    }));
+  } catch (err) {
+    console.error('getRelatedPosts failed:', err);
+    return [];
   }
-
-  const profileMap = new Map(profiles.map((p: any) => [p.id, p]));
-
-  // Fetch Categories
-  const categoryIds = Array.from(new Set(related.map((p: any) => p.category_id).filter(Boolean)));
-  
-  let categories = [];
-  if (categoryIds.length > 0) {
-    const { data } = await client
-      .from('categories')
-      .select('id, name, slug')
-      .in('id', categoryIds);
-    categories = data || [];
-  }
-
-  const categoryMap = new Map(categories.map((c: any) => [c.id, c]));
-
-  related.forEach((p: any) => {
-    p.author = profileMap.get(p.author_id) || { full_name: 'Thành viên', avatar_url: '' };
-    p.category = categoryMap.get(p.category_id) || { name: 'Chưa phân loại', slug: 'default' };
-  });
-
-  return related;
 }
 
 export async function generateStaticParams() {
-  const client = supabaseAdmin || supabase;
-  if (!client) return [];
-  
-  const { data: posts } = await client
-    .from('posts')
-    .select('slug')
-    .eq('status', 'published')
-    .limit(20);
-
-  return posts ? posts.map((p: any) => ({ slug: p.slug })) : [];
+  try {
+    await connectMongoDB();
+    const posts = await Post.find({ status: 'published' }).select('slug').limit(50).lean();
+    return posts.map((p: any) => ({ slug: p.slug }));
+  } catch (err) {
+    console.error('generateStaticParams failed:', err);
+    return MOCK_POSTS.map(p => ({ slug: p.slug }));
+  }
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
@@ -352,7 +323,7 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
     is_verified: false
   };
 
-  const relatedPosts = post.category ? await getRelatedPosts(post.category.id, post.slug) : [];
+  const relatedPosts = post.category?.slug ? await getRelatedPosts(post.category.slug, post.slug) : [];
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thuviennongnghiepfe.vercel.app';
   const jsonLd = {
