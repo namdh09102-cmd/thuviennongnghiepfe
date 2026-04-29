@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import { MessageSquare, CheckCircle, HelpCircle, AlertCircle, Search, ThumbsUp, ThumbsDown, Sparkles, UserCheck, Award, Plus, ChevronRight } from 'lucide-react';
 import ChatWidget from '../../components/ChatWidget';
 
@@ -93,9 +94,35 @@ const MOCK_QUESTIONS = [
 ];
 
 export default function CommunityQAPage() {
+  const fetcher = (url: string) => fetch(url).then(res => res.json());
+  const { data: apiRes } = useSWR('/api/questions', fetcher);
   const [questions, setQuestions] = useState(MOCK_QUESTIONS);
+
+  useEffect(() => {
+    if (apiRes?.data && apiRes.data.length > 0) {
+      const realQuestions = apiRes.data.map((q: any) => ({
+        id: q.id,
+        title: q.title,
+        content: q.content,
+        tags: Array.isArray(q.tags) ? q.tags : (q.tags ? q.tags.split(',').map((t: any) => t.trim()) : ['Nông nghiệp']),
+        status: q.status === 'pending' ? 'Chờ trả lời' : q.status === 'solved' ? 'Đã có đáp án' : 'Còn tranh luận',
+        author: { 
+          name: q.author?.full_name || 'Người dùng', 
+          role: q.author?.role || 'Nông dân', 
+          isExpert: q.author?.is_verified || false 
+        },
+        date: q.created_at ? new Date(q.created_at).toISOString().split('T')[0] : '2026-04-28',
+        votes: q.votes || 0,
+        views: q.view_count || 0,
+        answers: q.answers || []
+      }));
+      setQuestions(realQuestions);
+    }
+  }, [apiRes]);
+
   const [selectedFilter, setSelectedFilter] = useState('Tất cả');
   const [searchQuery, setSearchQuery] = useState('');
+
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
   // State cho form đặt câu hỏi

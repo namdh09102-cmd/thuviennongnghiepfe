@@ -50,10 +50,12 @@ export async function GET(req: NextRequest) {
 
   if (sort === 'hot' || sort === 'top') {
     query = query.order('view_count', { ascending: false });
+  } else if (sort === 'most_comments') {
+    query = query.order('comment_count', { ascending: false });
   } else {
-    // Fallback to created_at if published_at doesn't exist
     query = query.order('created_at', { ascending: false });
   }
+
 
   const { data, count, error } = await query.range(from, to);
 

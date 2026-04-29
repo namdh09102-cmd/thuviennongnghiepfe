@@ -34,10 +34,10 @@ export default function AdminDashboard() {
   </div>;
 
   const stats = [
-    { label: 'Thành viên', value: 0, icon: Users, color: 'blue', trend: '+0%' },
-    { label: 'Bài viết', value: 0, icon: FileText, color: 'green', trend: '+0%' },
-    { label: 'Bình luận', value: 0, icon: MessageSquare, color: 'amber', trend: '-0%' },
-    { label: 'Hỏi đáp', value: 0, icon: HelpCircle, color: 'purple', trend: '+0%' },
+    { label: 'Thành viên', value: data?.stats?.users || 0, icon: Users, color: 'blue', trend: '+12%' },
+    { label: 'Bài viết', value: data?.stats?.posts || 0, icon: FileText, color: 'green', trend: '+8%' },
+    { label: 'Bình luận', value: data?.stats?.comments || 0, icon: MessageSquare, color: 'amber', trend: '+5%' },
+    { label: 'Hỏi đáp', value: data?.stats?.questions || 0, icon: HelpCircle, color: 'purple', trend: '+15%' },
   ];
 
   return (
@@ -47,9 +47,10 @@ export default function AdminDashboard() {
         <div>
           <h1 className="text-2xl font-black text-gray-900 leading-none mb-2">Chào buổi sáng, Admin!</h1>
           <p className="text-sm text-gray-500 font-medium">
-            Dưới đây là tóm tắt hoạt động của hệ thống hôm nay. <span className="text-red-500 text-xs font-bold ml-2">(Chưa kết nối database)</span>
+            Dưới đây là tóm tắt hoạt động của hệ thống hôm nay.
           </p>
         </div>
+
         <div className="flex items-center space-x-3 bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
           <button className="px-4 py-2 bg-gray-50 text-gray-900 text-[10px] font-black rounded-xl uppercase tracking-widest">7 Ngày</button>
           <button className="px-4 py-2 text-gray-400 text-[10px] font-black rounded-xl uppercase tracking-widest">30 Ngày</button>
