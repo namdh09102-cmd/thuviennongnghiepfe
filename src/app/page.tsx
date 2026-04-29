@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import HomePageContent from '@/components/HomePageContent';
 
 export const metadata = {
@@ -7,5 +7,9 @@ export const metadata = {
 };
 
 export default function HomePage() {
-  return <HomePageContent />;
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs font-bold text-gray-400 animate-pulse uppercase tracking-widest">Đang tải trang chủ...</div>}>
+      <HomePageContent />
+    </Suspense>
+  );
 }
