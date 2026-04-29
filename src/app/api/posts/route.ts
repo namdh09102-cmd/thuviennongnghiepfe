@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { auth } from '@/auth';
 import { rateLimit, getIP } from '@/lib/rate-limit';
+import connectMongoDB from '@/lib/mongodb';
+import Post from '@/models/Post';
 
 const MOCK_POSTS = [
   {
@@ -87,6 +89,40 @@ export async function GET(req: NextRequest) {
   const is_featured = searchParams.get('is_featured');
 
   try {
+    // MongoDB Atlas Query
+    try {
+      await connectMongoDB();
+      let mongoQuery: any = { status: 'published' };
+      if (is_featured === 'true') {
+        mongoQuery.is_featured = true;
+      }
+      
+      const totalPosts = await Post.countDocuments(mongoQuery);
+      const posts = await Post.find(mongoQuery)
+        .skip(from)
+        .limit(limit)
+        .sort({ created_at: -1 });
+
+      if (posts && posts.length > 0) {
+        return NextResponse.json({
+          data: posts,
+          error: null,
+          meta: {
+            page,
+            limit,
+            total: totalPosts,
+            totalPages: Math.ceil(totalPosts / limit)
+          }
+        }, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30'
+          }
+        });
+      }
+    } catch (mongoReadErr) {
+      console.error('MongoDB query failed, trying Supabase fallback:', mongoReadErr);
+    }
+
     if (!supabaseAdmin) {
       return NextResponse.json({
         data: MOCK_POSTS,

@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import connectMongoDB from '@/lib/mongodb';
+import Category from '@/models/Category';
+import Post from '@/models/Post';
+import Question from '@/models/Question';
 
 export async function GET(req: NextRequest) {
+  try {
+    await connectMongoDB();
+  } catch (mongoErr) {
+    console.error('MongoDB connection failed in seed:', mongoErr);
+  }
   if (!supabaseAdmin) {
     return NextResponse.json({ error: 'supabaseAdmin is missing' }, { status: 500 });
   }
@@ -212,5 +221,21 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ success: true, message: 'Database seeded successfully' });
+  // MongoDB Seeding
+  try {
+    for (const cat of categories) {
+      await Category.findOneAndUpdate({ slug: cat.slug }, cat, { upsert: true, new: true });
+    }
+    for (const post of posts) {
+      await Post.findOneAndUpdate({ slug: post.slug }, post, { upsert: true, new: true });
+    }
+    for (const q of questions) {
+      await Question.findOneAndUpdate({ title: q.title }, q, { upsert: true, new: true });
+    }
+    console.log('MongoDB Atlas seeded successfully');
+  } catch (mongoSeedErr) {
+    console.error('MongoDB seeding failed:', mongoSeedErr);
+  }
+
+  return NextResponse.json({ success: true, message: 'Database seeded successfully (Supabase & MongoDB)' });
 }

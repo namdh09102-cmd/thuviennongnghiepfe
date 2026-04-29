@@ -25,6 +25,8 @@ const CommentSection = dynamic(() => import('@/components/CommentSection'), {
 import PostActions from '@/components/PostActions';
 import PostCard from '@/components/PostCard';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
+import connectMongoDB from '@/lib/mongodb';
+import Post from '@/models/Post';
 
 const MOCK_POSTS = [
   {
@@ -189,6 +191,20 @@ export const dynamicParams = true; // SSR for non-prerendered slugs
 
 async function getPost(slug: string) {
   try {
+    // MongoDB Atlas Query
+    try {
+      await connectMongoDB();
+      const mongoPost = await Post.findOne({ slug, status: 'published' }).lean();
+      if (mongoPost) {
+        return {
+          ...mongoPost,
+          id: (mongoPost as any)._id?.toString() || (mongoPost as any).id
+        };
+      }
+    } catch (mongoErr) {
+      console.error('MongoDB findOne failed in getPost, trying Supabase fallback:', mongoErr);
+    }
+
     const client = supabaseAdmin || supabase;
     if (!client) {
       return MOCK_POSTS.find(p => p.slug === slug) || null;

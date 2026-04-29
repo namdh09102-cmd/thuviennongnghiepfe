@@ -1,11 +1,9 @@
-const fetch = require('node-fetch');
-
 async function main() {
   try {
     const res = await fetch('http://localhost:3000/api/posts');
     const data = await res.json();
-    console.log('Status:', res.status);
-    console.log('Data:', JSON.stringify(data, null, 2));
+    console.log('Post Count from API:', data.data.length);
+    console.log('Sample Post Title:', data.data[0].title);
   } catch (e) {
     console.error('Error:', e);
   }
