@@ -27,8 +27,8 @@ export default function HomePageContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Fetch Categories
-  const { data: categories } = useSWR('/api/categories', fetcher, { dedupingInterval: 3600000 });
-  const categoryList = Array.isArray(categories) ? categories : [];
+  const { data: categories } = useSWR('/api/categories', fetcher, { dedupingInterval: 300000 });
+  const categoryList = Array.isArray(categories?.data) ? categories.data : [];
 
   // Fetch Trending Tags
   const { data: trendingTags } = useSWR('/api/tags/trending', fetcher, { dedupingInterval: 3600000 });

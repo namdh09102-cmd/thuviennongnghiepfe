@@ -22,11 +22,11 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, slug, icon, description, sort_order } = body;
+  const { name, slug, icon, color, parent_id, sort_order } = body;
 
   const { data, error } = await supabaseAdmin
     .from('categories')
-    .insert([{ name, slug, icon, description, sort_order }])
+    .insert([{ name, slug, icon, color, parent_id: parent_id || null, sort_order }])
     .select()
     .single();
 

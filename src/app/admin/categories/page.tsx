@@ -9,8 +9,8 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 export default function AdminCategoriesPage() {
   const { data: categories, mutate, isLoading } = useSWR('/api/categories', fetcher);
   const [isAdding, setIsAdding] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [formData, setFormData] = useState({ name: '', slug: '', icon: '🌱', sort_order: 0 });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ name: '', slug: '', icon: '🌱', color: '#16a34a', parent_id: '', sort_order: 0 });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,11 +26,11 @@ export default function AdminCategoriesPage() {
       mutate();
       setIsAdding(false);
       setEditingId(null);
-      setFormData({ name: '', slug: '', icon: '🌱', sort_order: 0 });
+      setFormData({ name: '', slug: '', icon: '🌱', color: '#16a34a', parent_id: '', sort_order: 0 });
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Xóa danh mục có thể ảnh hưởng đến các bài viết hiện có. Bạn chắc chứ?')) return;
     const res = await fetch(`/api/admin/categories?id=${id}`, { method: 'DELETE' });
     if (res.ok) mutate();
@@ -85,11 +85,43 @@ export default function AdminCategoriesPage() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Màu sắc</label>
+                  <div className="flex items-center space-x-2">
+                    <input 
+                      type="color" 
+                      value={formData.color}
+                      onChange={(e) => setFormData({...formData, color: e.target.value})}
+                      className="w-10 h-10 p-1 bg-gray-50 border-none rounded-xl cursor-pointer"
+                    />
+                    <input 
+                      type="text" 
+                      value={formData.color}
+                      onChange={(e) => setFormData({...formData, color: e.target.value})}
+                      className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-xs font-bold focus:ring-2 focus:ring-green-500 uppercase"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Danh mục cha</label>
+                  <select 
+                    value={formData.parent_id || ''}
+                    onChange={(e) => setFormData({...formData, parent_id: e.target.value})}
+                    className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-xs font-bold focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">Không có (Gốc)</option>
+                    {categories?.data?.filter((c: any) => c.id !== editingId).map((cat: any) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Thứ tự</label>
                   <input 
                     type="number" 
                     value={formData.sort_order}
-                    onChange={(e) => setFormData({...formData, sort_order: parseInt(e.target.value)})}
+                    onChange={(e) => setFormData({...formData, sort_order: parseInt(e.target.value) || 0})}
                     className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-xs font-bold focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -140,7 +172,14 @@ export default function AdminCategoriesPage() {
                       <button 
                         onClick={() => {
                           setEditingId(cat.id);
-                          setFormData({ name: cat.name, slug: cat.slug, icon: cat.icon || cat.emoji || '🌱', sort_order: cat.sort_order });
+                          setFormData({ 
+                            name: cat.name, 
+                            slug: cat.slug, 
+                            icon: cat.icon || cat.emoji || '🌱', 
+                            color: cat.color || '#16a34a',
+                            parent_id: cat.parent_id || '',
+                            sort_order: cat.sort_order 
+                          });
                         }}
                         className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all"
                       >
