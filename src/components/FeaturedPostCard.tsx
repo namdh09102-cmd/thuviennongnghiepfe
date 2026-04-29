@@ -12,6 +12,8 @@ interface FeaturedPostCardProps {
 }
 
 export default function FeaturedPostCard({ post }: FeaturedPostCardProps) {
+  const [imgError, setImgError] = React.useState(false);
+
   if (!post) return null;
 
   return (
@@ -19,8 +21,8 @@ export default function FeaturedPostCard({ post }: FeaturedPostCardProps) {
       <Link href={`/posts/${post.slug}`} className="absolute inset-0 z-0" aria-label={post.title}></Link>
       
       {/* Thumbnail */}
-      <div className="w-full md:w-1/2 relative aspect-[4/3] md:aspect-auto overflow-hidden bg-green-50 flex-shrink-0 flex items-center justify-center">
-        {post.thumbnail_url ? (
+      <div className="w-full md:w-1/2 relative aspect-[16/9] md:aspect-auto overflow-hidden bg-green-50 flex-shrink-0 flex items-center justify-center">
+        {post.thumbnail_url && !imgError ? (
           <Image
             src={post.thumbnail_url}
             alt={post.title}
@@ -30,10 +32,11 @@ export default function FeaturedPostCard({ post }: FeaturedPostCardProps) {
             loading="lazy"
             placeholder="blur"
             blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
+            onError={() => setImgError(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-green-50 text-green-300">
-            <Leaf className="w-20 h-20 opacity-50" />
+          <div className="w-full h-full flex items-center justify-center bg-green-50 text-green-300 min-h-[220px]">
+            <Leaf className="w-16 h-16 opacity-50 animate-pulse" />
           </div>
         )}
         <div className="absolute top-4 left-4 z-10">

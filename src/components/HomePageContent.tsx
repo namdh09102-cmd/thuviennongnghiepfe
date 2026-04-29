@@ -213,7 +213,12 @@ export default function HomePageContent() {
             {catsLoading ? (
               <CategorySkeleton />
             ) : (
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-4 px-4 flex-nowrap md:flex-wrap md:overflow-visible md:pb-0 md:px-0 md:mx-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                <style>{`
+                  .flex::-webkit-scrollbar {
+                    display: none;
+                  }
+                `}</style>
                 {/* "Tất cả" pill */}
                 <button
                   onClick={() => setCategory('all')}

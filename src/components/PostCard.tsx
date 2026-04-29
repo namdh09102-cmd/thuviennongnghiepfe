@@ -25,11 +25,13 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post, prefetch }: PostCardProps) {
+  const [imgError, setImgError] = React.useState(false);
+
   return (
     <article className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-green-900/5 transition-all group overflow-hidden">
       <Link href={`/posts/${post.slug}`} prefetch={prefetch}>
         <div className="relative aspect-[16/9] overflow-hidden bg-green-50">
-          {post.thumbnail_url ? (
+          {post.thumbnail_url && !imgError ? (
             <Image
               src={post.thumbnail_url}
               alt={post.title}
@@ -39,10 +41,11 @@ export default function PostCard({ post, prefetch }: PostCardProps) {
               loading="lazy"
               placeholder="blur"
               blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
+              onError={() => setImgError(true)}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-green-300 transition-transform duration-500 group-hover:scale-105">
-              <Leaf className="w-12 h-12 opacity-50" />
+              <Leaf className="w-12 h-12 opacity-50 animate-pulse" />
             </div>
           )}
           <div className="absolute top-4 left-4">
