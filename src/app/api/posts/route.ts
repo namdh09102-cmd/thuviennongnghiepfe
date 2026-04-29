@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { auth } from '@/auth';
-import { rateLimit, getIP } from '@/lib/rateLimit';
+import { rateLimit, getIP } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   const ip = getIP(req);

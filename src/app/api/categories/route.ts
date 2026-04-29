@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { rateLimit, getIP } from '@/lib/rateLimit';
+import { rateLimit, getIP } from '@/lib/rate-limit';
 
 export const revalidate = 300; // Cache 5 mins
 
