@@ -8,15 +8,20 @@ export async function GET(
 ) {
   const { data, error } = await supabaseAdmin
     .from('posts')
-    .select(`
-      *,
-      author:profiles(username, full_name, avatar_url, bio, region, is_verified),
-      category:categories(name, slug)
-    `)
+    .select('*')
     .eq('slug', params.slug)
     .single();
 
-  if (error) return NextResponse.json({ data: null, error: 'Post not found', meta: null }, { status: 404 });
+  if (error || !data) return NextResponse.json({ data: null, error: 'Post not found', meta: null }, { status: 404 });
+
+  // Manual relational joins
+  const [profileRes, categoryRes] = await Promise.all([
+    supabaseAdmin.from('profiles').select('username, full_name, avatar_url, bio, region, is_verified').eq('id', data.author_id).single(),
+    supabaseAdmin.from('categories').select('name, slug').eq('id', data.category_id).single()
+  ]);
+
+  data.author = profileRes.data || { full_name: 'Người dùng', avatar_url: '' };
+  data.category = categoryRes.data || { name: 'Chưa phân loại', slug: 'unknown' };
 
   return NextResponse.json(
     { data, error: null, meta: { slug: params.slug } },

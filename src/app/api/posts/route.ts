@@ -33,11 +33,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabaseAdmin
     .from('posts')
-    .select(`
-      *,
-      author:profiles(username, full_name, avatar_url),
-      category:categories(name, slug, emoji)
-    `, { count: 'exact' })
+    .select('*', { count: 'exact' })
     .eq('status', 'published');
 
   if (category && category !== 'all') {
@@ -55,10 +51,34 @@ export async function GET(req: NextRequest) {
   if (sort === 'hot' || sort === 'top') {
     query = query.order('view_count', { ascending: false });
   } else {
-    query = query.order('published_at', { ascending: false });
+    // Fallback to created_at if published_at doesn't exist
+    query = query.order('created_at', { ascending: false });
   }
 
   const { data, count, error } = await query.range(from, to);
+
+  if (error) {
+    return NextResponse.json({ data: null, error: error.message, meta: null }, { status: 500 });
+  }
+
+  // Manual relational joins
+  if (data && data.length > 0) {
+    const authorIds = [...new Set(data.map((p: any) => p.author_id).filter(Boolean))];
+    const catIds = [...new Set(data.map((p: any) => p.category_id).filter(Boolean))];
+
+    const [profilesRes, categoriesRes] = await Promise.all([
+      supabaseAdmin.from('profiles').select('id, username, full_name, avatar_url').in('id', authorIds),
+      supabaseAdmin.from('categories').select('id, name, slug, emoji').in('id', catIds),
+    ]);
+
+    const profileMap = new Map(profilesRes.data?.map((u: any) => [u.id, u]) || []);
+    const categoryMap = new Map(categoriesRes.data?.map((c: any) => [c.id, c]) || []);
+
+    data.forEach((p: any) => {
+      p.author = profileMap.get(p.author_id) || { full_name: 'Người dùng', avatar_url: '' };
+      p.category = categoryMap.get(p.category_id) || { name: 'Chưa phân loại', slug: 'unknown' };
+    });
+  }
 
   if (error) {
     return NextResponse.json({ data: null, error: error.message, meta: null }, { status: 500 });
