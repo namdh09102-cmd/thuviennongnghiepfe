@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Home, FileText, HelpCircle, User } from 'lucide-react';
+import { Home, FileText, PlusSquare, HelpCircle, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -13,8 +13,9 @@ export default function BottomNav() {
   const navItems = [
     { label: 'Trang chủ', icon: Home, href: '/' },
     { label: 'Bài viết', icon: FileText, href: '/posts' },
+    { label: 'Viết bài', icon: PlusSquare, href: '/posts/create' },
     { label: 'Hỏi đáp', icon: HelpCircle, href: '/hoi-dap' },
-    { label: 'Hồ sơ', icon: User, href: '/profile' },
+    { label: 'Cá nhân', icon: User, href: '/profile' },
   ];
 
   return (
@@ -39,7 +40,7 @@ export default function BottomNav() {
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />
               )}
             </div>
-            <span className="text-[11px] tracking-tight">
+            <span className="text-[10px] tracking-tight">
               {item.label}
             </span>
           </Link>

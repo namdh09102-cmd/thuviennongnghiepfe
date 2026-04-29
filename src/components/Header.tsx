@@ -189,28 +189,26 @@ export default function Header() {
           {session && <NotificationBell />}
 
           {mounted && session ? (
-            <Link href="/profile" className="hidden md:flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-all p-1 hover:bg-gray-50 rounded-2xl min-h-[44px]">
+            <Link href="/profile" className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-all p-1 hover:bg-gray-50 rounded-2xl min-h-[44px]">
               <Image 
                 src={session.user?.image || 'https://api.dicebear.com/7.x/avataaars/svg'} 
                 className="h-9 w-9 rounded-2xl bg-green-100 shadow-sm object-cover" 
                 alt={session.user?.name || 'Avatar'} 
                 width={80}
                 height={80}
-                placeholder="blur"
-                blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
               />
               <div className="hidden md:block text-left">
                 <p className="text-[10px] font-black text-gray-900 leading-none">{session.user?.name}</p>
                 <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Thành viên</p>
               </div>
             </Link>
-          ) : mounted ? (
-            <Link href="/login" className="hidden md:flex items-center space-x-2 bg-gray-900 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-2xl transition-all shadow-lg shadow-gray-900/10 min-h-[44px]">
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Đăng nhập</span>
-            </Link>
           ) : (
-            <div className="hidden md:block h-9 w-24 bg-gray-50 rounded-2xl animate-pulse" />
+            <Link href="/login" className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-all p-1 hover:bg-gray-50 rounded-2xl min-h-[44px]">
+              <div className="h-9 w-9 rounded-2xl bg-gray-100 flex items-center justify-center shadow-sm">
+                <User className="h-5 w-5 text-gray-400" />
+              </div>
+              <span className="hidden md:block text-[10px] font-black text-gray-900 uppercase tracking-wider">Đăng nhập</span>
+            </Link>
           )}
         </div>
       </div>

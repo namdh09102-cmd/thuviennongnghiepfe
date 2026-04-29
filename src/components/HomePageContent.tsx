@@ -23,6 +23,7 @@ export default function HomePageContent() {
   const activeSort = searchParams.get('sort') || 'latest';
   const [isRefreshing, setIsRefreshing] = useState(false);
   const touchStart = useRef(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Fetch Categories
   const { data: categories } = useSWR('/api/categories', fetcher, { dedupingInterval: 3600000 });
@@ -215,6 +216,75 @@ export default function HomePageContent() {
               Bạn đã xem hết bài viết hôm nay
             </p>
           )}
+        </div>
+
+        {/* Mobile Sidebar Accordion */}
+        <div className="lg:hidden mt-8 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="w-full flex items-center justify-between p-5 font-black text-xs text-gray-900 uppercase tracking-wider bg-gray-50/50 border-b border-gray-100"
+          >
+            <div className="flex items-center space-x-2">
+              <TrendingUp className="w-4 h-4 text-green-600" />
+              <span>Chủ đề & Thảo luận nổi bật</span>
+            </div>
+            <span className={`transform transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`}>
+              ▼
+            </span>
+          </button>
+
+          <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isSidebarOpen ? 'max-h-[1000px] opacity-100 p-6 space-y-6' : 'max-h-0 opacity-0'}`}>
+            {/* Đang thảo luận */}
+            <div className="space-y-3">
+              <h4 className="font-black text-[10px] text-gray-400 flex items-center space-x-2 uppercase tracking-wider">
+                <MessageSquare className="w-3.5 h-3.5 text-green-600" />
+                <span>Đang thảo luận</span>
+              </h4>
+              <ul className="space-y-3">
+                {trendingPosts.map((post: any) => (
+                  <li key={post.id} className="group">
+                    <Link href={`/posts/${post.slug}`} className="flex flex-col">
+                      <span className="text-xs font-bold text-gray-800 line-clamp-2">
+                        {post.title}
+                      </span>
+                      <span className="text-[9px] text-gray-400 font-bold uppercase mt-1">
+                        {post.comment_count || 0} bình luận
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Chuyên gia online */}
+            <div className="space-y-3 pt-4 border-t border-gray-50">
+              <h4 className="font-black text-[10px] text-gray-400 flex items-center space-x-2 uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5 text-green-600" />
+                <span>Chuyên gia online</span>
+              </h4>
+              <div className="space-y-3">
+                {topExperts?.map((expert: any) => (
+                  <div key={expert.id} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Image
+                        src={expert.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'}
+                        className="w-8 h-8 rounded-xl bg-gray-50 object-cover"
+                        alt={expert.full_name || 'Avatar'}
+                        width={32}
+                        height={32}
+                      />
+                      <div>
+                        <p className="text-xs font-black text-gray-900">{expert.full_name}</p>
+                        <p className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">
+                          {expert.role === 'expert' ? 'Chuyên gia' : 'Thành viên'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </main>
 
