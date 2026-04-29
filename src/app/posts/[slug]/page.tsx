@@ -19,25 +19,26 @@ import PostContent from '@/components/PostContent';
 import CommentSection from '@/components/CommentSection';
 import PostActions from '@/components/PostActions';
 import PostCard from '@/components/PostCard';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export const revalidate = 3600; // ISR: Revalidate every 1 hour
 export const dynamicParams = true; // SSR for non-prerendered slugs
 
 async function getPost(slug: string) {
-  if (!supabaseAdmin) return null;
+  if (!supabase) return null;
   
-  const { data: post, error } = await supabaseAdmin
+  const { data: post, error } = await supabase
     .from('posts')
     .select('*')
     .eq('slug', slug)
+    .eq('status', 'published')
     .single();
 
   if (error || !post) return null;
 
   // Fetch Author Profile
   if (post.author_id) {
-    const { data: profile } = await supabaseAdmin
+    const { data: profile } = await supabase
       .from('profiles')
       .select('username, full_name, avatar_url, role, bio, points, is_verified')
       .eq('id', post.author_id)
@@ -48,7 +49,7 @@ async function getPost(slug: string) {
 
   // Fetch Category
   if (post.category_id) {
-    const { data: category } = await supabaseAdmin
+    const { data: category } = await supabase
       .from('categories')
       .select('id, name, slug')
       .eq('id', post.category_id)
@@ -61,35 +62,45 @@ async function getPost(slug: string) {
 }
 
 async function getRelatedPosts(categoryId: any, currentSlug: string) {
-  if (!supabaseAdmin || !categoryId) return [];
+  if (!supabase || !categoryId) return [];
 
-  const { data: related, error } = await supabaseAdmin
+  const { data: related, error } = await supabase
     .from('posts')
     .select('*')
     .eq('category_id', categoryId)
     .neq('slug', currentSlug)
     .eq('status', 'published')
-    .limit(4); // Limit updated to 4 according to specs
+    .limit(4);
 
   if (error || !related || related.length === 0) return [];
 
   // Fetch Authors
   const authorIds = Array.from(new Set(related.map((p: any) => p.author_id).filter(Boolean)));
-  const { data: profiles } = await supabaseAdmin
-    .from('profiles')
-    .select('id, username, full_name, avatar_url')
-    .in('id', authorIds);
+  
+  let profiles = [];
+  if (authorIds.length > 0) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, username, full_name, avatar_url')
+      .in('id', authorIds);
+    profiles = data || [];
+  }
 
-  const profileMap = new Map(profiles?.map((p: any) => [p.id, p]) || []);
+  const profileMap = new Map(profiles.map((p: any) => [p.id, p]));
 
   // Fetch Categories
   const categoryIds = Array.from(new Set(related.map((p: any) => p.category_id).filter(Boolean)));
-  const { data: categories } = await supabaseAdmin
-    .from('categories')
-    .select('id, name, slug')
-    .in('id', categoryIds);
+  
+  let categories = [];
+  if (categoryIds.length > 0) {
+    const { data } = await supabase
+      .from('categories')
+      .select('id, name, slug')
+      .in('id', categoryIds);
+    categories = data || [];
+  }
 
-  const categoryMap = new Map(categories?.map((c: any) => [c.id, c]) || []);
+  const categoryMap = new Map(categories.map((c: any) => [c.id, c]));
 
   related.forEach((p: any) => {
     p.author = profileMap.get(p.author_id) || { full_name: 'Thành viên', avatar_url: '' };
@@ -100,9 +111,9 @@ async function getRelatedPosts(categoryId: any, currentSlug: string) {
 }
 
 export async function generateStaticParams() {
-  if (!supabaseAdmin) return [];
+  if (!supabase) return [];
   
-  const { data: posts } = await supabaseAdmin
+  const { data: posts } = await supabase
     .from('posts')
     .select('slug')
     .eq('status', 'published')
