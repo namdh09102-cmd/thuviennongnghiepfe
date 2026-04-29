@@ -18,6 +18,7 @@ import {
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function NotificationsPage() {
   const { notifications, markAsRead, markAllAsRead, isLoading } = useNotifications();
@@ -140,10 +141,12 @@ export default function NotificationsPage() {
                     className={`group flex items-start space-x-6 p-8 hover:bg-gray-50 transition-all relative ${!n.is_read ? 'bg-green-50/20' : ''}`}
                   >
                     <div className="relative flex-shrink-0">
-                      <img 
+                      <Image 
                         src={n.actor?.avatar_url || n.data?.actor_avatar || 'https://api.dicebear.com/7.x/avataaars/svg'} 
+                        width={56}
+                        height={56}
                         className="w-14 h-14 rounded-2xl bg-gray-100 shadow-sm object-cover" 
-                        alt="" 
+                        alt="Avatar" 
                       />
                       <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-2 shadow-md border border-gray-50">
                         {getIcon(n.type)}

@@ -114,7 +114,14 @@ export default function CommunityQAPage() {
         date: q.created_at ? new Date(q.created_at).toISOString().split('T')[0] : '2026-04-28',
         votes: q.votes || 0,
         views: q.view_count || 0,
-        answers: q.answers || []
+        answers: Array.isArray(q.answers) ? q.answers.map((a: any) => ({
+          id: a.id,
+          author: { name: a.author?.full_name || 'Người dùng', role: a.author?.role || 'Thành viên', isExpert: a.author?.is_verified || false },
+          content: a.content,
+          votes: a.upvotes || 0,
+          isBest: a.is_best_answer || false,
+          date: a.created_at ? new Date(a.created_at).toISOString().split('T')[0] : '2026-04-28'
+        })) : []
       }));
       setQuestions(realQuestions);
     }

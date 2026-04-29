@@ -16,7 +16,15 @@ export async function GET(req: NextRequest) {
     .select(`
       *,
       author:profiles(username, full_name, avatar_url, is_verified),
-      expert:profiles!expert_id(full_name, is_verified)
+      expert:profiles!expert_id(full_name, is_verified),
+      answers(
+        id,
+        content,
+        is_best_answer,
+        upvotes,
+        created_at,
+        author:profiles(username, full_name, avatar_url, is_verified, role)
+      )
     `, { count: 'exact' })
     .range(from, to)
     .order('created_at', { ascending: false });

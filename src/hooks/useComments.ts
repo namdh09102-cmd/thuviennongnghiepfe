@@ -40,7 +40,7 @@ export function useComments(postSlug: string, sortBy: string = 'newest', onNewCo
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [postSlug, mutate]);
+  }, [postSlug, mutate, onNewComment]);
 
   const addComment = async (content: string, parentId?: string) => {
     const optimisticComment = {
