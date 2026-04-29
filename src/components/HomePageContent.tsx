@@ -172,13 +172,13 @@ export default function HomePageContent() {
           <span className="text-[10px] font-bold text-green-600 cursor-pointer hover:underline uppercase tracking-wider">Xem tất cả</span>
         </div>
         
-        <div className="flex items-center gap-3 overflow-x-auto pb-3 -mx-4 px-4 flex-nowrap scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 flex-nowrap scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {/* Card 1: Tạo câu hỏi */}
-          <Link href="/hoi-dap" className="flex-shrink-0 w-28 h-40 rounded-2xl bg-gradient-to-br from-green-600 to-teal-500 p-3 flex flex-col justify-between text-white shadow-md cursor-pointer group relative overflow-hidden">
-            <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center font-black text-base shadow-sm">
+          <Link href="/hoi-dap" className="flex-shrink-0 w-24 h-36 rounded-2xl bg-gradient-to-br from-green-600 to-teal-500 p-2.5 flex flex-col justify-between text-white shadow-md cursor-pointer group relative overflow-hidden">
+            <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center font-black text-sm shadow-sm">
               +
             </div>
-            <span className="text-xs font-black leading-tight">Tạo câu hỏi mới</span>
+            <span className="text-[10px] font-black leading-tight">Tạo câu hỏi</span>
           </Link>
           
           {/* Mock Expert Cards */}
@@ -188,14 +188,14 @@ export default function HomePageContent() {
             { name: 'TS. Lê Thị C', color: 'from-rose-500 to-pink-600', title: 'Nuôi tôm thẻ' },
             { name: 'Chuyên gia Mai D', color: 'from-emerald-500 to-teal-600', title: 'Trồng rau thủy canh' },
           ].map((expert, idx) => (
-            <div key={idx} className={`flex-shrink-0 w-28 h-40 rounded-2xl bg-gradient-to-br ${expert.color} p-3 flex flex-col justify-between text-white shadow-md relative group overflow-hidden`}>
+            <div key={idx} className={`flex-shrink-0 w-24 h-36 rounded-2xl bg-gradient-to-br ${expert.color} p-2.5 flex flex-col justify-between text-white shadow-md relative group overflow-hidden`}>
               <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-all" />
-              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center font-black text-xs text-gray-800 overflow-hidden border border-white/40 shadow-sm relative">
+              <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center font-black text-xs text-gray-800 overflow-hidden border border-white/40 shadow-sm relative">
                 <Image src={`https://api.dicebear.com/7.x/avataaars/svg?seed=Expert${idx}`} alt={expert.name} fill className="object-cover" />
               </div>
               <div className="relative z-10">
-                <span className="text-[8px] font-black uppercase tracking-widest bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded">Chuyên gia</span>
-                <p className="text-[10px] font-black mt-1 leading-tight line-clamp-2">{expert.title}</p>
+                <span className="text-[7px] font-black uppercase tracking-widest bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded">Chuyên gia</span>
+                <p className="text-[9px] font-black mt-0.5 leading-tight line-clamp-2">{expert.title}</p>
               </div>
             </div>
           ))}

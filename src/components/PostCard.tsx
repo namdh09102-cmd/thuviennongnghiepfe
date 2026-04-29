@@ -56,8 +56,8 @@ export default function PostCard({ post, prefetch }: PostCardProps) {
         </div>
       </Link>
 
-      <div className="p-5 space-y-4">
-        <div className="space-y-2">
+      <div className="p-3 md:p-5 space-y-2 md:space-y-4">
+        <div className="space-y-1 md:space-y-2">
           <Link href={`/posts/${post.slug}`}>
             <h3 className="text-sm font-black text-gray-900 leading-tight group-hover:text-green-700 transition-colors line-clamp-2" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
               {post.title}

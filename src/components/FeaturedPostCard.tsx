@@ -17,11 +17,11 @@ export default function FeaturedPostCard({ post }: FeaturedPostCardProps) {
   if (!post) return null;
 
   return (
-    <article className="bg-white rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-green-900/5 transition-all group overflow-hidden flex flex-col md:flex-row relative">
+    <article className="md:bg-white md:rounded-[32px] md:border md:border-gray-100 md:shadow-sm hover:shadow-xl hover:shadow-green-900/5 transition-all group flex flex-col md:flex-row relative overflow-hidden">
       <Link href={`/posts/${post.slug}`} className="absolute inset-0 z-0" aria-label={post.title}></Link>
       
       {/* Thumbnail */}
-      <div className="w-full md:w-1/2 relative aspect-[16/9] md:aspect-auto overflow-hidden bg-green-50 flex-shrink-0 flex items-center justify-center">
+      <div className="w-full md:w-1/2 relative aspect-[16/9] md:aspect-auto overflow-hidden bg-green-50 flex-shrink-0 flex items-center justify-center rounded-2xl md:rounded-none">
         {post.thumbnail_url && !imgError ? (
           <Image
             src={post.thumbnail_url}
@@ -35,7 +35,7 @@ export default function FeaturedPostCard({ post }: FeaturedPostCardProps) {
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-green-50 text-green-300 min-h-[220px]">
+          <div className="w-full h-full flex items-center justify-center bg-green-50 text-green-300 min-h-[200px]">
             <Leaf className="w-16 h-16 opacity-50 animate-pulse" />
           </div>
         )}
@@ -47,7 +47,7 @@ export default function FeaturedPostCard({ post }: FeaturedPostCardProps) {
       </div>
 
       {/* Content */}
-      <div className="p-8 md:p-10 flex flex-col justify-center space-y-6 flex-1 z-10 pointer-events-none">
+      <div className="px-2 py-4 md:p-10 flex flex-col justify-center space-y-4 flex-1 z-10 pointer-events-none">
         <div className="space-y-3">
           <span className="text-green-600 text-[10px] font-black uppercase tracking-widest bg-green-50 px-3 py-1 rounded-full">
             {post.category?.name || 'Chưa phân loại'}
