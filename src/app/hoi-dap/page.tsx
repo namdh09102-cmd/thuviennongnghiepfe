@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -11,6 +12,7 @@ import {
 
 export default function CommunityQAPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<'newest' | 'unanswered' | 'expert'>('newest');
@@ -111,7 +113,13 @@ export default function CommunityQAPage() {
           <p className="text-sm text-green-50 font-medium max-w-xl">Gặp khó khăn trong canh tác? Đặt câu hỏi để nhận tư vấn từ các chuyên gia và cộng đồng nhà nông.</p>
         </div>
         <button 
-          onClick={() => setIsFormOpen(true)}
+          onClick={() => {
+            if (!session) {
+              router.push('/login?callbackUrl=/hoi-dap');
+            } else {
+              setIsFormOpen(true);
+            }
+          }}
           className="flex items-center space-x-2 bg-white hover:bg-green-50 text-gray-900 font-black text-xs px-6 py-4 rounded-2xl transition-all shadow-md shadow-black/10 relative z-10"
         >
           <Plus className="w-4 h-4 text-green-600" />
@@ -265,7 +273,13 @@ export default function CommunityQAPage() {
 
       {/* Floating Action Button (Mobile) */}
       <button 
-        onClick={() => setIsFormOpen(true)}
+        onClick={() => {
+          if (!session) {
+            router.push('/login?callbackUrl=/hoi-dap');
+          } else {
+            setIsFormOpen(true);
+          }
+        }}
         className="md:hidden fixed bottom-24 right-6 w-14 h-14 bg-green-600 text-white rounded-full shadow-xl shadow-green-600/30 flex items-center justify-center active:scale-95 transition-transform z-40"
       >
         <Plus className="w-6 h-6" />
