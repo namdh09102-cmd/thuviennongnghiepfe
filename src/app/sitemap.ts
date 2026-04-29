@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thuviennongnghiepfe.vercel.app';
+  const baseUrl = 'https://thuviennongnghiep.vn';
 
   // Fetch all published posts
   const { data: posts } = await supabaseAdmin

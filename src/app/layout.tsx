@@ -12,47 +12,28 @@ import AuthProvider from "../components/AuthProvider";
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: {
-    default: "Thư viện Nông nghiệp Thuviennongnghiep - Cộng đồng nông dân Việt Nam",
-    template: "%s | Thuviennongnghiep"
+  metadataBase: new URL('https://thuviennongnghiep.vn'),
+  title: { 
+    default: 'Thư viện Nông nghiệp — Cộng đồng nông dân Việt Nam', 
+    template: '%s | Thư viện Nông nghiệp' 
   },
-  description: "Chia sẻ kiến thức, kỹ thuật canh tác và giải đáp thắc mắc nông nghiệp chuẩn chuyên gia. Cộng đồng kết nối nông dân và chuyên gia hàng đầu Việt Nam.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://thuviennongnghiepfe.vercel.app'),
+  description: 'Chia sẻ kinh nghiệm, kỹ thuật canh tác, hỏi đáp chuyên gia nông nghiệp Việt Nam',
+  keywords: ['nông nghiệp', 'canh tác', 'phân bón', 'sâu bệnh', 'lúa', 'sầu riêng'],
+  openGraph: { 
+    type: 'website', 
+    locale: 'vi_VN', 
+    siteName: 'Thư viện Nông nghiệp',
+    url: '/',
+  },
+  twitter: { 
+    card: 'summary_large_image' 
+  },
+  robots: { 
+    index: true, 
+    follow: true 
+  },
   alternates: {
     canonical: '/',
-  },
-  openGraph: {
-    title: "Thư viện Nông nghiệp Thuviennongnghiep",
-    description: "Cộng đồng chia sẻ kiến thức nông nghiệp hàng đầu Việt Nam",
-    url: '/',
-    siteName: 'Thuviennongnghiep',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Thuviennongnghiep - Thư viện Nông nghiệp',
-      },
-    ],
-    locale: 'vi_VN',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: "Thư viện Nông nghiệp Thuviennongnghiep",
-    description: "Cộng đồng chia sẻ kiến thức nông nghiệp hàng đầu Việt Nam",
-    images: ['/og-image.png'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
   },
 };
 

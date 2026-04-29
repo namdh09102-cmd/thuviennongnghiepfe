@@ -79,24 +79,18 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!post) return { title: 'Không tìm thấy bài viết' };
 
   const authorName = post.author?.full_name || 'Thành viên TVNN';
-  const metaDescription = post.excerpt ? post.excerpt.slice(0, 160) : 'Cộng đồng chia sẻ kiến thức nông nghiệp Việt Nam';
+  const metaDescription = post.excerpt?.slice(0, 160) || post.content?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Chia sẻ kinh nghiệm, kỹ thuật canh tác, hỏi đáp chuyên gia nông nghiệp Việt Nam';
 
   return {
-    title: `${post.title} | TVNN`,
+    title: post.title,
     description: metaDescription,
     openGraph: {
       title: post.title,
-      description: metaDescription,
-      images: [post.thumbnail_url],
+      description: post.excerpt || metaDescription,
+      images: [{ url: post.thumbnail_url || 'https://thuviennongnghiep.vn/og-image.png', width: 1200, height: 630, alt: post.title }],
       type: 'article',
-      publishedTime: post.published_at,
+      publishedTime: post.created_at,
       authors: [authorName],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: post.title,
-      description: metaDescription,
-      images: [post.thumbnail_url],
     },
   };
 }
@@ -138,6 +132,20 @@ export default async function PostDetailPage({ params }: { params: { slug: strin
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            'itemListElement': [
+              { '@type': 'ListItem', 'position': 1, 'name': 'Trang chủ', 'item': 'https://thuviennongnghiep.vn' },
+              { '@type': 'ListItem', 'position': 2, 'name': post.category?.name || 'Bài viết', 'item': `https://thuviennongnghiep.vn/posts?category=${post.category?.slug || 'all'}` },
+              { '@type': 'ListItem', 'position': 3, 'name': post.title, 'item': `https://thuviennongnghiep.vn/posts/${post.slug}` }
+            ]
+          })
+        }}
       />
 
       {/* Breadcrumbs */}
