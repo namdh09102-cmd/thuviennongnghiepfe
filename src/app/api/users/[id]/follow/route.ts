@@ -51,6 +51,21 @@ export async function POST(
   } else {
     await supabaseAdmin.from('user_follows').insert({ follower_id: followerId, following_id: followingId });
     following = true;
+
+    const { data: actor } = await supabaseAdmin
+      .from('profiles')
+      .select('full_name')
+      .eq('id', followerId)
+      .single();
+
+    await supabaseAdmin.from('notifications').insert({
+      user_id: followingId,
+      type: 'new_follower',
+      actor_id: followerId,
+      resource_type: 'user',
+      resource_id: followerId,
+      message: `${actor?.full_name || 'Ai đó'} đã bắt đầu theo dõi bạn.`
+    });
   }
 
   // Count total followers

@@ -99,7 +99,7 @@ export async function POST(
 
   const { data: post, error: postError } = await supabaseAdmin
     .from('posts')
-    .select('id')
+    .select('id, author_id, title')
     .eq(isUuid ? 'id' : 'slug', slug)
     .single();
 
@@ -127,6 +127,35 @@ export async function POST(
 
   // Update comment count
   await supabaseAdmin.rpc('increment_comment_count', { post_id_param: post.id });
+
+  // Trigger Notifications
+  if (parent_id) {
+    const { data: parentComment } = await supabaseAdmin
+      .from('comments')
+      .select('user_id')
+      .eq('id', parent_id)
+      .single();
+
+    if (parentComment && parentComment.user_id && parentComment.user_id !== userId) {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: parentComment.user_id,
+        type: 'reply_to_comment',
+        actor_id: userId,
+        resource_type: 'post',
+        resource_id: post.id,
+        message: `${comment.author?.full_name || 'Ai đó'} đã trả lời bình luận của bạn.`
+      });
+    }
+  } else if (post.author_id && post.author_id !== userId) {
+    await supabaseAdmin.from('notifications').insert({
+      user_id: post.author_id,
+      type: 'comment_on_post',
+      actor_id: userId,
+      resource_type: 'post',
+      resource_id: post.id,
+      message: `${comment.author?.full_name || 'Ai đó'} đã bình luận về bài viết "${post.title}".`
+    });
+  }
 
   return NextResponse.json({ data: comment, error: null, meta: { created: true } });
 }

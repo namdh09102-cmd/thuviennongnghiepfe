@@ -13,7 +13,8 @@ export function useNotifications() {
 
   const { data, mutate, isLoading } = useSWR(
     userId ? `/api/notifications` : null,
-    fetcher
+    fetcher,
+    { refreshInterval: 30000 }
   );
 
   const notifications = data || [];

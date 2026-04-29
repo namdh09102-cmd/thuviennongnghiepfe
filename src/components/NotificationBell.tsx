@@ -121,18 +121,22 @@ export default function NotificationBell() {
                 </div>
                 <div className="flex-1 min-w-0 space-y-1">
                   <p className="text-xs text-gray-700 leading-relaxed group-hover:text-gray-900 transition-colors">
-                    <span className="font-black">{n.actor?.full_name || n.data?.actor_name || 'Hệ thống'}</span>
-                    {' '}
-                    {n.type === 'comment_on_post' && `đã bình luận bài viết "${n.data?.post_title}"`}
-                    {n.type === 'reply_to_comment' && 'đã phản hồi bình luận của bạn'}
-                    {n.type === 'like_post' && `đã thích bài viết của bạn: "${n.data?.post_title}"`}
-                    {n.type === 'follow_user' && 'đã bắt đầu theo dõi bạn'}
-                    {n.type === 'expert_answer' && `chuyên gia đã trả lời câu hỏi "${n.data?.question_title}"`}
-                    {n.type === 'post_approved' && `Bài viết "${n.data?.post_title}" đã được duyệt`}
-                    {n.type === 'post_rejected' && `Bài viết "${n.data?.post_title}" đã bị từ chối`}
-                    {n.type === 'daily_reminder' && n.data?.reason}
-                    {n.type === 'level_up' && `Chúc mừng! Bạn đã lên cấp ${n.data?.level}`}
-                    {n.type === 'badge_earned' && `Bạn đã nhận được huy hiệu "${n.data?.badge_name}"`}
+                    {n.message || (
+                      <>
+                        <span className="font-black">{n.actor?.full_name || n.data?.actor_name || 'Hệ thống'}</span>
+                        {' '}
+                        {n.type === 'comment_on_post' && `đã bình luận bài viết "${n.data?.post_title}"`}
+                        {n.type === 'reply_to_comment' && 'đã phản hồi bình luận của bạn'}
+                        {n.type === 'like_post' && `đã thích bài viết của bạn: "${n.data?.post_title}"`}
+                        {(n.type === 'follow_user' || n.type === 'new_follower') && 'đã bắt đầu theo dõi bạn'}
+                        {n.type === 'expert_answer' && `chuyên gia đã trả lời câu hỏi "${n.data?.question_title}"`}
+                        {n.type === 'post_approved' && `Bài viết "${n.data?.post_title}" đã được duyệt`}
+                        {n.type === 'post_rejected' && `Bài viết "${n.data?.post_title}" đã bị từ chối`}
+                        {n.type === 'daily_reminder' && n.data?.reason}
+                        {n.type === 'level_up' && `Chúc mừng! Bạn đã lên cấp ${n.data?.level}`}
+                        {n.type === 'badge_earned' && `Bạn đã nhận được huy hiệu "${n.data?.badge_name}"`}
+                      </>
+                    )}
                   </p>
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                     {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: vi })}
