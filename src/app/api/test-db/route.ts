@@ -6,13 +6,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'supabaseAdmin is null' });
   }
 
-  const { data: posts, error: postsError } = await supabaseAdmin.from('posts').select('*').limit(1);
-  const { data: categories, error: catError } = await supabaseAdmin.from('categories').select('*').limit(1);
-  const { data: profiles, error: profError } = await supabaseAdmin.from('profiles').select('*').limit(1);
+  // Test the exact relationship query
+  const { data: posts, error } = await supabaseAdmin
+    .from('posts')
+    .select(`
+      *,
+      author:profiles(username, full_name, avatar_url),
+      category:categories(name, slug, emoji)
+    `, { count: 'exact' })
+    .limit(5);
 
   return NextResponse.json({
-    posts: { count: posts?.length || 0, error: postsError?.message || null },
-    categories: { count: categories?.length || 0, error: catError?.message || null },
-    profiles: { count: profiles?.length || 0, error: profError?.message || null }
+    success: !error,
+    error: error?.message || null,
+    hint: error?.hint || null,
+    data: posts
   });
 }
