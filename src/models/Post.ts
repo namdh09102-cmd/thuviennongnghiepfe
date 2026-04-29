@@ -9,6 +9,9 @@ export interface IPost extends Document {
   author_id: string;
   category_id: string;
   status: string;
+  likes: string[];
+  saves: string[];
+  viewCount: number;
   view_count: number;
   like_count: number;
   comment_count: number;
@@ -29,6 +32,9 @@ const PostSchema: Schema = new Schema({
   author_id: { type: String },
   category_id: { type: String },
   status: { type: String, default: 'published' },
+  likes: [{ type: String }],
+  saves: [{ type: String }],
+  viewCount: { type: Number, default: 0 },
   view_count: { type: Number, default: 0 },
   like_count: { type: Number, default: 0 },
   comment_count: { type: Number, default: 0 },

@@ -43,6 +43,8 @@ export default function PublicProfilePage({ params }: { params: { username: stri
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'questions' | 'saved' | 'badges'>('posts');
+  const [savedPosts, setSavedPosts] = useState<any[]>([]);
+  const [loadingSaved, setLoadingSaved] = useState(false);
 
   useEffect(() => {
     fetch(`/api/users/${username}`)
@@ -69,6 +71,23 @@ export default function PublicProfilePage({ params }: { params: { username: stri
         .catch(() => {});
     }
   }, [username, session]);
+
+  useEffect(() => {
+    if (activeTab === 'saved' && savedPosts.length === 0) {
+      setLoadingSaved(true);
+      fetch('/api/users/me/saved')
+        .then(res => res.json())
+        .then(data => {
+          if (data.data) {
+            setSavedPosts(data.data);
+          }
+          setLoadingSaved(false);
+        })
+        .catch(() => {
+          setLoadingSaved(false);
+        });
+    }
+  }, [activeTab, savedPosts.length]);
 
   const handleFollowToggle = async () => {
     if (!session) return alert('Vui lòng đăng nhập để theo dõi');
@@ -308,8 +327,23 @@ export default function PublicProfilePage({ params }: { params: { username: stri
             )}
 
             {activeTab === 'saved' && (
-              <div className="py-20 text-center bg-white rounded-[32px] border border-gray-100">
-                <p className="text-xs font-bold text-gray-400 italic">Mục bài viết đã lưu hiện đang bảo trì.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {loadingSaved ? (
+                  <div className="col-span-full py-20 text-center bg-white rounded-[32px] border border-gray-100 flex items-center justify-center">
+                    <div className="w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : (
+                  <>
+                    {savedPosts.map((post) => (
+                      <PostCard key={post.id} post={post} />
+                    ))}
+                    {savedPosts.length === 0 && (
+                      <div className="col-span-full py-20 text-center bg-white rounded-[32px] border border-gray-100">
+                        <p className="text-xs font-bold text-gray-400 italic">Chưa có bài viết nào được lưu.</p>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
