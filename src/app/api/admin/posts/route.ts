@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
 import { jwtVerify } from 'jose';
+import connectMongoDB from '@/lib/mongodb';
+import Post from '@/models/Post';
+import Category from '@/models/Category';
+import mongoose from 'mongoose';
 
 async function checkAdminAuth(req: NextRequest) {
   const adminToken = req.cookies.get('admin_token')?.value;
@@ -27,57 +30,55 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '20');
 
   const from = (page - 1) * limit;
-  const to = from + limit - 1;
 
-  const MOCK_ADMIN_POSTS = [
-    { id: 'mock-1', title: 'Kỹ thuật trồng dưa lưới nhà màng đạt năng suất cao', slug: 'ky-thuat-trong-dua-luoi-nha-mang', status: 'pending', created_at: '2026-04-28T00:00:00Z', author: { full_name: 'Nguyễn Văn Minh', username: 'chuyengia_minh' }, category: { name: 'Kỹ thuật trồng trọt' } },
-    { id: 'mock-2', title: 'Biện pháp phòng trừ bệnh đạo ôn hại lúa vụ Hè Thu', slug: 'phong-tru-dao-on-lua-he-thu', status: 'published', created_at: '2026-04-27T00:00:00Z', author: { full_name: 'Lê Thị Hoa', username: 'ky_su_hoa' }, category: { name: 'Phòng trừ sâu bệnh' } },
-    { id: 'mock-3', title: 'Quy tắc bón phân NPK đúng cách cho cây ăn trái', slug: 'bon-phan-npk-dung-cach', status: 'rejected', created_at: '2026-04-26T00:00:00Z', author: { full_name: 'Trần Đại Tấn', username: 'tan_npk' }, category: { name: 'Dinh dưỡng & Phân bón' } }
-  ];
+  try {
+    await connectMongoDB();
+    
+    let query: any = {};
+    if (status && status !== 'all') {
+      query.status = status;
+    }
 
-  if (!supabaseAdmin) {
-    const filtered = status && status !== 'all' ? MOCK_ADMIN_POSTS.filter(p => p.status === status) : MOCK_ADMIN_POSTS;
-    return NextResponse.json({ data: filtered, total: filtered.length });
-  }
+    const count = await Post.countDocuments(query);
+    const posts = await Post.find(query)
+      .skip(from)
+      .limit(limit)
+      .sort({ created_at: -1 })
+      .lean();
 
-  let query = supabaseAdmin
-    .from('posts')
-    .select('*', { count: 'exact' })
-    .range(from, to)
-    .order('created_at', { ascending: false });
+    const categories = await Category.find({}).lean();
+    const categoryMap = new Map(categories.map((c: any) => [c._id.toString(), c]));
+    categories.forEach((c: any) => categoryMap.set(c.slug, c));
 
-  if (status && status !== 'all') {
-    query = query.eq('status', status);
-  }
+    const userMap = new Map();
+    try {
+      const rawUsers = await mongoose.connection.db!.collection('users').find({}).toArray();
+      rawUsers.forEach((u: any) => userMap.set(u._id.toString(), u));
+    } catch (e) {
+      console.error('Failed to fetch users from raw MongoDB:', e);
+    }
 
-  const { data, count, error } = await query;
-  
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  if (data && data.length > 0) {
-    const authorIds = Array.from(new Set(data.map((p: any) => p.author_id).filter(Boolean)));
-    const { data: profiles } = await supabaseAdmin
-      .from('profiles')
-      .select('id, full_name, username')
-      .in('id', authorIds);
-
-    const profileMap = new Map(profiles?.map((p: any) => [p.id, p]) || []);
-
-    const categoryIds = Array.from(new Set(data.map((p: any) => p.category_id).filter(Boolean)));
-    const { data: categories } = await supabaseAdmin
-      .from('categories')
-      .select('id, name')
-      .in('id', categoryIds);
-
-    const categoryMap = new Map(categories?.map((c: any) => [c.id, c]) || []);
-
-    data.forEach((p: any) => {
-      p.author = profileMap.get(p.author_id) || { full_name: 'Người dùng', username: 'member' };
-      p.category = categoryMap.get(p.category_id) || { name: 'Chưa phân loại' };
+    const mappedPosts = posts.map((p: any) => {
+      const author = userMap.get(p.author_id) || { name: 'Người dùng', image: '' };
+      const category = categoryMap.get(p.category_id) || { name: 'Chưa phân loại' };
+      return {
+        ...p,
+        id: p._id.toString(),
+        author: {
+          full_name: author.name || author.email || 'Người dùng',
+          username: author.email?.split('@')[0] || 'member'
+        },
+        category: {
+          name: category.name || 'Chưa phân loại'
+        }
+      };
     });
-  }
 
-  return NextResponse.json({ data, total: count });
+    return NextResponse.json({ data: mappedPosts, total: count });
+  } catch (err: any) {
+    console.error('Admin posts GET error:', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: NextRequest) {
@@ -86,56 +87,41 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body = await req.json();
-  const { ids, status, is_featured, is_pinned } = body;
+  try {
+    await connectMongoDB();
+    const body = await req.json();
+    const { ids, status, is_featured, is_pinned } = body;
 
-  if (!ids || !Array.isArray(ids)) {
-    return NextResponse.json({ error: 'Invalid IDs' }, { status: 400 });
-  }
+    if (!ids || !Array.isArray(ids)) {
+      return NextResponse.json({ error: 'Invalid IDs' }, { status: 400 });
+    }
 
-  const updateData: any = {};
-  if (status) {
-    updateData.status = status;
-    if (status === 'published') updateData.published_at = new Date().toISOString();
-  }
-  if (typeof is_featured === 'boolean') updateData.is_featured = is_featured;
-  if (typeof is_pinned === 'boolean') updateData.is_pinned = is_pinned;
+    const updateData: any = {};
+    if (status) {
+      updateData.status = status;
+      if (status === 'published') updateData.published_at = new Date();
+    }
+    if (typeof is_featured === 'boolean') updateData.is_featured = is_featured;
+    if (typeof is_pinned === 'boolean') updateData.is_pinned = is_pinned;
 
-  const { data, error } = await supabaseAdmin
-    .from('posts')
-    .update(updateData)
-    .in('id', ids)
-    .select();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  // Gửi thông báo cho từng tác giả
-  if (status && (status === 'published' || status === 'rejected')) {
-    const { createNotificationAsync } = await import('@/lib/createNotification');
-    
-    // Lấy thông tin tác giả và tiêu đề bài viết
-    const { data: updatedPosts } = await supabaseAdmin
-      .from('posts')
-      .select('author_id, title, slug')
-      .in('id', ids);
-
-    updatedPosts?.forEach((post: any) => {
-      createNotificationAsync(
-        post.author_id,
-        status === 'published' ? 'post_approved' : 'post_rejected',
-        {
-          post_title: post.title,
-          post_slug: post.slug,
-          reason: status === 'rejected' ? 'Bài viết không phù hợp với tiêu chuẩn cộng đồng.' : undefined
-        },
-        undefined,
-        'post',
-        undefined
-      );
+    const mongoIds = ids.map(id => {
+      try {
+        return new mongoose.Types.ObjectId(id);
+      } catch (e) {
+        return id;
+      }
     });
-  }
 
-  return NextResponse.json({ success: true, data });
+    await Post.updateMany(
+      { $or: [{ _id: { $in: mongoIds } }, { id: { $in: ids } }, { slug: { $in: ids } }] }, 
+      { $set: updateData }
+    );
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error('Admin posts PATCH error:', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: NextRequest) {
@@ -144,17 +130,28 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { searchParams } = new URL(req.url);
-  const ids = searchParams.get('ids')?.split(',');
+  try {
+    await connectMongoDB();
+    const { searchParams } = new URL(req.url);
+    const ids = searchParams.get('ids')?.split(',');
 
-  if (!ids) return NextResponse.json({ error: 'No IDs provided' }, { status: 400 });
+    if (!ids) return NextResponse.json({ error: 'No IDs provided' }, { status: 400 });
 
-  const { error } = await supabaseAdmin
-    .from('posts')
-    .delete()
-    .in('id', ids);
+    const mongoIds = ids.map(id => {
+      try {
+        return new mongoose.Types.ObjectId(id);
+      } catch (e) {
+        return id;
+      }
+    });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    await Post.deleteMany({ 
+      $or: [{ _id: { $in: mongoIds } }, { id: { $in: ids } }, { slug: { $in: ids } }] 
+    });
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error('Admin posts DELETE error:', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }

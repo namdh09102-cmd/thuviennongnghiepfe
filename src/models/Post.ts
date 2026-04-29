@@ -12,6 +12,8 @@ export interface IPost extends Document {
   view_count: number;
   like_count: number;
   comment_count: number;
+  is_featured: boolean;
+  is_pinned: boolean;
   tags: string[];
   published_at: Date;
   created_at: Date;
@@ -30,6 +32,8 @@ const PostSchema: Schema = new Schema({
   view_count: { type: Number, default: 0 },
   like_count: { type: Number, default: 0 },
   comment_count: { type: Number, default: 0 },
+  is_featured: { type: Boolean, default: false },
+  is_pinned: { type: Boolean, default: false },
   tags: [{ type: String }],
   published_at: { type: Date, default: Date.now },
   created_at: { type: Date, default: Date.now },

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
 import { jwtVerify } from 'jose';
+import connectMongoDB from '@/lib/mongodb';
+import Category from '@/models/Category';
+import mongoose from 'mongoose';
 
 async function checkAdminAuth(req: NextRequest) {
   const adminToken = req.cookies.get('admin_token')?.value;
@@ -21,17 +23,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body = await req.json();
-  const { name, slug, icon, color, parent_id, sort_order } = body;
+  try {
+    await connectMongoDB();
+    const body = await req.json();
+    const { name, slug, icon, color, parent_id, sort_order } = body;
 
-  const { data, error } = await supabaseAdmin
-    .from('categories')
-    .insert([{ name, slug, icon, color, parent_id: parent_id || null, sort_order }])
-    .select()
-    .single();
+    const category = await Category.create({ 
+      name, 
+      slug: slug || name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''), 
+      sort_order: sort_order || 0 
+    });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+    return NextResponse.json(category);
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: NextRequest) {
@@ -40,18 +46,27 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body = await req.json();
-  const { id, ...updates } = body;
+  try {
+    await connectMongoDB();
+    const body = await req.json();
+    const { id, ...updates } = body;
 
-  const { data, error } = await supabaseAdmin
-    .from('categories')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
+    let mongoId: any = id;
+    try {
+      mongoId = new mongoose.Types.ObjectId(id);
+    } catch (e) {}
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+    const category = await Category.findOneAndUpdate(
+      { $or: [{ _id: mongoId }, { id: id }, { slug: id }] },
+      updates,
+      { new: true }
+    );
+
+    if (!category) return NextResponse.json({ error: 'Category not found' }, { status: 404 });
+    return NextResponse.json(category);
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: NextRequest) {
@@ -60,14 +75,24 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get('id');
+  try {
+    await connectMongoDB();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
 
-  const { error } = await supabaseAdmin
-    .from('categories')
-    .delete()
-    .eq('id', id);
+    if (!id) return NextResponse.json({ error: 'No ID provided' }, { status: 400 });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ success: true });
+    let mongoId: any = id;
+    try {
+      mongoId = new mongoose.Types.ObjectId(id);
+    } catch (e) {}
+
+    await Category.deleteOne({ 
+      $or: [{ _id: mongoId }, { id: id }, { slug: id }] 
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
