@@ -1,41 +1,35 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface IAnswer {
-  content: string;
-  user_id: string;
-  is_best_answer: boolean;
-  upvotes: number;
-  created_at: Date;
-}
-
 export interface IQuestion extends Document {
+  _id: mongoose.Types.ObjectId;
   title: string;
   content: string;
-  user_id: string;
-  expert_id: string;
-  status: string;
+  authorId: string | mongoose.Types.ObjectId;
   tags: string[];
-  answers: IAnswer[];
-  created_at: Date;
+  status: 'open' | 'answered' | 'closed';
+  viewCount: number;
+  answerCount: number;
+  upvotes: string[]; // User IDs
+  acceptedAnswerId: string | mongoose.Types.ObjectId | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const AnswerSchema = new Schema({
-  content: { type: String, required: true },
-  user_id: { type: String },
-  is_best_answer: { type: Boolean, default: false },
-  upvotes: { type: Number, default: 0 },
-  created_at: { type: Date, default: Date.now }
-});
-
 const QuestionSchema: Schema = new Schema({
-  title: { type: String, required: true },
+  title: { type: String, required: true, maxlength: 200 },
   content: { type: String, required: true },
-  user_id: { type: String },
-  expert_id: { type: String },
-  status: { type: String, default: 'pending' },
+  authorId: { type: Schema.Types.Mixed, required: true }, // Mixed to allow both ObjectId and strings
   tags: [{ type: String }],
-  answers: [AnswerSchema],
-  created_at: { type: Date, default: Date.now }
-});
+  status: { type: String, enum: ['open', 'answered', 'closed'], default: 'open' },
+  viewCount: { type: Number, default: 0 },
+  answerCount: { type: Number, default: 0 },
+  upvotes: [{ type: String }],
+  acceptedAnswerId: { type: Schema.Types.Mixed, default: null },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+}, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
+
+QuestionSchema.index({ status: 1, createdAt: -1 });
+QuestionSchema.index({ tags: 1 });
 
 export default mongoose.models.Question || mongoose.model<IQuestion>('Question', QuestionSchema);

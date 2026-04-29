@@ -1,596 +1,381 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import useSWR from 'swr';
-import { MessageSquare, CheckCircle, HelpCircle, AlertCircle, Search, ThumbsUp, ThumbsDown, Sparkles, UserCheck, Award, Plus, ChevronRight } from 'lucide-react';
-import ChatWidget from '../../components/ChatWidget';
-
-// 8. Dữ liệu 10 câu hỏi mẫu thực tế
-const MOCK_QUESTIONS = [
-  {
-    id: 'q1',
-    title: 'Bệnh sương mai trên quả vải thiều phòng trừ thế nào?',
-    content: 'Mấy hôm nay trời nồm ẩm, quả vải bắt đầu xuất hiện các đốm đen nhỏ ở cuống, lan nhanh. Có phải bị sương mai không và xịt thuốc gì hiệu quả?',
-    tags: ['Vải thiều', 'Sâu bệnh'],
-    status: 'Chờ trả lời',
-    author: { name: 'Nguyễn Văn Tám', role: 'Nông dân', isExpert: false },
-    date: '2026-04-27',
-    votes: 12,
-    views: 48,
-    answers: [
-      {
-        id: 'a1_1',
-        author: { name: 'KS. Trần Thị Mai', role: 'Bảo vệ thực vật', isExpert: true },
-        content: 'Chào anh, đây chính xác là bệnh sương mai. Anh cần phun ngay gốc hoạt chất Metalaxyl kết hợp Mancozeb. Ngưng phun thuốc trước thu hoạch 14 ngày nhé.',
-        votes: 8,
-        isBest: true,
-        date: '2026-04-28'
-      }
-    ]
-  },
-  {
-    id: 'q2',
-    title: 'Sầu riêng bị vàng lá thối rễ vào đầu mùa mưa',
-    content: 'Vườn sầu riêng 4 năm tuổi đọt non ra bị chùn, lá già vàng úa, rễ tơ đen thui. Xin chuyên gia tư vấn cách cứu cây.',
-    tags: ['Sầu riêng', 'Trồng trọt'],
-    status: 'Đã có đáp án',
-    author: { name: 'Lê Đình Nam', role: 'Nhà vườn', isExpert: false },
-    date: '2026-04-25',
-    votes: 24,
-    views: 120,
-    answers: [
-      {
-        id: 'a2_1',
-        author: { name: 'GS.TS Nguyễn Văn A', role: 'Đại học Cần Thơ', isExpert: true },
-        content: 'Bệnh do nấm Phytophthora và Fusarium gây ra. Bước 1: Cắt tỉa cành thông thoáng. Bước 2: Đào rãnh thoát nước. Bước 3: Tưới thuốc gốc Phosphonate hoặc Ridomil Gold quanh gốc.',
-        votes: 19,
-        isBest: true,
-        date: '2026-04-26'
-      }
-    ]
-  },
-  {
-    id: 'q3',
-    title: 'Phân biệt sâu đục thân lúa 2 chấm và sâu cuốn lá?',
-    content: 'Em mới làm ruộng vụ đầu, chưa biết phân biệt hai loại này để mua thuốc phun xịt phù hợp.',
-    tags: ['Lúa', 'Sâu bệnh'],
-    status: 'Còn tranh luận',
-    author: { name: 'Út Hiền', role: 'Nông dân trẻ', isExpert: false },
-    date: '2026-04-28',
-    votes: 5,
-    views: 31,
-    answers: [
-      {
-        id: 'a3_1',
-        author: { name: 'Lão nông Tư Đờn', role: '30 năm làm ruộng', isExpert: false },
-        content: 'Sâu cuốn lá thì làm lá lúa cuốn tròn lại, sâu ở trong ăn diệp lục. Sâu đục thân thì làm cây lúa bị héo ngọn (bông bạc).',
-        votes: 4,
-        isBest: false,
-        date: '2026-04-28'
-      }
-    ]
-  },
-  {
-    id: 'q4',
-    title: 'Giá phân bón NPK Phú Mỹ hôm nay tại Đắk Lắk?',
-    content: 'Em định nhập 5 tấn bón cho cà phê, giá đại lý báo 750k/bao 50kg có đắt quá không các bác?',
-    tags: ['Phân bón', 'Cà phê'],
-    status: 'Đã có đáp án',
-    author: { name: 'Y-Kha', role: 'Chủ rẫy', isExpert: false },
-    date: '2026-04-26',
-    votes: 2,
-    views: 55,
-    answers: [
-      {
-        id: 'a4_1',
-        author: { name: 'Đại lý VTNN Ba Hưng', role: 'Kinh doanh', isExpert: false },
-        content: 'Giá 750k là đúng giá thị trường tuần này rồi đó em. Nếu mua sỉ 5 tấn trở lên liên hệ anh bớt thêm tiền vận chuyển.',
-        votes: 3,
-        isBest: true,
-        date: '2026-04-26'
-      }
-    ]
-  }
-];
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { 
+  MessageSquare, CheckCircle, HelpCircle, AlertCircle, Search, 
+  ThumbsUp, Sparkles, Award, Plus, X, Save 
+} from 'lucide-react';
 
 export default function CommunityQAPage() {
-  const fetcher = (url: string) => fetch(url).then(res => res.json());
-  const { data: apiRes } = useSWR('/api/questions', fetcher);
-  const [questions, setQuestions] = useState(MOCK_QUESTIONS);
-
-  useEffect(() => {
-    if (apiRes?.data && apiRes.data.length > 0) {
-      const realQuestions = apiRes.data.map((q: any) => ({
-        id: q.id,
-        title: q.title,
-        content: q.content,
-        tags: Array.isArray(q.tags) ? q.tags : (q.tags ? q.tags.split(',').map((t: any) => t.trim()) : ['Nông nghiệp']),
-        status: q.status === 'pending' ? 'Chờ trả lời' : q.status === 'solved' ? 'Đã có đáp án' : 'Còn tranh luận',
-        author: { 
-          name: q.author?.full_name || 'Người dùng', 
-          role: q.author?.role || 'Nông dân', 
-          isExpert: q.author?.is_verified || false 
-        },
-        date: q.created_at ? new Date(q.created_at).toISOString().split('T')[0] : '2026-04-28',
-        votes: q.votes || 0,
-        views: q.view_count || 0,
-        answers: Array.isArray(q.answers) ? q.answers.map((a: any) => ({
-          id: a.id,
-          author: { name: a.author?.full_name || 'Người dùng', role: a.author?.role || 'Thành viên', isExpert: a.author?.is_verified || false },
-          content: a.content,
-          votes: a.upvotes || 0,
-          isBest: a.is_best_answer || false,
-          date: a.created_at ? new Date(a.created_at).toISOString().split('T')[0] : '2026-04-28'
-        })) : []
-      }));
-      setQuestions(realQuestions);
-    }
-  }, [apiRes]);
-
-  const [selectedFilter, setSelectedFilter] = useState('Tất cả');
+  const { data: session } = useSession();
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedFilter, setSelectedFilter] = useState<'newest' | 'unanswered' | 'expert'>('newest');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-
-  // State cho form đặt câu hỏi
+  
+  // Form đặt câu hỏi
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [tagInput, setTagInput] = useState('Lúa');
-  const [isAIGenerating, setIsAIGenerating] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // State cho form trả lời
-  const [answerContent, setAnswerContent] = useState('');
+  const TAG_SUGGESTIONS = ['Lúa', 'Rau', 'Trái cây', 'Sâu bệnh', 'Phân bón'];
 
-  const filteredQuestions = questions.filter(q => {
-    const matchesFilter = selectedFilter === 'Tất cả' || q.status === selectedFilter;
-    const matchesSearch = q.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         q.content.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  useEffect(() => {
+    fetchQuestions();
+  }, [selectedFilter, selectedTag]);
 
-  const activeQuestion = questions.find(q => q.id === activeQuestionId);
-
-  // 6. AI gợi ý sơ bộ (Claude API integration)
-  const askAISuggestion = async (questionTitle: string, questionContent: string, qId: string) => {
+  const fetchQuestions = async () => {
+    setLoading(true);
     try {
-      setIsAIGenerating(true);
-      const prompt = `Bạn là chuyên gia nông nghiệp. Hãy trả lời câu hỏi "${questionTitle}" với nội dung "${questionContent}". Trả lời bằng tiếng Việt, ngắn gọn, thực tế, 3-5 câu.`;
+      let url = `/api/questions?page=1&limit=30`;
       
-      const res = await fetch('/api/ai-consultant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-      const data = await res.json();
-
-      if (data.content) {
-        const aiAnswer = {
-          id: `a_ai_${Date.now()}`,
-          author: { name: 'Bác sĩ Cây Trồng AI', role: 'Claude 3.5 Sonnet', isExpert: true },
-          content: `🤖 (AI Trả lời tự động): ${data.content}`,
-          votes: 1,
-          isBest: false,
-          date: new Date().toISOString().split('T')[0]
-        };
-
-        setQuestions(prev => prev.map(q => q.id === qId ? { ...q, answers: [...q.answers, aiAnswer] } : q));
+      if (selectedTag) {
+        url += `&tag=${encodeURIComponent(selectedTag.toLowerCase())}`;
       }
+      if (selectedFilter === 'unanswered') {
+        // Filter on client side for simplicity, or backend could support
+      }
+      
+      const res = await fetch(url);
+      const data = await res.json();
+      
+      let finalQuestions = data.data || [];
+      
+      if (selectedFilter === 'unanswered') {
+        finalQuestions = finalQuestions.filter((q: any) => !q.answerCount || q.answerCount === 0);
+      } else if (selectedFilter === 'expert') {
+        // Ideally questions answered by experts, for now simple mock/filter logic if tag supported
+      }
+
+      setQuestions(finalQuestions);
     } catch (error) {
-      console.error('AI suggestion failed:', error);
+      console.error('Failed to fetch questions', error);
     } finally {
-      setIsAIGenerating(false);
+      setLoading(false);
     }
   };
 
   const handleCreateQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !content) return;
+    if (!session) return alert('Vui lòng đăng nhập để đặt câu hỏi');
+    if (!title.trim() || !content.trim()) return;
 
-    const newQId = `q_${Date.now()}`;
-    const newQuestion = {
-      id: newQId,
-      title,
-      content,
-      tags: [tagInput],
-      status: 'Chờ trả lời',
-      author: { name: 'Nhà nông mới', role: 'Nông dân', isExpert: false },
-      date: new Date().toISOString().split('T')[0],
-      votes: 0,
-      views: 1,
-      answers: []
-    };
-
-    setQuestions(prev => [newQuestion, ...prev]);
-    setTitle('');
-    setContent('');
-    setIsFormOpen(false);
-
-    // Kích hoạt trả lời AI
-    await askAISuggestion(title, content, newQId);
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, tags })
+      });
+      
+      if (res.ok) {
+        setTitle('');
+        setContent('');
+        setTags([]);
+        setIsFormOpen(false);
+        fetchQuestions();
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleCreateAnswer = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!answerContent || !activeQuestionId) return;
-
-    const newAnswer = {
-      id: `a_${Date.now()}`,
-      author: { name: 'Nhà nông tư vấn', role: 'Nông dân', isExpert: false },
-      content: answerContent,
-      votes: 0,
-      isBest: false,
-      date: new Date().toISOString().split('T')[0]
-    };
-
-    setQuestions(prev =>
-      prev.map(q => q.id === activeQuestionId ? { ...q, answers: [...q.answers, newAnswer], status: 'Đã có đáp án' } : q)
-    );
-    setAnswerContent('');
-  };
-
-  const handleVoteQuestion = (qId: string, increment: number) => {
-    setQuestions(prev => prev.map(q => q.id === qId ? { ...q, votes: q.votes + increment } : q));
-  };
-
-  const handleVoteAnswer = (qId: string, aId: string, increment: number) => {
-    setQuestions(prev =>
-      prev.map(q => q.id === qId ? {
-        ...q,
-        answers: q.answers.map(a => a.id === aId ? { ...a, votes: a.votes + increment } : a)
-      } : q)
-    );
-  };
-
-  const handleMarkBestAnswer = (qId: string, aId: string) => {
-    setQuestions(prev =>
-      prev.map(q => q.id === qId ? {
-        ...q,
-        answers: q.answers.map(a => ({ ...a, isBest: a.id === aId }))
-      } : q)
-    );
+  const toggleUpvote = async (id: string) => {
+    if (!session) return alert('Vui lòng đăng nhập để upvote');
+    try {
+      const res = await fetch(`/api/questions/${id}/upvote`, { method: 'POST' });
+      if (res.ok) {
+        fetchQuestions();
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-6 px-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
-      {/* Cột chính */}
-      <div className="lg:col-span-8 space-y-6">
-        {activeQuestionId && activeQuestion ? (
-          // 3. TRANG CHI TIẾT CÂU HỎI
-          <div className="space-y-6 animate-in fade-in duration-200">
-            <button 
-              onClick={() => setActiveQuestionId(null)} 
-              className="text-xs font-bold text-gray-500 hover:text-green-600 flex items-center space-x-1"
-            >
-              <span>← Quay lại danh sách</span>
-            </button>
-
-            <div className="bg-white p-6 border border-gray-100 rounded-3xl shadow-sm space-y-4">
-              <h1 className="text-lg font-black text-gray-900">{activeQuestion.title}</h1>
-              
-              <div className="flex items-center justify-between text-[10px] text-gray-500">
-                <div className="flex items-center space-x-2">
-                  <span className={`px-2 py-0.5 rounded-full font-bold flex items-center space-x-1 ${activeQuestion.author.isExpert ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-gray-50 text-gray-700'}`}>
-                    {activeQuestion.author.isExpert && <Award className="h-3 w-3 text-amber-600" />}
-                    <span>{activeQuestion.author.name} ({activeQuestion.author.role})</span>
-                  </span>
-                  <span>•</span>
-                  <span>{activeQuestion.date}</span>
-                </div>
-
-                <div className="flex items-center space-x-2 text-xs font-bold text-gray-700">
-                  <button onClick={() => handleVoteQuestion(activeQuestion.id, 1)} className="p-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg"><ThumbsUp className="h-3.5 w-3.5" /></button>
-                  <span className="px-1">{activeQuestion.votes}</span>
-                  <button onClick={() => handleVoteQuestion(activeQuestion.id, -1)} className="p-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg"><ThumbsDown className="h-3.5 w-3.5" /></button>
-                </div>
-              </div>
-
-              <p className="text-xs text-gray-700 leading-relaxed border-t pt-3 whitespace-pre-line">
-                {activeQuestion.content}
-              </p>
-
-              <div className="flex flex-wrap gap-1 pt-2">
-                {activeQuestion.tags.map(tag => (
-                  <span key={tag} className="text-[9px] font-bold bg-green-50 text-green-700 px-2 py-0.5 rounded-full">#{tag}</span>
-                ))}
-              </div>
-            </div>
-
-            {/* Danh sách câu trả lời */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-gray-800">Câu trả lời ({activeQuestion.answers.length})</h3>
-              
-              {activeQuestion.answers.map(answer => (
-                <div 
-                  key={answer.id}
-                  className={`p-4 rounded-2xl border transition-all ${
-                    answer.isBest 
-                      ? 'bg-emerald-50/50 border-emerald-200 ring-1 ring-emerald-600/20' 
-                      : 'bg-white border-gray-100 shadow-sm'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[10px] text-gray-500">
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-0.5 rounded-full font-bold flex items-center space-x-1 ${answer.author.isExpert ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-gray-50 text-gray-700'}`}>
-                        {answer.author.isExpert && <Award className="h-3 w-3 text-amber-600" />}
-                        <span>{answer.author.name} ({answer.author.role})</span>
-                      </span>
-                      <span>•</span>
-                      <span>{answer.date}</span>
-                    </div>
-
-                    {answer.isBest && (
-                      <span className="flex items-center space-x-1 text-[10px] text-emerald-700 font-bold bg-emerald-100/60 px-2 py-0.5 rounded-full">
-                        <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
-                        <span>Hữu ích nhất</span>
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-xs text-gray-800 leading-relaxed mt-3 whitespace-pre-line">
-                    {answer.content}
-                  </p>
-
-                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-50">
-                    <div className="flex items-center space-x-1 text-[10px] text-gray-600">
-                      <button onClick={() => handleVoteAnswer(activeQuestion.id, answer.id, 1)} className="p-1 bg-gray-50 rounded hover:bg-gray-100"><ThumbsUp className="h-3 w-3" /></button>
-                      <span className="px-1 font-bold">{answer.votes}</span>
-                      <button onClick={() => handleVoteAnswer(activeQuestion.id, answer.id, -1)} className="p-1 bg-gray-50 rounded hover:bg-gray-100"><ThumbsDown className="h-3 w-3" /></button>
-                    </div>
-
-                    {!answer.isBest && (
-                      <button 
-                        onClick={() => handleMarkBestAnswer(activeQuestion.id, answer.id)}
-                        className="text-[9px] font-bold text-gray-400 hover:text-emerald-600 transition-colors flex items-center space-x-1"
-                      >
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        <span>Đánh dấu hữu ích</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Form trả lời */}
-            <form onSubmit={handleCreateAnswer} className="bg-white p-4 border border-gray-100 rounded-3xl shadow-sm space-y-3">
-              <h4 className="text-xs font-bold text-gray-700">Trả lời câu hỏi này</h4>
-              <textarea
-                rows={3}
-                value={answerContent}
-                onChange={(e) => setAnswerContent(e.target.value)}
-                placeholder="Chia sẻ kinh nghiệm, hướng dẫn của bạn..."
-                className="w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                required
-              />
-              <div className="flex justify-end">
-                <button 
-                  type="submit" 
-                  className="px-4 py-2 bg-green-600 text-white font-bold text-xs rounded-xl shadow-md hover:bg-green-700 transition-all"
-                >
-                  Gửi trả lời
-                </button>
-              </div>
-            </form>
-          </div>
-        ) : (
-          // 2. TRANG DANH SÁCH CÂU HỎI
-          <div className="space-y-6 animate-in fade-in duration-200">
-            {/* Search & Filter Bar */}
-            <div className="flex flex-col md:flex-row gap-3 justify-between bg-white p-4 border border-gray-100 rounded-3xl shadow-sm">
-              <div className="flex flex-wrap gap-1.5">
-                {['Tất cả', 'Chờ trả lời', 'Đã có đáp án', 'Còn tranh luận'].map(filter => (
-                  <button
-                    key={filter}
-                    onClick={() => setSelectedFilter(filter)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                      selectedFilter === filter
-                        ? 'bg-green-600 text-white shadow-md shadow-green-500/20'
-                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200/50'
-                    }`}
-                  >
-                    {filter}
-                  </button>
-                ))}
-              </div>
-
-              <div className="relative min-w-[200px] flex-1 md:flex-none">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm câu hỏi..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-            </div>
-
-            {/* Desktop CTA for question form */}
-            <button
-              onClick={() => setIsFormOpen(true)}
-              className="hidden md:flex w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-black text-sm rounded-3xl shadow-md hover:opacity-95 transition-all items-center justify-center space-x-2 shadow-green-600/20"
-            >
-              <HelpCircle className="h-5 w-5 text-emerald-200" />
-              <span>Bạn có thắc mắc kỹ thuật? Hỏi chuyên gia ngay</span>
-            </button>
-
-            {/* Question Form Modal */}
-            {isFormOpen && (
-              <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 animate-in fade-in duration-200">
-                <div 
-                  className="absolute inset-0" 
-                  onClick={() => setIsFormOpen(false)} 
-                />
-                <form 
-                  onSubmit={handleCreateQuestion} 
-                  className="relative bg-white w-full md:max-w-xl p-6 rounded-t-[32px] md:rounded-3xl shadow-2xl space-y-4 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto"
-                >
-                  <div className="flex items-center justify-between border-b pb-3">
-                    <h3 className="text-sm font-black text-gray-900">Đặt câu hỏi mới cho cộng đồng</h3>
-                    <button 
-                      type="button" 
-                      onClick={() => setIsFormOpen(false)}
-                      className="text-xs font-bold text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 w-6 h-6 flex items-center justify-center rounded-full"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Tiêu đề câu hỏi</label>
-                    <input
-                      type="text"
-                      placeholder="Ví dụ: Cây sầu riêng bị xì mủ thân cây"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent font-medium"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Chủ đề</label>
-                      <select
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none bg-gray-50 font-bold text-gray-700 focus:ring-2 focus:ring-green-500"
-                      >
-                        <option value="Lúa">Lúa</option>
-                        <option value="Sầu riêng">Sầu riêng</option>
-                        <option value="Vải thiều">Vải thiều</option>
-                        <option value="Cà phê">Cà phê</option>
-                        <option value="Rau màu">Rau màu</option>
-                        <option value="Chăn nuôi">Chăn nuôi</option>
-                        <option value="Khác">Khác</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Nội dung chi tiết</label>
-                    <textarea
-                      rows={4}
-                      placeholder="Mô tả triệu chứng, thời gian bị bệnh, tình hình phân bón đã dùng..."
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent font-medium"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-end space-x-2 pt-2 border-t">
-                    <button
-                      type="button"
-                      onClick={() => setIsFormOpen(false)}
-                      className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-50 rounded-xl transition-all"
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-5 py-2 bg-green-600 text-white font-black text-xs rounded-xl shadow-md hover:bg-green-700 transition-all flex items-center space-x-1.5 shadow-green-600/20"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>Đăng câu hỏi</span>
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Mobile FAB for Question Page */}
-            <button
-              onClick={() => setIsFormOpen(true)}
-              className="md:hidden fixed bottom-[76px] right-[16px] z-50 flex items-center justify-center w-[52px] h-[52px] rounded-full text-white bg-green-600 shadow-lg active:scale-95 transition-all shadow-green-600/30"
-              aria-label="Đặt câu hỏi"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-            >
-              <Plus className="w-6 h-6" />
-            </button>
-
-            {/* Danh sách câu hỏi */}
-            {filteredQuestions.length === 0 ? (
-              <div className="text-center py-16 bg-white border rounded-3xl">
-                <p className="text-xs text-gray-400 font-medium">Không tìm thấy câu hỏi nào phù hợp.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredQuestions.map(q => (
-                  <div 
-                    key={q.id}
-                    onClick={() => setActiveQuestionId(q.id)}
-                    className="bg-white p-4 border border-gray-100 rounded-2xl shadow-sm hover:border-emerald-300 cursor-pointer transition-all flex items-start justify-between gap-3 group"
-                  >
-                    <div className="space-y-2 min-w-0 flex-1">
-                      <div className="flex items-center space-x-2">
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                          q.status === 'Chờ trả lời' ? 'bg-red-50 text-red-700 border border-red-200/50' :
-                          q.status === 'Đã có đáp án' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50' :
-                          'bg-amber-50 text-amber-700 border border-amber-200/50'
-                        }`}>
-                          {q.status}
-                        </span>
-                        <span className="text-[9px] text-gray-400">{q.date}</span>
-                      </div>
-
-                      <h3 className="text-xs font-bold text-gray-900 group-hover:text-green-700 transition-colors line-clamp-1">
-                        {q.title}
-                      </h3>
-                      <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">
-                        {q.content}
-                      </p>
-
-                      <div className="flex flex-wrap gap-1 pt-1">
-                        {q.tags.map(tag => (
-                          <span key={tag} className="text-[8px] bg-gray-50 text-gray-500 px-2 py-0.5 rounded-full font-medium">
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-center text-center border-l pl-4 flex-shrink-0 justify-center min-w-[60px]">
-                      <span className="text-xs font-black text-gray-800">{q.answers.length}</span>
-                      <span className="text-[9px] text-gray-400">Trả lời</span>
-                      <ChevronRight className="h-4 w-4 text-gray-300 mt-2 group-hover:text-green-600 group-hover:translate-x-1 transition-all" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+    <div className="max-w-6xl mx-auto px-4 py-12 space-y-8 animate-in fade-in duration-500 relative min-h-screen pb-24">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-gradient-to-r from-green-600 to-teal-700 rounded-[40px] p-8 md:p-12 text-white shadow-lg shadow-green-900/20 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/paddy.png')]" />
+        <div className="space-y-2 relative z-10">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight">Hỏi Đáp Cùng Cộng Đồng</h1>
+          <p className="text-sm text-green-50 font-medium max-w-xl">Gặp khó khăn trong canh tác? Đặt câu hỏi để nhận tư vấn từ các chuyên gia và cộng đồng nhà nông.</p>
+        </div>
+        <button 
+          onClick={() => setIsFormOpen(true)}
+          className="flex items-center space-x-2 bg-white hover:bg-green-50 text-gray-900 font-black text-xs px-6 py-4 rounded-2xl transition-all shadow-md shadow-black/10 relative z-10"
+        >
+          <Plus className="w-4 h-4 text-green-600" />
+          <span>Đặt câu hỏi</span>
+        </button>
       </div>
 
-      {/* Cột phụ: Expert Dashboard */}
-      <div className="lg:col-span-4 space-y-6">
-        <div className="bg-white p-5 border border-gray-100 rounded-3xl shadow-sm space-y-4 sticky top-20">
-          <h3 className="text-sm font-bold text-gray-900 flex items-center space-x-2 pb-2 border-b">
-            <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-            <span>Tư vấn Trực tuyến</span>
-          </h3>
-          
-          <p className="text-[11px] text-gray-500 leading-relaxed">
-            Hệ thống tự động tích hợp AI hỗ trợ trả lời sơ bộ khi đặt câu hỏi.
-          </p>
-          
-          <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 space-y-2">
-            <span className="text-[10px] font-bold text-amber-800 flex items-center space-x-1">
-              <UserCheck className="h-3.5 w-3.5" />
-              <span>Đã xác thực chuyên gia</span>
-            </span>
-            <p className="text-[9px] text-amber-700 leading-relaxed">
-              Các câu trả lời từ tài khoản có nhãn danh hiệu đặc biệt được kiểm định nghiêm ngặt bởi Hội đồng Nông nghiệp.
-            </p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Sidebar Filters */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Tag Filter */}
+          <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-3">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lĩnh vực chuyên môn</h3>
+            <div className="flex flex-col gap-2">
+              <button 
+                onClick={() => setSelectedTag(null)}
+                className={`text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${!selectedTag ? 'bg-green-600 text-white border-green-600 shadow-sm shadow-green-600/20' : 'bg-gray-50 text-gray-600 border-transparent hover:border-gray-200'}`}
+              >
+                Tất cả
+              </button>
+              {TAG_SUGGESTIONS.map((tag) => (
+                <button 
+                  key={tag}
+                  onClick={() => setSelectedTag(tag)}
+                  className={`text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${selectedTag === tag ? 'bg-green-600 text-white border-green-600 shadow-sm shadow-green-600/20' : 'bg-gray-50 text-gray-600 border-transparent hover:border-gray-200'}`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
           </div>
+        </div>
+
+        {/* Main Question Feed */}
+        <div className="lg:col-span-9 space-y-6">
+          {/* Filter Tabs */}
+          <div className="flex items-center justify-between flex-wrap gap-4 border-b border-gray-100 pb-4">
+            <div className="flex items-center space-x-2 overflow-x-auto">
+              <button 
+                onClick={() => setSelectedFilter('newest')}
+                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${selectedFilter === 'newest' ? 'bg-gray-900 text-white' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                Mới nhất
+              </button>
+              <button 
+                onClick={() => setSelectedFilter('unanswered')}
+                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${selectedFilter === 'unanswered' ? 'bg-gray-900 text-white' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                Chưa có đáp
+              </button>
+              <button 
+                onClick={() => setSelectedFilter('expert')}
+                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${selectedFilter === 'expert' ? 'bg-gray-900 text-white' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                Chuyên gia trả lời
+              </button>
+            </div>
+
+            <div className="relative w-full md:w-64">
+              <Search className="w-4 h-4 text-gray-400 absolute left-4 top-3.5" />
+              <input 
+                type="text" 
+                placeholder="Tìm câu hỏi..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 rounded-2xl bg-gray-50 border border-gray-100 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none text-xs font-bold transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Questions List */}
+          {loading ? (
+            <div className="py-20 flex items-center justify-center">
+              <div className="w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {questions
+                .filter(q => q.title.toLowerCase().includes(searchQuery.toLowerCase()) || q.content.toLowerCase().includes(searchQuery.toLowerCase()))
+                .map((question) => (
+                  <div key={question.id} className="bg-white rounded-[32px] border border-gray-100 p-6 hover:border-green-200 shadow-sm transition-all flex gap-6 items-start">
+                    {/* Votes count side */}
+                    <button 
+                      onClick={() => toggleUpvote(question.id)}
+                      className={`flex flex-col items-center justify-center px-3 py-2 rounded-2xl border transition-all ${question.upvotes?.includes(session?.user?.email || '') ? 'bg-green-50 border-green-500 text-green-600' : 'bg-gray-50 border-gray-100 text-gray-400 hover:text-gray-600'}`}
+                    >
+                      <ThumbsUp className="w-4 h-4 mb-1" />
+                      <span className="text-xs font-black">{(question.upvotes || []).length}</span>
+                    </button>
+
+                    {/* Question main content */}
+                    <div className="flex-1 min-w-0 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {question.status === 'answered' && (
+                          <span className="flex items-center space-x-1 text-[9px] font-black uppercase tracking-widest bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-full">
+                            <CheckCircle className="w-3 h-3" />
+                            <span>Đã có đáp</span>
+                          </span>
+                        )}
+                        {question.tags?.map((t: string) => (
+                          <span key={t} className="text-[9px] font-black uppercase tracking-widest bg-gray-50 text-gray-400 border border-gray-100 px-2.5 py-1 rounded-full">{t}</span>
+                        ))}
+                      </div>
+
+                      <Link href={`/hoi-dap/${question.id}`} className="block group">
+                        <h3 className="text-base font-black text-gray-900 leading-tight group-hover:text-green-600 transition-colors">
+                          {question.title}
+                        </h3>
+                      </Link>
+
+                      <p className="text-xs font-medium text-gray-500 line-clamp-2 leading-relaxed">
+                        {question.content.replace(/<[^>]*>/g, '')}
+                      </p>
+
+                      <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
+                        <div className="flex items-center space-x-2">
+                          <Image 
+                            src={question.author?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'} 
+                            alt="Avatar" 
+                            width={24} 
+                            height={24} 
+                            className="w-6 h-6 rounded-full bg-gray-50" 
+                            unoptimized
+                          />
+                          <span className="text-[10px] font-black text-gray-700">{question.author?.full_name}</span>
+                          {question.author?.is_verified && <Award className="w-3 h-3 text-blue-500 fill-blue-50" />}
+                        </div>
+
+                        <div className="flex items-center space-x-4 text-[10px] font-bold text-gray-400">
+                          <span className="flex items-center space-x-1">
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span>{question.answerCount || 0} trả lời</span>
+                          </span>
+                          <span>{question.viewCount || 0} lượt xem</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              
+              {questions.length === 0 && (
+                <div className="py-20 text-center bg-white rounded-[40px] border border-gray-100">
+                  <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-gray-400 italic">Không tìm thấy câu hỏi nào.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      <ChatWidget />
+      {/* Floating Action Button (Mobile) */}
+      <button 
+        onClick={() => setIsFormOpen(true)}
+        className="md:hidden fixed bottom-24 right-6 w-14 h-14 bg-green-600 text-white rounded-full shadow-xl shadow-green-600/30 flex items-center justify-center active:scale-95 transition-transform z-40"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
+
+      {/* Question Form Modal */}
+      {isFormOpen && (
+        <div className="fixed inset-0 z-50 bg-white md:bg-black/60 md:backdrop-blur-sm md:p-4 flex items-center justify-center animate-in fade-in duration-200">
+          <div className="bg-white md:rounded-[40px] p-8 w-full max-w-2xl h-full md:h-auto md:max-h-[90vh] overflow-y-auto relative shadow-2xl">
+            <button 
+              onClick={() => setIsFormOpen(false)}
+              className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-full transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+              <HelpCircle className="w-6 h-6 text-green-600" />
+              <span>Đặt câu hỏi mới</span>
+            </h3>
+
+            <form onSubmit={handleCreateQuestion} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tiêu đề câu hỏi</label>
+                <input 
+                  type="text"
+                  required
+                  maxLength={200}
+                  placeholder="Ví dụ: Kỹ thuật bón phân cho lúa ST25"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                />
+                <span className="text-[9px] font-bold text-gray-400 block text-right mr-1">{title.length}/200 ký tự</span>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Chi tiết vấn đề</label>
+                <textarea 
+                  required
+                  rows={5}
+                  placeholder="Hãy miêu tả rõ triệu chứng, điều kiện canh tác..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-medium focus:ring-2 focus:ring-green-500 outline-none transition-all resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <span>Tags</span>
+                </label>
+                <div className="flex flex-wrap gap-2 bg-gray-50 p-4 rounded-[24px] border border-gray-100 mb-2">
+                  {TAG_SUGGESTIONS.map((tag) => {
+                    const isSelected = tags.includes(tag.toLowerCase());
+                    return (
+                      <button
+                        type="button"
+                        key={tag}
+                        onClick={() => {
+                          const lower = tag.toLowerCase();
+                          setTags(prev => isSelected ? prev.filter(t => t !== lower) : [...prev, lower]);
+                        }}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                          isSelected 
+                            ? 'bg-green-600 text-white border-green-600' 
+                            : 'bg-white text-gray-400 border-gray-100 hover:border-green-200'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="text"
+                    placeholder="Thêm tag thủ công..."
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (tagInput.trim() && !tags.includes(tagInput.toLowerCase())) {
+                          setTags([...tags, tagInput.toLowerCase().trim()]);
+                          setTagInput('');
+                        }
+                      }
+                    }}
+                    className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-4 text-xs font-bold focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-gray-900 hover:bg-green-700 text-white font-black text-xs py-4 rounded-2xl shadow-xl shadow-gray-900/10 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                <span>{isSubmitting ? 'Đang tạo...' : 'Đăng câu hỏi'}</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
