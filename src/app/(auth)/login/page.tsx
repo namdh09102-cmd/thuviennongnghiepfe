@@ -160,7 +160,7 @@ function LoginContent() {
               />
               <span className="text-[11px] font-bold text-gray-600 uppercase">Ghi nhớ đăng nhập</span>
             </label>
-            <Link href="#" className="text-[11px] font-bold text-green-600 uppercase hover:underline">
+            <Link href="/forgot-password" className="text-[11px] font-bold text-green-600 uppercase hover:underline">
               Quên mật khẩu?
             </Link>
           </div>

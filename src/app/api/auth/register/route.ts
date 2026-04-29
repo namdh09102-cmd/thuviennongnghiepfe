@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import connectMongoDB from '@/lib/mongodb';
+import User from '@/models/User';
+import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,47 +11,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Thiếu thông tin đăng ký' }, { status: 400 });
     }
 
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Supabase không được cấu hình' }, { status: 500 });
+    await connectMongoDB();
+
+    // Check if email already exists
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return NextResponse.json({ error: 'Email đã được sử dụng' }, { status: 400 });
     }
 
-    // 1. Tạo Auth User trong Supabase
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    // Check if username already exists
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      return NextResponse.json({ error: 'Username đã được sử dụng' }, { status: 400 });
+    }
+
+    // Hash password using email as salt
+    const hashedPassword = crypto.scryptSync(password, email, 64).toString('hex');
+
+    // Create user in MongoDB
+    const newUser = await User.create({
+      name: full_name,
       email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name,
-        username
-      }
+      username,
+      password: hashedPassword,
+      role: 'user',
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+      points: 0,
+      level: 1,
+      bio: 'Thành viên mới tham gia AgriLib.',
     });
 
-    if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 400 });
-    }
-
-    const userId = authData.user.id;
-
-    // 2. Tạo Profile
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .upsert([{
-        id: userId,
-        username,
-        full_name,
-        role: 'member',
-        points: 0,
-        level: 1,
-        bio: 'Thành viên mới tham gia AgriLib.',
-        region: ''
-      }], { onConflict: 'id' });
-
-    if (profileError) {
-      return NextResponse.json({ error: profileError.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, user: authData.user });
+    return NextResponse.json({ 
+      success: true, 
+      user: {
+        id: newUser._id.toString(),
+        name: newUser.name,
+        email: newUser.email,
+        username: newUser.username,
+        role: newUser.role,
+      } 
+    });
   } catch (err: any) {
+    console.error('Registration error:', err);
     return NextResponse.json({ error: err.message || 'Lỗi hệ thống' }, { status: 500 });
   }
 }

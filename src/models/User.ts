@@ -5,6 +5,9 @@ export interface IUser extends Document {
   name: string;
   email: string;
   image?: string;
+  password?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   // Extended profile fields
   username?: string;
   bio?: string;
@@ -31,6 +34,9 @@ const UserSchema: Schema = new Schema({
   name: { type: String },
   email: { type: String, unique: true, sparse: true },
   image: { type: String },
+  password: { type: String },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
   username: { type: String, unique: true, sparse: true },
   bio: { type: String, maxlength: 200 },
   avatar: { type: String },
