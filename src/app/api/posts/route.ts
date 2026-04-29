@@ -63,8 +63,8 @@ export async function GET(req: NextRequest) {
 
   // Manual relational joins
   if (data && data.length > 0) {
-    const authorIds = [...new Set(data.map((p: any) => p.author_id).filter(Boolean))];
-    const catIds = [...new Set(data.map((p: any) => p.category_id).filter(Boolean))];
+    const authorIds = Array.from(new Set(data.map((p: any) => p.author_id).filter(Boolean)));
+    const catIds = Array.from(new Set(data.map((p: any) => p.category_id).filter(Boolean)));
 
     const [profilesRes, categoriesRes] = await Promise.all([
       supabaseAdmin.from('profiles').select('id, username, full_name, avatar_url').in('id', authorIds),
