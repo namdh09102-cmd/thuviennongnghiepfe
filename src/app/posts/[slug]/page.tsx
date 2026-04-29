@@ -15,8 +15,13 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import dynamic from 'next/dynamic';
 import PostContent from '@/components/PostContent';
-import CommentSection from '@/components/CommentSection';
+
+const CommentSection = dynamic(() => import('@/components/CommentSection'), {
+  ssr: false,
+  loading: () => <p className="text-center text-xs font-black text-gray-400 uppercase tracking-widest py-10">Đang tải bình luận...</p>
+});
 import PostActions from '@/components/PostActions';
 import PostCard from '@/components/PostCard';
 import { supabase } from '@/lib/supabase';
@@ -130,7 +135,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const metaDescription = post.excerpt?.slice(0, 160) || post.content?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Chia sẻ kinh nghiệm, kỹ thuật canh tác, hỏi đáp chuyên gia nông nghiệp Việt Nam';
 
   return {
-    title: post.title,
+    title: `${post.title} | Thư Viện Nông Nghiệp`,
     description: metaDescription,
     openGraph: {
       title: post.title,
@@ -140,6 +145,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       publishedTime: post.created_at,
       authors: [authorName],
     },
+    alternates: { canonical: `https://thuviennongnghiep.vn/posts/${post.slug}` }
   };
 }
 

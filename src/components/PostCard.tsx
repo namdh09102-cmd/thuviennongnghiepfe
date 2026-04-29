@@ -21,12 +21,13 @@ interface PostCardProps {
     like_count: number;
     comment_count: number;
   };
+  prefetch?: boolean;
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, prefetch }: PostCardProps) {
   return (
     <article className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-green-900/5 transition-all group overflow-hidden">
-      <Link href={`/posts/${post.slug}`}>
+      <Link href={`/posts/${post.slug}`} prefetch={prefetch}>
         <div className="relative aspect-[4/3] overflow-hidden">
           {post.thumbnail_url ? (
             <Image

@@ -212,8 +212,8 @@ export default function HomePageContent() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {posts.map((post: any) => (
-              <PostCard key={post.id} post={post} />
+            {posts.map((post: any, idx: number) => (
+              <PostCard key={post.id} post={post} prefetch={idx < 3} />
             ))}
           </div>
         )}
