@@ -67,7 +67,7 @@ export const {
               email: user.email,
               image: user.image,
               username: (user.email ? user.email.split('@')[0] : 'user') + Math.floor(Math.random() * 1000),
-              role: 'user',
+              role: user.email === 'namdh09102@gmail.com' ? 'admin' : 'user',
               avatar: user.image,
             });
           }
