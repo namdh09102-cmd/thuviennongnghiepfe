@@ -31,9 +31,7 @@ export default function PostCard({ post, prefetch }: PostCardProps) {
         <div className="relative aspect-[16/9] overflow-hidden bg-green-50">
           {post.thumbnail_url ? (
             <Image
-              src={post.thumbnail_url.startsWith('http') && !post.thumbnail_url.includes('cloudinary')
-                ? `https://res.cloudinary.com/demo/image/fetch/w_400,h_225,c_fill,f_auto,q_auto/${encodeURIComponent(post.thumbnail_url)}`
-                : post.thumbnail_url}
+              src={post.thumbnail_url}
               alt={post.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               width={400}
