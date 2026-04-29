@@ -12,6 +12,7 @@ export default function BottomNav() {
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
 
+
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -26,6 +27,8 @@ export default function BottomNav() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (pathname.startsWith('/posts/') && pathname !== '/posts/create') return null;
 
   const navItems = [
     { label: 'Trang chủ', icon: Home, href: '/' },

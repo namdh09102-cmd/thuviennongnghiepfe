@@ -64,7 +64,7 @@ export default function CommentForm({ onSubmit, placeholder, replyTo, initialVal
   };
 
   return (
-    <div className="sm:relative fixed bottom-[56px] md:bottom-0 left-0 right-0 sm:bottom-auto sm:left-auto sm:right-auto bg-white sm:bg-transparent z-40 sm:z-auto p-4 sm:p-4 border-t border-gray-100 sm:border sm:border-gray-100 sm:rounded-3xl shadow-lg sm:shadow-sm focus-within:ring-2 focus-within:ring-green-500/20 focus-within:border-green-500 transition-all">
+    <div className="relative bg-white sm:bg-transparent p-4 border border-gray-100 sm:rounded-3xl shadow-sm focus-within:ring-2 focus-within:ring-green-500/20 focus-within:border-green-500 transition-all mt-4">
       {replyTo && (
         <div className="flex items-center space-x-2 mb-3 px-2 py-1 bg-green-50 rounded-lg w-fit">
           <MessageSquare className="w-3 h-3 text-green-600" />

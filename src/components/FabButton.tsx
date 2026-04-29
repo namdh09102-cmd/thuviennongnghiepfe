@@ -34,7 +34,7 @@ export default function FabButton() {
   }, [pathname]);
 
   // Hide if user is not logged in or not on a feed page
-  if (!session?.user || !(pathname === '/' || pathname.startsWith('/posts'))) return null;
+  if (!session?.user || !(pathname === '/' || pathname === '/posts')) return null;
 
   return (
     <Link
