@@ -39,7 +39,7 @@ export default function HomePageContent() {
   const trendingPosts = trendingPostsData?.data || [];
 
   const getKey = (pageIndex: number, previousPageData: any) => {
-    if (previousPageData && !previousPageData.data.length) return null;
+    if (previousPageData && (!previousPageData.data || !previousPageData.data.length)) return null;
     return `/api/posts?page=${pageIndex + 1}&category=${activeCategory}&sort=${activeSort}&limit=20`;
   };
 
