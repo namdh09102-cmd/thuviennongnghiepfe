@@ -6,6 +6,6 @@ export const { auth: middleware } = NextAuth(authConfig);
 
 export const config = {
   // Apply middleware to admin routes
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin', '/admin/:path*'],
 };
 

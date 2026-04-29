@@ -1,9 +1,7 @@
 import mongoose from 'mongoose';
 import dns from 'dns';
 
-if (typeof window === 'undefined') {
-  dns.setServers(['8.8.8.8', '1.1.1.1']);
-}
+
 
 const MONGODB_URI = process.env.MONGODB_URI || '';
 

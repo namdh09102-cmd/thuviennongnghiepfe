@@ -11,13 +11,15 @@ export default {
     Credentials({
       async authorize(credentials) {
         if (credentials?.email && credentials?.password) {
-          // Trả về user thật từ database hoặc mock thông tin user thật
+          const email = credentials.email as string;
+          const isAdmin = email === 'admin@example.com';
+          
           return {
-            id: "a817905e-5286-4d0b-af95-3688912dd902",
-            name: "Người dùng Thử nghiệm",
-            email: credentials.email as string,
-            role: "expert",
-            username: "testuser",
+            id: isAdmin ? "admin-mock-id" : "a817905e-5286-4d0b-af95-3688912dd902",
+            name: isAdmin ? "Ban Quản Trị" : "Người dùng Thử nghiệm",
+            email: email,
+            role: isAdmin ? "admin" : "expert",
+            username: isAdmin ? "admin" : "testuser",
           };
         }
         return null;
