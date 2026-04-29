@@ -9,8 +9,10 @@ import { useSession } from 'next-auth/react';
 import { Save, Send, Eye, EyeOff, Image as ImageIcon, Tag, Loader2, AlertCircle, X, UploadCloud } from 'lucide-react';
 import DOMPurify from 'dompurify';
 
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
-import 'react-quill/dist/quill.snow.css';
+const TipTapEditor = dynamic(() => import('@/components/TipTapEditor'), { 
+  ssr: false,
+  loading: () => <div className="h-40 bg-gray-50 rounded-2xl animate-pulse flex items-center justify-center text-xs font-bold text-gray-400">Đang tải trình soạn thảo...</div>
+});
 
 const CROP_OPTIONS = ['Lúa', 'Sầu riêng', 'Dưa lưới', 'Tiêu', 'Cà phê', 'Rau', 'Thủy sản'];
 
@@ -356,13 +358,9 @@ export default function PostEditor() {
               Nội dung bài viết <span className="text-red-500">*</span>
             </label>
             <div className={`border rounded-3xl overflow-hidden ${errors.content ? 'border-red-300' : 'border-gray-200'}`}>
-              <ReactQuill 
-                theme="snow" 
-                value={content} 
+              <TipTapEditor 
+                content={content} 
                 onChange={setContent}
-                modules={modules}
-                placeholder="Chia sẻ chi tiết kỹ thuật, mẹo hay tại đây..."
-                className="bg-white text-sm min-h-[250px]"
               />
             </div>
             {errors.content && <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">{errors.content}</p>}
