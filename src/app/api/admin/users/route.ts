@@ -64,12 +64,13 @@ export async function PATCH(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { userId, role, is_verified, points } = body;
+  const { userId, role, is_verified, points, status } = body;
 
   const updateData: any = {};
   if (role) updateData.role = role;
   if (typeof is_verified === 'boolean') updateData.is_verified = is_verified;
   if (typeof points === 'number') updateData.points = points;
+  if (status) updateData.status = status;
 
   const { data, error } = await supabaseAdmin
     .from('profiles')

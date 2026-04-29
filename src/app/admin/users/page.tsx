@@ -96,7 +96,12 @@ export default function AdminUsersPage() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={user.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'} className="w-10 h-10 rounded-2xl bg-gray-100 object-cover" alt="" />
                       <div className="flex flex-col">
-                        <span className="text-xs font-black text-gray-900 line-clamp-1">{user.full_name || 'Người dùng ẩn danh'}</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-black text-gray-900 line-clamp-1">{user.full_name || 'Người dùng ẩn danh'}</span>
+                          {user.status === 'banned' && (
+                            <span className="px-1.5 py-0.5 bg-red-50 text-red-600 text-[8px] font-black uppercase tracking-widest rounded border border-red-100 flex-shrink-0">Banned</span>
+                          )}
+                        </div>
                         <span className="text-[10px] font-bold text-gray-400">@{user.username}</span>
                       </div>
                     </div>
@@ -145,10 +150,23 @@ export default function AdminUsersPage() {
                               {r}
                             </button>
                           ))}
-                          <button className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50 rounded-xl mt-2 flex items-center space-x-2">
-                            <Ban className="w-3 h-3" />
-                            <span>Khóa tài khoản</span>
-                          </button>
+                          {user.status === 'banned' ? (
+                            <button 
+                              onClick={() => handleUpdateUser(user.id, { status: 'active' })}
+                              className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-green-600 hover:bg-green-50 rounded-xl mt-2 flex items-center space-x-2"
+                            >
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Mở khóa</span>
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleUpdateUser(user.id, { status: 'banned' })}
+                              className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50 rounded-xl mt-2 flex items-center space-x-2"
+                            >
+                              <Ban className="w-3 h-3" />
+                              <span>Khóa tài khoản</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

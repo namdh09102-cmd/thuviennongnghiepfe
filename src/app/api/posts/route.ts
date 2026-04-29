@@ -55,11 +55,11 @@ export async function GET(req: NextRequest) {
   }
 
   if (sort === 'hot' || sort === 'top') {
-    query = query.order('view_count', { ascending: false });
+    query = query.order('is_pinned', { ascending: false }).order('view_count', { ascending: false });
   } else if (sort === 'most_comments') {
-    query = query.order('comment_count', { ascending: false });
+    query = query.order('is_pinned', { ascending: false }).order('comment_count', { ascending: false });
   } else {
-    query = query.order('created_at', { ascending: false });
+    query = query.order('is_pinned', { ascending: false }).order('created_at', { ascending: false });
   }
 
 
