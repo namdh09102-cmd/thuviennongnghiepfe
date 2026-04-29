@@ -16,9 +16,15 @@ export async function GET(
     .eq('slug', params.slug)
     .single();
 
-  if (error) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+  if (error) return NextResponse.json({ data: null, error: 'Post not found', meta: null }, { status: 404 });
 
-  return NextResponse.json(data);
+  return NextResponse.json(
+    { data, error: null, meta: { slug: params.slug } },
+    {
+      status: 200,
+      headers: { 'Cache-Control': 'public, max-age=120, stale-while-revalidate=600' }
+    }
+  );
 }
 
 export async function PUT(

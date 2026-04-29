@@ -57,6 +57,7 @@ export const metadata: Metadata = {
 };
 
 import PushNotificationManager from "../components/PushNotificationManager";
+import { Analytics } from "@vercel/analytics/react";
 
 export default function RootLayout({
   children,
@@ -75,6 +76,7 @@ export default function RootLayout({
             <main className="flex-1 container mx-auto px-4 py-6 pb-24 lg:pb-12 max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
               {children}
             </main>
+            <Analytics />
             <FabButton />
             <BottomNav />
           </ReactQueryProvider>

@@ -6,6 +6,7 @@ import useSWR from 'swr';
 import { useInView } from 'react-intersection-observer';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import PostCard from '@/components/PostCard';
 import FilterTabs from '@/components/FilterTabs';
 import SkeletonCard from '@/components/SkeletonCard';
@@ -254,10 +255,12 @@ export default function HomePageContent() {
             {topExperts?.map((expert: any) => (
               <div key={expert.id} className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <img
+                  <Image
                     src={expert.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'}
                     className="w-10 h-10 rounded-2xl bg-gray-50 object-cover"
-                    alt=""
+                    alt={expert.full_name || 'Avatar'}
+                    width={48}
+                    height={48}
                   />
                   <div>
                     <p className="text-xs font-black text-gray-900">{expert.full_name}</p>

@@ -33,8 +33,9 @@ export default function PostCard({ post }: PostCardProps) {
             src={post.thumbnail_url || 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80'}
             alt={post.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            width={400}
-            height={225}
+            width={800}
+            height={450}
+            loading="lazy"
             placeholder="blur"
             blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
           />

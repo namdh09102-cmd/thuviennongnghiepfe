@@ -84,16 +84,22 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({
-    data,
-    error: null,
-    meta: {
-      page,
-      limit,
-      total: count || 0,
-      totalPages: count ? Math.ceil(count / limit) : 0
+  return NextResponse.json(
+    {
+      data,
+      error: null,
+      meta: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages: count ? Math.ceil(count / limit) : 0
+      }
+    },
+    {
+      status: 200,
+      headers: { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=300' }
     }
-  });
+  );
 }
 
 export async function POST(req: NextRequest) {
