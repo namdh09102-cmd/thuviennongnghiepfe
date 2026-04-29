@@ -14,7 +14,6 @@ interface CommentSectionProps {
 
 export default function CommentSection({ postSlug, postId }: CommentSectionProps) {
   const postIdentifier = postId || postSlug || '';
-  const [hasNewComments, setHasNewComments] = useState(false);
   const { data: session } = useSession();
   const [sortBy, setSortBy] = useState('newest');
   const { 
@@ -28,7 +27,30 @@ export default function CommentSection({ postSlug, postId }: CommentSectionProps
     editComment,
     likeComment,
     mutate 
-  } = useComments(postIdentifier, sortBy, () => setHasNewComments(true));
+  } = useComments(postIdentifier, sortBy);
+
+  const observerTarget = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isReachingEnd && !isLoading) {
+          loadMore();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [observerTarget, isReachingEnd, isLoading, loadMore]);
 
   const handleMainSubmit = async (content: string) => {
     if (!session) return alert('Vui lòng đăng nhập để bình luận!');
@@ -82,17 +104,6 @@ export default function CommentSection({ postSlug, postId }: CommentSectionProps
         )}
       </div>
 
-      {/* Realtime Notification */}
-      {hasNewComments && (
-        <button 
-          onClick={() => { mutate(); setHasNewComments(false); }}
-          className="w-full py-3 bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-widest rounded-2xl border border-green-100 flex items-center justify-center space-x-2 animate-bounce"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>Có bình luận mới, nhấn để tải lại</span>
-        </button>
-      )}
-
       {/* Comments List */}
       <div className="space-y-8">
         {comments.map((comment) => (
@@ -123,14 +134,8 @@ export default function CommentSection({ postSlug, postId }: CommentSectionProps
           </div>
         )}
 
-        {!isReachingEnd && !isLoading && (
-          <button 
-            onClick={() => loadMore()}
-            className="w-full py-4 text-[10px] font-black text-gray-400 hover:text-green-600 uppercase tracking-widest bg-white border border-gray-100 rounded-2xl hover:border-green-100 hover:bg-green-50/30 transition-all shadow-sm"
-          >
-            Xem thêm {totalComments - comments.length} bình luận
-          </button>
-        )}
+        {/* Infinite scroll target */}
+        <div ref={observerTarget} className="h-4 w-full" />
       </div>
     </div>
   );

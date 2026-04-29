@@ -1,36 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import connectMongoDB from '@/lib/mongodb';
+import Comment from '@/models/Comment';
 import { auth } from '@/auth';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id } = params;
   const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-  const body = await req.json();
-  const { action } = body; // 'like' | 'unlike'
+  try {
+    await connectMongoDB();
+    const comment = await Comment.findOne({ _id: id, isDeleted: false });
+    if (!comment) {
+      return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
+    }
 
-  const { data: comment } = await supabaseAdmin
-    .from('comments')
-    .select('votes')
-    .eq('id', params.id)
-    .single();
+    const userId = (session.user as any).id;
+    const likesArray = comment.likes || [];
 
-  if (!comment) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    const isLiked = likesArray.includes(userId);
 
-  const currentVotes = comment.votes || 0;
-  const newVotes = action === 'like' ? currentVotes + 1 : Math.max(0, currentVotes - 1);
+    if (isLiked) {
+      // Unlike
+      comment.likes = likesArray.filter((uid: string) => uid !== userId);
+    } else {
+      // Like
+      comment.likes.push(userId);
+    }
 
-  const { data, error } = await supabaseAdmin
-    .from('comments')
-    .update({ votes: newVotes })
-    .eq('id', params.id)
-    .select()
-    .single();
+    await comment.save();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json(data);
+    return NextResponse.json({
+      success: true,
+      liked: !isLiked,
+      likeCount: comment.likes.length
+    });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }

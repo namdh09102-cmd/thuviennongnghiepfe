@@ -1,13 +1,11 @@
 'use client';
 
 import useSWRInfinite from 'swr/infinite';
-import { supabase } from '@/lib/supabase';
-import { useEffect } from 'react';
 
-export function useComments(postSlug: string, sortBy: string = 'newest', onNewComment?: () => void) {
+export function useComments(postId: string, sortBy: string = 'newest') {
   const getKey = (pageIndex: number, previousPageData: any) => {
-    if (previousPageData && !previousPageData.length) return null;
-    return `/api/posts/${postSlug}/comments?page=${pageIndex}&sort=${sortBy}&limit=10`;
+    if (previousPageData && !previousPageData.data?.length) return null;
+    return `/api/posts/${postId}/comments?page=${pageIndex + 1}&sort=${sortBy}&limit=20`;
   };
 
   const { data, error, size, setSize, mutate, isLoading } = useSWRInfinite(
@@ -16,54 +14,28 @@ export function useComments(postSlug: string, sortBy: string = 'newest', onNewCo
   );
 
   const comments = data ? data.map((page: any) => page.data).flat().filter(Boolean) : [];
-  const totalComments = data?.[0]?.total || 0;
+  const totalComments = data?.[0]?.total || comments.length;
   const isEmpty = comments.length === 0;
-  const isReachingEnd = isEmpty || comments.length >= totalComments;
-
-  // Realtime subscription
-  useEffect(() => {
-    const channel = supabase
-      .channel(`comments-${postSlug}`)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'comments'
-      }, () => {
-        if (onNewComment) {
-          onNewComment();
-        } else {
-          mutate();
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [postSlug, mutate, onNewComment]);
+  const isReachingEnd = isEmpty || (data && data[data.length - 1]?.data?.length < 20);
 
   const addComment = async (content: string, parentId?: string) => {
-    const optimisticComment = {
-      id: Math.random().toString(),
-      content,
-      parent_id: parentId,
-      created_at: new Date().toISOString(),
-      author: { /* current user mock for optimistic */ },
-      votes: 0,
-    };
-
-    // Optimistic update
-    mutate([optimisticComment, ...comments], false);
-
     try {
-      const res = await fetch(`/api/posts/${postSlug}/comments`, {
-        method: 'POST',
-        body: JSON.stringify({ content, parentId }),
+      let url = `/api/posts/${postId}/comments`;
+      let method = 'POST';
+      
+      if (parentId) {
+        url = `/api/comments/${parentId}/replies`;
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
       });
-      if (!res.ok) throw new Error();
-      mutate(); // Sync with real data
+
+      if (!res.ok) throw new Error('Không thể gửi bình luận');
+      mutate(); 
     } catch (e) {
-      mutate(); // Rollback
       throw e;
     }
   };
@@ -81,7 +53,8 @@ export function useComments(postSlug: string, sortBy: string = 'newest', onNewCo
   const editComment = async (id: string, content: string) => {
     try {
       const res = await fetch(`/api/comments/${id}`, {
-        method: 'PATCH',
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
       });
       if (!res.ok) {
@@ -94,11 +67,10 @@ export function useComments(postSlug: string, sortBy: string = 'newest', onNewCo
     }
   };
 
-  const likeComment = async (id: string, action: 'like' | 'unlike') => {
+  const likeComment = async (id: string) => {
     try {
       const res = await fetch(`/api/comments/${id}/like`, {
         method: 'POST',
-        body: JSON.stringify({ action }),
       });
       if (!res.ok) throw new Error();
       mutate();

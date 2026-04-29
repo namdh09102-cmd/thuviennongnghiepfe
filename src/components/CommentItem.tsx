@@ -72,10 +72,10 @@ export default function CommentItem({ comment, onReply, onDelete, onEdit, onVote
         <div className="flex-shrink-0">
           <Image 
             src={comment.author?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'} 
-            className="w-10 h-10 rounded-2xl bg-gray-100 shadow-sm border border-white object-cover" 
+            className="w-8 h-8 rounded-xl bg-gray-100 shadow-sm border border-white object-cover" 
             alt={comment.author?.full_name || 'Avatar'} 
-            width={80}
-            height={80}
+            width={32}
+            height={32}
             placeholder="blur"
             blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
           />
@@ -190,7 +190,7 @@ export default function CommentItem({ comment, onReply, onDelete, onEdit, onVote
 
           {/* Nested Replies */}
           {hasReplies && (
-            <div className="mt-4 ml-6 space-y-4 border-l-2 border-gray-50 pl-6">
+            <div className="mt-4 ml-8 space-y-4 border-l-2 border-gray-50 pl-8">
               {visibleReplies.map((reply: any) => (
                 <CommentItem 
                   key={reply.id} 

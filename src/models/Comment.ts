@@ -1,23 +1,25 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IComment extends Document {
-  post_id: string;
-  user_id: string;
-  parent_id: string | null;
+  postId: string;
+  parentId: string | null;
+  authorId: string;
   content: string;
-  is_hidden: boolean;
-  created_at: Date;
-  updated_at: Date;
+  likes: string[];
+  isDeleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const CommentSchema: Schema = new Schema({
-  post_id: { type: String, required: true },
-  user_id: { type: String, required: true },
-  parent_id: { type: String, default: null },
-  content: { type: String, required: true },
-  is_hidden: { type: Boolean, default: false },
-  created_at: { type: Date, default: Date.now },
-  updated_at: { type: Date, default: Date.now }
+  postId: { type: String, required: true },
+  parentId: { type: String, default: null },
+  authorId: { type: String, required: true },
+  content: { type: String, required: true, maxlength: 2000 },
+  likes: [{ type: String, default: [] }],
+  isDeleted: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
 export default mongoose.models.Comment || mongoose.model<IComment>('Comment', CommentSchema);
