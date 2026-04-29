@@ -26,45 +26,215 @@ import PostActions from '@/components/PostActions';
 import PostCard from '@/components/PostCard';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 
+const MOCK_POSTS = [
+  {
+    id: 'mock-post-1',
+    slug: 'ky-thuat-trong-sau-rieng-ri6',
+    title: 'Kỹ thuật trồng sầu riêng Ri6 đạt năng suất cao',
+    content: '<p>Sầu riêng Ri6 là giống cây ăn trái có giá trị kinh tế cao...</p><p>Chăm sóc sầu riêng đòi hỏi kỹ thuật cao, nhất là khâu tỉa cành và điều tiết nước...</p>',
+    excerpt: 'Chia sẻ bí quyết bón phân và chăm sóc sầu riêng giai đoạn làm bông.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=800',
+    status: 'published',
+    tags: ['Sầu riêng', 'Trồng trọt', 'Ri6'],
+    published_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    view_count: 1250,
+    like_count: 42,
+    comment_count: 15,
+    author: {
+      id: 'chuyengia1',
+      username: 'chuyengianongnghiep',
+      full_name: 'GS.TS Nguyễn Văn A',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Expert',
+      role: 'Chuyên gia',
+      bio: 'Chuyên gia tư vấn nông nghiệp'
+    },
+    category: {
+      id: 1,
+      name: 'Trồng trọt',
+      slug: 'trong-trot'
+    }
+  },
+  {
+    id: 'mock-post-2',
+    slug: 'phong-tru-benh-dao-on-lua',
+    title: 'Cách phòng trừ bệnh đạo ôn trên lúa vụ Đông Xuân',
+    content: '<p>Bệnh đạo ôn do nấm Pyricularia oryzae gây ra...</p>',
+    excerpt: 'Nhận biết sớm dấu hiệu bệnh và các loại thuốc đặc trị hiệu quả.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1536638317175-32449e148ced?w=800',
+    status: 'published',
+    tags: ['Lúa', 'Sâu bệnh'],
+    published_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    view_count: 840,
+    like_count: 31,
+    comment_count: 8,
+    author: {
+      id: 'chuyengia2',
+      username: 'kstruongvanphuc',
+      full_name: 'KS. Trương Văn Phúc',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Phuc',
+      role: 'Kỹ sư',
+      bio: 'Kỹ sư bảo vệ thực vật'
+    },
+    category: {
+      id: 2,
+      name: 'Sâu bệnh',
+      slug: 'sau-benh'
+    }
+  },
+  {
+    id: 'mock-post-3',
+    slug: 'quy-trinh-bon-phan-buoi-da-xanh',
+    title: 'Quy trình bón phân cho bưởi da xanh giai đoạn nuôi trái',
+    content: '<p>Giai đoạn nuôi trái quyết định chất lượng...</p>',
+    excerpt: 'Hướng dẫn bón phân đạm, lân, kali cân đối giúp trái to, bóng đẹp.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1615678815958-5910c6811c25?w=800',
+    status: 'published',
+    tags: ['Bưởi', 'Phân bón'],
+    published_at: new Date().toISOString(),
+    author: { full_name: 'KS. Trương Văn Phúc', avatar_url: '' },
+    category: { name: 'Phân bón', slug: 'phan-bon' }
+  },
+  {
+    id: 'mock-post-4',
+    slug: 'ky-thuat-nuoi-bo-vo-beo',
+    title: 'Kỹ thuật nuôi bò vỗ béo theo hướng an toàn sinh học',
+    content: '<p>Nuôi bò vỗ béo mang lại nguồn thu nhập ổn định...</p>',
+    excerpt: 'Xây dựng khẩu phần ăn và lịch tiêm phòng vắc-xin cho bò thịt.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1545466226-ddba60a43ed6?w=800',
+    status: 'published',
+    tags: ['Chăn nuôi', 'Bò thịt'],
+    published_at: new Date().toISOString(),
+    category: { name: 'Chăn nuôi', slug: 'chan-nuoi' }
+  },
+  {
+    id: 'mock-post-5',
+    slug: 'ung-dung-iot-tuoi-thong-minh',
+    title: 'Ứng dụng IoT trong quản lý nước tưới thông minh',
+    content: '<p>Công nghệ IoT giúp tự động hóa hệ thống tưới tiêu...</p>',
+    excerpt: 'Tiết kiệm 40% lượng nước và tối ưu hóa chi phí nhân công.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=800',
+    status: 'published',
+    tags: ['Nông nghiệp số', 'IoT'],
+    published_at: new Date().toISOString(),
+    category: { name: 'Nông nghiệp số', slug: 'nong-nghiep-so' }
+  },
+  {
+    id: 'mock-post-6',
+    slug: 'mo-hinh-nuoi-cua-dong',
+    title: 'Bí quyết làm giàu từ mô hình nuôi cua đồng trong bể xi măng',
+    content: '<p>Nuôi cua đồng trong bể xi măng dễ quản lý...</p>',
+    excerpt: 'Cách thiết kế bể nuôi, quản lý nguồn nước và thức ăn cho cua.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1614548331473-71e5b13f7f80?w=800',
+    status: 'published',
+    tags: ['Chăn nuôi', 'Cua đồng'],
+    published_at: new Date().toISOString(),
+    category: { name: 'Chăn nuôi', slug: 'chan-nuoi' }
+  },
+  {
+    id: 'mock-post-7',
+    slug: 'xu-ly-rom-ra-sinh-hoc',
+    title: 'Xử lý rơm rạ bằng chế phẩm sinh học sau thu hoạch',
+    content: '<p>Đốt rơm rạ gây ô nhiễm môi trường...</p>',
+    excerpt: 'Ủ rơm rạ thành phân bón hữu cơ cải tạo đất cực tốt.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=800',
+    status: 'published',
+    tags: ['Phân bón', 'Sinh học'],
+    published_at: new Date().toISOString(),
+    category: { name: 'Phân bón', slug: 'phan-bon' }
+  },
+  {
+    id: 'mock-post-8',
+    slug: 'phong-tri-nhen-do-cay-co-mui',
+    title: 'Nhận biết và phòng trị nhện đỏ hại cây có múi',
+    content: '<p>Nhện đỏ chích hút làm vàng lá...</p>',
+    excerpt: 'Các biện pháp sinh học và hóa học kiểm soát nhện đỏ hiệu quả.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=800',
+    status: 'published',
+    tags: ['Sâu bệnh', 'Cây có múi'],
+    published_at: new Date().toISOString(),
+    category: { name: 'Sâu bệnh', slug: 'sau-benh' }
+  },
+  {
+    id: 'mock-post-9',
+    slug: 'trong-rau-thuy-canh-tai-gia',
+    title: 'Kỹ thuật trồng rau thủy canh quy mô gia đình',
+    content: '<p>Trồng rau thủy canh cung cấp nguồn rau sạch...</p>',
+    excerpt: 'Thiết kế giàn thủy canh hồi lưu đơn giản, chi phí thấp.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800',
+    status: 'published',
+    tags: ['Trồng trọt', 'Thủy canh'],
+    published_at: new Date().toISOString(),
+    category: { name: 'Trồng trọt', slug: 'trong-trot' }
+  },
+  {
+    id: 'mock-post-10',
+    slug: 'drone-phun-thuoc-bvtv',
+    title: 'Sử dụng drone phun thuốc BVTV: Lợi ích và lưu ý',
+    content: '<p>Máy bay không người lái (drone) đang thay đổi...</p>',
+    excerpt: 'Tăng hiệu quả dập dịch, bảo vệ sức khỏe người nông dân.',
+    thumbnail_url: 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=800',
+    status: 'published',
+    tags: ['Nông nghiệp số', 'Drone'],
+    published_at: new Date().toISOString(),
+    category: { name: 'Nông nghiệp số', slug: 'nong-nghiep-so' }
+  }
+];
+
 export const revalidate = 3600; // ISR: Revalidate every 1 hour
 export const dynamicParams = true; // SSR for non-prerendered slugs
 
 async function getPost(slug: string) {
-  const client = supabaseAdmin || supabase;
-  if (!client) return null;
-  
-  const { data: post, error } = await client
-    .from('posts')
-    .select('*')
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .single();
-
-  if (error || !post) return null;
-
-  // Fetch Author Profile
-  if (post.author_id) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('username, full_name, avatar_url, role, bio, points, is_verified')
-      .eq('id', post.author_id)
-      .single();
+  try {
+    const client = supabaseAdmin || supabase;
+    if (!client) {
+      return MOCK_POSTS.find(p => p.slug === slug) || null;
+    }
     
-    if (profile) post.author = profile;
-  }
-
-  // Fetch Category
-  if (post.category_id) {
-    const { data: category } = await supabase
-      .from('categories')
-      .select('id, name, slug')
-      .eq('id', post.category_id)
+    const { data: post, error } = await client
+      .from('posts')
+      .select('*')
+      .eq('slug', slug)
+      .eq('status', 'published')
       .single();
 
-    if (category) post.category = category;
-  }
+    if (error || !post) {
+      // Check fallback in mock posts
+      const mockPost = MOCK_POSTS.find(p => p.slug === slug);
+      if (mockPost) return mockPost;
+      return null;
+    }
 
-  return post;
+    // Fetch Author Profile
+    if (post.author_id) {
+      const { data: profile } = await client
+        .from('profiles')
+        .select('username, full_name, avatar_url, role, bio, points, is_verified')
+        .eq('id', post.author_id)
+        .single();
+      
+      if (profile) post.author = profile;
+    }
+
+    // Fetch Category
+    if (post.category_id) {
+      const { data: category } = await client
+        .from('categories')
+        .select('id, name, slug')
+        .eq('id', post.category_id)
+        .single();
+
+      if (category) post.category = category;
+    }
+
+    return post;
+  } catch (err) {
+    console.error('Error in getPost, returning mock post if available:', err);
+    return MOCK_POSTS.find(p => p.slug === slug) || null;
+  }
 }
 
 async function getRelatedPosts(categoryId: any, currentSlug: string) {
