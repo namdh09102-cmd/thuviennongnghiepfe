@@ -408,78 +408,109 @@ export default function CommunityQAPage() {
               </div>
             </div>
 
-            {/* Form tạo câu hỏi */}
-            {isFormOpen ? (
-              <form onSubmit={handleCreateQuestion} className="bg-white p-6 border border-gray-100 rounded-3xl shadow-sm space-y-4 animate-in slide-in-from-top duration-300">
-                <h3 className="text-sm font-black text-gray-900">Đặt câu hỏi mới cho cộng đồng</h3>
-                
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Tiêu đề</label>
-                  <input
-                    type="text"
-                    placeholder="Ví dụ: Cây sầu riêng bị xì mủ thân cây"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
-                    required
-                  />
-                </div>
+            {/* Desktop CTA for question form */}
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="hidden md:flex w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-black text-sm rounded-3xl shadow-md hover:opacity-95 transition-all items-center justify-center space-x-2 shadow-green-600/20"
+            >
+              <HelpCircle className="h-5 w-5 text-emerald-200" />
+              <span>Bạn có thắc mắc kỹ thuật? Hỏi chuyên gia ngay</span>
+            </button>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1">Tag cây trồng</label>
-                    <select
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      className="w-full border rounded-xl px-3 py-2 text-xs focus:outline-none bg-gray-50"
+            {/* Question Form Modal */}
+            {isFormOpen && (
+              <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 animate-in fade-in duration-200">
+                <div 
+                  className="absolute inset-0" 
+                  onClick={() => setIsFormOpen(false)} 
+                />
+                <form 
+                  onSubmit={handleCreateQuestion} 
+                  className="relative bg-white w-full md:max-w-xl p-6 rounded-t-[32px] md:rounded-3xl shadow-2xl space-y-4 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto"
+                >
+                  <div className="flex items-center justify-between border-b pb-3">
+                    <h3 className="text-sm font-black text-gray-900">Đặt câu hỏi mới cho cộng đồng</h3>
+                    <button 
+                      type="button" 
+                      onClick={() => setIsFormOpen(false)}
+                      className="text-xs font-bold text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 w-6 h-6 flex items-center justify-center rounded-full"
                     >
-                      <option value="Lúa">Lúa</option>
-                      <option value="Sầu riêng">Sầu riêng</option>
-                      <option value="Vải thiều">Vải thiều</option>
-                      <option value="Cà phê">Cà phê</option>
-                      <option value="Khác">Khác</option>
-                    </select>
+                      ✕
+                    </button>
                   </div>
-                </div>
+                  
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Tiêu đề câu hỏi</label>
+                    <input
+                      type="text"
+                      placeholder="Ví dụ: Cây sầu riêng bị xì mủ thân cây"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent font-medium"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Nội dung chi tiết</label>
-                  <textarea
-                    rows={4}
-                    placeholder="Mô tả triệu chứng, thời gian bị bệnh, tình hình phân bón..."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className="w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
-                    required
-                  />
-                </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Chủ đề</label>
+                      <select
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none bg-gray-50 font-bold text-gray-700 focus:ring-2 focus:ring-green-500"
+                      >
+                        <option value="Lúa">Lúa</option>
+                        <option value="Sầu riêng">Sầu riêng</option>
+                        <option value="Vải thiều">Vải thiều</option>
+                        <option value="Cà phê">Cà phê</option>
+                        <option value="Rau màu">Rau màu</option>
+                        <option value="Chăn nuôi">Chăn nuôi</option>
+                        <option value="Khác">Khác</option>
+                      </select>
+                    </div>
+                  </div>
 
-                <div className="flex items-center justify-end space-x-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsFormOpen(false)}
-                    className="px-3 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50 rounded-xl"
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-green-600 text-white font-bold text-xs rounded-xl shadow-md hover:bg-green-700 transition-all flex items-center space-x-1"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Đăng câu hỏi</span>
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <button
-                onClick={() => setIsFormOpen(true)}
-                className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold text-sm rounded-3xl shadow-md hover:opacity-90 transition-all flex items-center justify-center space-x-2"
-              >
-                <HelpCircle className="h-5 w-5 text-emerald-200 animate-bounce" />
-                <span>Bạn có thắc mắc kỹ thuật? Hỏi chuyên gia ngay</span>
-              </button>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Nội dung chi tiết</label>
+                    <textarea
+                      rows={4}
+                      placeholder="Mô tả triệu chứng, thời gian bị bệnh, tình hình phân bón đã dùng..."
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent font-medium"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end space-x-2 pt-2 border-t">
+                    <button
+                      type="button"
+                      onClick={() => setIsFormOpen(false)}
+                      className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-50 rounded-xl transition-all"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 bg-green-600 text-white font-black text-xs rounded-xl shadow-md hover:bg-green-700 transition-all flex items-center space-x-1.5 shadow-green-600/20"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Đăng câu hỏi</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
             )}
+
+            {/* Mobile FAB for Question Page */}
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="md:hidden fixed bottom-[76px] right-[16px] z-50 flex items-center justify-center w-[52px] h-[52px] rounded-full text-white bg-green-600 shadow-lg active:scale-95 transition-all shadow-green-600/30"
+              aria-label="Đặt câu hỏi"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              <Plus className="w-6 h-6" />
+            </button>
 
             {/* Danh sách câu hỏi */}
             {filteredQuestions.length === 0 ? (

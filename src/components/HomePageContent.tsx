@@ -9,7 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import PostCard from '@/components/PostCard';
 import FeaturedPostCard from '@/components/FeaturedPostCard';
-import SkeletonCard from '@/components/SkeletonCard';
+import PostCardSkeleton from '@/components/PostCardSkeleton';
 import {
   TrendingUp,
   Sparkles,
@@ -270,10 +270,9 @@ export default function HomePageContent() {
             </span>
           </div>
 
-          {/* Post Grid / Skeleton / Empty */}
           {isInitialLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Array(6).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+              {Array(5).fill(0).map((_, i) => <PostCardSkeleton key={i} />)}
             </div>
           ) : posts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-[32px] border border-gray-100 shadow-sm space-y-4">

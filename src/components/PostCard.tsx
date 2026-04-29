@@ -28,20 +28,22 @@ export default function PostCard({ post, prefetch }: PostCardProps) {
   return (
     <article className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-green-900/5 transition-all group overflow-hidden">
       <Link href={`/posts/${post.slug}`} prefetch={prefetch}>
-        <div className="relative aspect-[4/3] overflow-hidden">
+        <div className="relative aspect-[16/9] overflow-hidden bg-green-50">
           {post.thumbnail_url ? (
             <Image
-              src={post.thumbnail_url}
+              src={post.thumbnail_url.startsWith('http') && !post.thumbnail_url.includes('cloudinary')
+                ? `https://res.cloudinary.com/demo/image/fetch/w_400,h_225,c_fill,f_auto,q_auto/${encodeURIComponent(post.thumbnail_url)}`
+                : post.thumbnail_url}
               alt={post.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              width={800}
-              height={450}
+              width={400}
+              height={225}
               loading="lazy"
               placeholder="blur"
               blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-green-50 text-green-300 transition-transform duration-500 group-hover:scale-105">
+            <div className="w-full h-full flex items-center justify-center text-green-300 transition-transform duration-500 group-hover:scale-105">
               <Leaf className="w-12 h-12 opacity-50" />
             </div>
           )}
@@ -56,40 +58,37 @@ export default function PostCard({ post, prefetch }: PostCardProps) {
       <div className="p-5 space-y-4">
         <div className="space-y-2">
           <Link href={`/posts/${post.slug}`}>
-            <h3 className="text-sm font-black text-gray-900 line-clamp-2 leading-tight group-hover:text-green-700 transition-colors">
+            <h3 className="text-sm font-black text-gray-900 leading-tight group-hover:text-green-700 transition-colors line-clamp-2" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
               {post.title}
             </h3>
           </Link>
-          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+          <p className="text-xs text-gray-500 leading-relaxed line-clamp-3" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
             {post.excerpt}
           </p>
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-gray-50">
           <div className="flex items-center space-x-2">
-            <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+            <div className="relative flex-shrink-0">
               <Image
                 src={post.author?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky'}
                 alt={post.author?.full_name || 'Tác giả'}
-                className="w-8 h-8 rounded-full bg-gray-100 object-cover"
-                width={80}
-                height={80}
-                placeholder="blur"
-                blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
+                className="w-6 h-6 rounded-full bg-gray-100 object-cover"
+                width={24}
+                height={24}
               />
               {post.author?.is_verified && (
-                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
-                  <Award className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
+                <div className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full p-0.5 shadow-sm">
+                  <Award className="w-2 h-2 text-amber-500 fill-amber-500" />
                 </div>
               )}
             </div>
-            <div>
-              <p className="text-[10px] font-black text-gray-900 leading-none">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-black text-gray-900 leading-none truncate">
                 {post.author?.full_name || 'Người dùng'}
               </p>
               <div className="flex items-center text-[9px] text-gray-400 mt-1 space-x-1">
-                <Clock className="w-2.5 h-2.5" />
+                <span>· {post.excerpt ? Math.ceil(post.excerpt.length / 500) : 2} phút đọc ·</span>
                 <span>
                   {(() => {
                     try {
@@ -106,14 +105,14 @@ export default function PostCard({ post, prefetch }: PostCardProps) {
             </div>
           </div>
 
-          <div className="flex items-center space-x-3 text-gray-400">
+          <div className="flex items-center space-x-3 text-gray-400 flex-shrink-0">
             <div className="flex items-center space-x-1">
               <Heart className="w-3.5 h-3.5" />
-              <span className="text-[10px] font-bold">{post.like_count}</span>
+              <span className="text-[10px] font-bold">{post.like_count || 0}</span>
             </div>
             <div className="flex items-center space-x-1">
               <MessageSquare className="w-3.5 h-3.5" />
-              <span className="text-[10px] font-bold">{post.comment_count}</span>
+              <span className="text-[10px] font-bold">{post.comment_count || 0}</span>
             </div>
             <button className="hover:text-green-600 transition-colors">
               <Bookmark className="w-4 h-4" />
