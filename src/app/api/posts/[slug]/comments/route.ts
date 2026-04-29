@@ -25,10 +25,12 @@ export async function GET(
     return NextResponse.json({ data: [], error: null, meta: null });
   }
 
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(slug);
+  
   const { data: post, error: postError } = await supabaseAdmin
     .from('posts')
     .select('id')
-    .eq('slug', slug)
+    .eq(isUuid ? 'id' : 'slug', slug)
     .single();
 
   if (postError || !post) {
@@ -93,10 +95,12 @@ export async function POST(
   // Sanitize content
   const cleanContent = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(slug);
+
   const { data: post, error: postError } = await supabaseAdmin
     .from('posts')
     .select('id')
-    .eq('slug', slug)
+    .eq(isUuid ? 'id' : 'slug', slug)
     .single();
 
   if (postError || !post) {

@@ -82,3 +82,10 @@ export async function PATCH(
   return NextResponse.json(data);
 }
 
+export async function PUT(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
+  return PATCH(req, context);
+}
+

@@ -8,10 +8,12 @@ import CommentItem from './CommentItem';
 import CommentForm from './CommentForm';
 
 interface CommentSectionProps {
-  postSlug: string;
+  postSlug?: string;
+  postId?: string;
 }
 
-export default function CommentSection({ postSlug }: CommentSectionProps) {
+export default function CommentSection({ postSlug, postId }: CommentSectionProps) {
+  const postIdentifier = postId || postSlug || '';
   const [hasNewComments, setHasNewComments] = useState(false);
   const { data: session } = useSession();
   const [sortBy, setSortBy] = useState('newest');
@@ -26,7 +28,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
     editComment,
     likeComment,
     mutate 
-  } = useComments(postSlug, sortBy, () => setHasNewComments(true));
+  } = useComments(postIdentifier, sortBy, () => setHasNewComments(true));
 
   const handleMainSubmit = async (content: string) => {
     if (!session) return alert('Vui lòng đăng nhập để bình luận!');
@@ -65,7 +67,19 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
 
       {/* Main Form */}
       <div className="animate-in slide-in-from-top-4 duration-500">
-        <CommentForm onSubmit={handleMainSubmit} placeholder="Chia sẻ ý kiến của bạn..." />
+        {session ? (
+          <CommentForm onSubmit={handleMainSubmit} placeholder="Chia sẻ kinh nghiệm của bạn..." />
+        ) : (
+          <div className="bg-gray-50 border border-gray-100 rounded-[24px] p-6 text-center">
+            <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Bạn có kinh nghiệm về chủ đề này?</p>
+            <a 
+              href="/login" 
+              className="inline-block px-6 py-2.5 bg-green-600 text-white text-xs font-black uppercase tracking-wider rounded-xl hover:bg-green-700 transition-all shadow-sm"
+            >
+              Đăng nhập để bình luận
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Realtime Notification */}
