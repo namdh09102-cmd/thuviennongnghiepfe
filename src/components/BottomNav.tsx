@@ -15,7 +15,7 @@ export default function BottomNav() {
     { label: 'Bài viết', icon: FileText, href: '/posts' },
     { label: 'Viết bài', icon: PlusSquare, href: '/posts/create' },
     { label: 'Hỏi đáp', icon: HelpCircle, href: '/hoi-dap' },
-    { label: 'Cá nhân', icon: User, href: '/profile' },
+    { label: 'Tôi', icon: User, href: '/profile' },
   ];
 
   return (
