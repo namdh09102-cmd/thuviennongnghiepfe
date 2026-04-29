@@ -24,15 +24,16 @@ const CommentSection = dynamic(() => import('@/components/CommentSection'), {
 });
 import PostActions from '@/components/PostActions';
 import PostCard from '@/components/PostCard';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 export const revalidate = 3600; // ISR: Revalidate every 1 hour
 export const dynamicParams = true; // SSR for non-prerendered slugs
 
 async function getPost(slug: string) {
-  if (!supabase) return null;
+  const client = supabaseAdmin || supabase;
+  if (!client) return null;
   
-  const { data: post, error } = await supabase
+  const { data: post, error } = await client
     .from('posts')
     .select('*')
     .eq('slug', slug)
@@ -67,9 +68,10 @@ async function getPost(slug: string) {
 }
 
 async function getRelatedPosts(categoryId: any, currentSlug: string) {
-  if (!supabase || !categoryId) return [];
+  const client = supabaseAdmin || supabase;
+  if (!client || !categoryId) return [];
 
-  const { data: related, error } = await supabase
+  const { data: related, error } = await client
     .from('posts')
     .select('*')
     .eq('category_id', categoryId)
@@ -84,7 +86,7 @@ async function getRelatedPosts(categoryId: any, currentSlug: string) {
   
   let profiles = [];
   if (authorIds.length > 0) {
-    const { data } = await supabase
+    const { data } = await client
       .from('profiles')
       .select('id, username, full_name, avatar_url')
       .in('id', authorIds);
@@ -98,7 +100,7 @@ async function getRelatedPosts(categoryId: any, currentSlug: string) {
   
   let categories = [];
   if (categoryIds.length > 0) {
-    const { data } = await supabase
+    const { data } = await client
       .from('categories')
       .select('id, name, slug')
       .in('id', categoryIds);
@@ -116,9 +118,10 @@ async function getRelatedPosts(categoryId: any, currentSlug: string) {
 }
 
 export async function generateStaticParams() {
-  if (!supabase) return [];
+  const client = supabaseAdmin || supabase;
+  if (!client) return [];
   
-  const { data: posts } = await supabase
+  const { data: posts } = await client
     .from('posts')
     .select('slug')
     .eq('status', 'published')
