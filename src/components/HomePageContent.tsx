@@ -33,14 +33,14 @@ export default function HomePageContent() {
   const tagList = Array.isArray(trendingTags) ? trendingTags : [];
 
   // Fetch Sidebar Data
-  const { data: trendingPostsData } = useSWR('/api/posts?sort=comments&limit=5', fetcher);
+  const { data: trendingPostsData } = useSWR('/api/posts?sort=most_comments&limit=5', fetcher);
   const { data: topExperts } = useSWR('/api/users?role=expert&limit=3', fetcher);
 
   const trendingPosts = trendingPostsData?.data || [];
 
   const getKey = (pageIndex: number, previousPageData: any) => {
     if (previousPageData && (!previousPageData.data || !previousPageData.data.length)) return null;
-    return `/api/posts?page=${pageIndex + 1}&category=${activeCategory}&sort=${activeSort}&limit=20`;
+    return `/api/posts?page=${pageIndex + 1}&category=${activeCategory}&sort=${activeSort}&limit=10`;
   };
 
   const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(getKey, fetcher, {
@@ -52,7 +52,7 @@ export default function HomePageContent() {
     : [];
 
   const isInitialLoading = isLoading && posts.length === 0;
-  const isReachingEnd = data && Array.isArray(data[data.length - 1]?.data) && data[data.length - 1].data.length < 20;
+  const isReachingEnd = data && Array.isArray(data[data.length - 1]?.data) && data[data.length - 1].data.length < 10;
 
   const { ref, inView } = useInView({
     rootMargin: '400px',
@@ -183,9 +183,15 @@ export default function HomePageContent() {
               <Leaf className="w-8 h-8" />
             </div>
             <h3 className="text-base font-black text-gray-900 mb-1">Chưa có bài viết nào.</h3>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
+            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-4">
               Hãy là người đầu tiên chia sẻ!
             </p>
+            <Link 
+              href="/posts/create"
+              className="px-6 py-2.5 bg-green-600 text-white text-xs font-black uppercase tracking-wider rounded-full hover:bg-green-700 transition-all shadow-sm shadow-green-600/20"
+            >
+              Viết bài đầu tiên
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
