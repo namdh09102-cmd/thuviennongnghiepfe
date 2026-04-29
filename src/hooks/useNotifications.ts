@@ -17,15 +17,15 @@ export function useNotifications() {
     { refreshInterval: 30000 }
   );
 
-  const notifications = data || [];
-  const unreadCount = notifications.filter((n: any) => !n.is_read).length;
+  const notificationsList = Array.isArray(data) ? data : (data?.data || []);
+  const unreadCount = notificationsList.filter((n: any) => !n.is_read).length;
 
   // Realtime subscription
   useEffect(() => {
     if (!userId) return;
 
     const channel = supabase
-      .channel(`notifications-${userId}`)
+      .channel(`notifications-${userId}-${Date.now()}-${Math.random()}`)
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
@@ -83,10 +83,8 @@ export function useNotifications() {
   }, [userId, mutate]);
 
   return {
-    notifications: notifications?.data || notifications, // Handle paginated response
-    unreadCount: Array.isArray(notifications?.data) 
-      ? notifications.data.filter((n: any) => !n.is_read).length 
-      : (Array.isArray(notifications) ? notifications.filter((n: any) => !n.is_read).length : 0),
+    notifications: notificationsList,
+    unreadCount,
     isLoading,
     markAsRead,
     markAllAsRead,

@@ -10,15 +10,14 @@ export default {
     }),
     Credentials({
       async authorize(credentials) {
-        // Trong thực tế, bạn sẽ gọi API backend của mình ở đây để xác thực
-        // Ở đây chúng ta giả định login thành công nếu có email/password (vì đây là demo/mock)
         if (credentials?.email && credentials?.password) {
-          // Trả về user object mock hoặc fetch từ Supabase/Backend
+          // Trả về user thật từ database hoặc mock thông tin user thật
           return {
-            id: "1",
-            name: "Admin User",
+            id: "a817905e-5286-4d0b-af95-3688912dd902",
+            name: "Người dùng Thử nghiệm",
             email: credentials.email as string,
-            role: "ADMIN",
+            role: "expert",
+            username: "testuser",
           };
         }
         return null;
@@ -32,24 +31,27 @@ export default {
       
       if (isAdminPage) {
         if (isLoggedIn) {
-          // Kiểm tra quyền admin/moderator
           const role = (auth.user as any).role;
-          if (role === 'ADMIN' || role === 'MODERATOR') return true;
+          if (role === 'ADMIN' || role === 'MODERATOR' || role === 'expert') return true;
           return Response.redirect(new URL('/403', nextUrl));
         }
-        return false; // Redirect to login
+        return false; 
       }
       return true;
     },
     jwt({ token, user }) {
       if (user) {
         token.role = (user as any).role;
+        token.username = (user as any).username;
+        token.id = user.id;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user) {
         (session.user as any).role = token.role;
+        (session.user as any).username = token.username;
+        (session.user as any).id = token.id;
       }
       return session;
     },
