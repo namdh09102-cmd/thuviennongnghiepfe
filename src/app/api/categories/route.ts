@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import connectMongoDB from '@/lib/mongodb';
+import Category from '@/models/Category';
 import { rateLimit, getIP } from '@/lib/rate-limit';
 
-export const revalidate = 300; // Cache 5 mins
+export const revalidate = 300;
 
 const MOCK_CATEGORIES = [
-  { id: 1, name: 'Kỹ thuật trồng trọt', slug: 'ky-thuat', emoji: '🌱', description: 'Kiến thức canh tác', sort_order: 1, is_hidden: false },
-  { id: 2, name: 'Phòng trừ sâu bệnh', slug: 'sau-benh', emoji: '🐛', description: 'Nhận biết và điều trị sâu bệnh', sort_order: 2, is_hidden: false },
-  { id: 3, name: 'Dinh dưỡng & Phân bón', slug: 'dinh-duong', emoji: '🧪', description: 'Cung cấp dinh dưỡng cho cây', sort_order: 3, is_hidden: false },
-  { id: 4, name: 'Chăn nuôi gia súc', slug: 'chan-nuoi', emoji: '🐄', description: 'Kỹ thuật chăn nuôi an toàn', sort_order: 4, is_hidden: false },
-  { id: 5, name: 'Nông nghiệp 4.0', slug: 'nong-nghiep-so', emoji: '📱', description: 'Áp dụng công nghệ cao', sort_order: 5, is_hidden: false }
+  { id: '1', name: 'Kỹ thuật trồng trọt', slug: 'ky-thuat', emoji: '🌱', sort_order: 1 },
+  { id: '2', name: 'Phòng trừ sâu bệnh', slug: 'sau-benh', emoji: '🐛', sort_order: 2 },
+  { id: '3', name: 'Dinh dưỡng & Phân bón', slug: 'dinh-duong', emoji: '🧪', sort_order: 3 },
+  { id: '4', name: 'Chăn nuôi gia súc', slug: 'chan-nuoi', emoji: '🐄', sort_order: 4 },
+  { id: '5', name: 'Nông nghiệp 4.0', slug: 'nong-nghiep-so', emoji: '📱', sort_order: 5 },
+  { id: '6', name: 'Thủy sản', slug: 'thuy-san', emoji: '🐟', sort_order: 6 },
 ];
 
 export async function GET(req: NextRequest) {
   const ip = getIP(req);
   const limiter = rateLimit(ip);
-  
+
   if (!limiter.success) {
     return NextResponse.json(
       { data: null, error: 'Too Many Requests', meta: null },
@@ -23,36 +25,35 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  if (!supabaseAdmin) {
+  try {
+    await connectMongoDB();
+    const cats = await Category.find({}).sort({ sort_order: 1 }).lean();
+
+    const data = cats.length > 0
+      ? cats.map((c: any) => ({
+          id: c._id.toString(),
+          name: c.name,
+          slug: c.slug,
+          emoji: c.emoji || '🌿',
+          sort_order: c.sort_order || 0,
+        }))
+      : MOCK_CATEGORIES;
+
     return NextResponse.json(
-      { data: MOCK_CATEGORIES, error: null, meta: { cache: 'mock' } },
-      { 
+      { data, error: null, meta: { total: data.length } },
+      {
         status: 200,
-        headers: { 'Cache-Control': 'max-age=300' }
+        headers: { 'Cache-Control': 'public, max-age=300' },
+      }
+    );
+  } catch (err: any) {
+    console.error('[GET /api/categories] Error:', err);
+    return NextResponse.json(
+      { data: MOCK_CATEGORIES, error: null, meta: { total: MOCK_CATEGORIES.length, cache: 'mock' } },
+      {
+        status: 200,
+        headers: { 'Cache-Control': 'max-age=60' },
       }
     );
   }
-
-  const { data, error } = await supabaseAdmin
-    .from('categories')
-    .select('id, name, slug, icon, color, parent_id, sort_order, posts(count)')
-    .order('sort_order', { ascending: true });
-
-  if (error) {
-    return NextResponse.json(
-      { data: null, error: error.message, meta: null },
-      { status: 500 }
-    );
-  }
-
-  // Fallback if Supabase yields empty results
-  const responseData = data && data.length > 0 ? data : MOCK_CATEGORIES;
-
-  return NextResponse.json(
-    { data: responseData, error: null, meta: { total: responseData.length } },
-    { 
-      status: 200,
-      headers: { 'Cache-Control': 'public, max-age=300' }
-    }
-  );
 }

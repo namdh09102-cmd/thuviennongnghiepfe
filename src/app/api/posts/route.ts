@@ -4,6 +4,7 @@ import { auth } from '@/auth';
 import { rateLimit, getIP } from '@/lib/rate-limit';
 import connectMongoDB from '@/lib/mongodb';
 import Post from '@/models/Post';
+import mongoose from 'mongoose';
 
 const MOCK_POSTS = [
   {
@@ -89,21 +90,68 @@ export async function GET(req: NextRequest) {
   const is_featured = searchParams.get('is_featured');
 
   try {
-    // MongoDB Atlas Query
+    // Primary: MongoDB Atlas Query
     try {
       await connectMongoDB();
+
       let mongoQuery: any = { status: 'published' };
+
       if (is_featured === 'true') {
         mongoQuery.is_featured = true;
       }
-      
+
+      // Category filter by slug
+      if (category && category !== 'all') {
+        mongoQuery['category.slug'] = category;
+      }
+
+      const sortOrder: any =
+        sort === 'hot' || sort === 'top'
+          ? { is_pinned: -1, view_count: -1 }
+          : sort === 'most_comments'
+          ? { is_pinned: -1, comment_count: -1 }
+          : { is_pinned: -1, created_at: -1 };
+
       const totalPosts = await Post.countDocuments(mongoQuery);
-      const posts = await Post.find(mongoQuery)
+      const rawPosts = await Post.find(mongoQuery)
         .skip(from)
         .limit(limit)
-        .sort({ created_at: -1 });
+        .sort(sortOrder)
+        .lean();
 
-      if (posts && posts.length > 0) {
+      if (rawPosts && rawPosts.length > 0) {
+        // Resolve author names from users collection
+        const userMap = new Map<string, any>();
+        try {
+          const userIds = Array.from(new Set(rawPosts.map((p: any) => p.author_id).filter(Boolean))) as string[];
+          if (userIds.length > 0) {
+            const mongoIds = userIds
+              .map((id: string) => {
+                try { return new mongoose.Types.ObjectId(id); } catch { return null; }
+              })
+              .filter((id) => id !== null) as mongoose.Types.ObjectId[];
+            const users = await mongoose.connection.db!
+              .collection('users')
+              .find({ _id: { $in: mongoIds } })
+              .toArray();
+            users.forEach((u: any) => userMap.set(u._id.toString(), u));
+          }
+        } catch (e) { /* silent */ }
+
+        const posts = rawPosts.map((p: any) => {
+          const user = userMap.get(p.author_id) || null;
+          return {
+            ...p,
+            id: p._id?.toString(),
+            author: p.author || (user ? {
+              full_name: user.name || user.email || 'Người dùng',
+              username: user.email?.split('@')[0] || 'member',
+              avatar_url: user.image || '',
+            } : { full_name: 'Thành viên TVNN', avatar_url: '' }),
+            category: p.category || { name: 'Chưa phân loại', slug: 'uncategorized' },
+          };
+        });
+
         return NextResponse.json({
           data: posts,
           error: null,
@@ -111,16 +159,14 @@ export async function GET(req: NextRequest) {
             page,
             limit,
             total: totalPosts,
-            totalPages: Math.ceil(totalPosts / limit)
-          }
+            totalPages: Math.ceil(totalPosts / limit),
+          },
         }, {
-          headers: {
-            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30'
-          }
+          headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30' },
         });
       }
     } catch (mongoReadErr) {
-      console.error('MongoDB query failed, trying Supabase fallback:', mongoReadErr);
+      console.error('MongoDB query failed, falling back to mock:', mongoReadErr);
     }
 
     if (!supabaseAdmin) {

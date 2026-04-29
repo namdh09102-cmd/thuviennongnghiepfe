@@ -1,19 +1,11 @@
-'use client';
-
-import React, { Suspense } from 'react';
+import React from 'react';
 import HomePageContent from '@/components/HomePageContent';
 
+export const metadata = {
+  title: 'Thư Viện Nông Nghiệp - Kiến thức canh tác từ chuyên gia',
+  description: 'Cập nhật kiến thức nông nghiệp mới nhất, kỹ thuật canh tác, phòng trừ sâu bệnh từ chuyên gia và cộng đồng nông dân Việt Nam.',
+};
+
 export default function HomePage() {
-  return (
-    <Suspense fallback={
-      <div className="flex flex-col items-center justify-center py-32 space-y-4">
-        <div className="w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider animate-pulse">
-          Đang tải dữ liệu...
-        </p>
-      </div>
-    }>
-      <HomePageContent />
-    </Suspense>
-  );
+  return <HomePageContent />;
 }

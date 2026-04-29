@@ -9,11 +9,61 @@ import Link from 'next/link';
 import Image from 'next/image';
 import PostCard from '@/components/PostCard';
 import FeaturedPostCard from '@/components/FeaturedPostCard';
-import FilterTabs from '@/components/FilterTabs';
 import SkeletonCard from '@/components/SkeletonCard';
-import { TrendingUp, Sparkles, Filter, MessageSquare, Leaf, Award } from 'lucide-react';
+import {
+  TrendingUp,
+  Sparkles,
+  MessageSquare,
+  ChevronRight,
+  Flame,
+  Clock,
+  RefreshCw,
+  Leaf,
+} from 'lucide-react';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+// ─── Skeleton for hero ────────────────────────────────────────────────────────
+function HeroSkeleton() {
+  return (
+    <div className="relative w-full aspect-[16/7] md:aspect-[21/8] rounded-[32px] overflow-hidden bg-gray-100 animate-pulse">
+      <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-[shimmer_1.5s_infinite]" />
+      <div className="absolute bottom-0 left-0 right-0 p-8 space-y-3">
+        <div className="h-4 bg-gray-200/70 rounded-full w-24" />
+        <div className="h-8 bg-gray-200/70 rounded-xl w-3/4" />
+        <div className="h-4 bg-gray-200/50 rounded-lg w-1/2" />
+      </div>
+    </div>
+  );
+}
+
+// ─── Category Pill Skeleton ────────────────────────────────────────────────────
+function CategorySkeleton() {
+  return (
+    <div className="flex items-center gap-2 overflow-hidden">
+      {Array(6).fill(0).map((_, i) => (
+        <div key={i} className="h-9 w-24 rounded-full bg-gray-100 animate-pulse flex-shrink-0" />
+      ))}
+    </div>
+  );
+}
+
+// ─── Sidebar Skeleton ─────────────────────────────────────────────────────────
+function SidebarSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array(4).fill(0).map((_, i) => (
+        <div key={i} className="flex gap-3 animate-pulse">
+          <div className="w-16 h-16 rounded-2xl bg-gray-100 flex-shrink-0" />
+          <div className="flex-1 space-y-2 pt-1">
+            <div className="h-3.5 bg-gray-100 rounded-lg w-full" />
+            <div className="h-3 bg-gray-100 rounded-lg w-2/3" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function HomePageContent() {
   const router = useRouter();
@@ -22,81 +72,77 @@ export default function HomePageContent() {
 
   const activeCategory = searchParams.get('category') || 'all';
   const activeSort = searchParams.get('sort') || 'latest';
-  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const touchStart = useRef(0);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch Categories
-  const { data: categories } = useSWR('/api/categories', fetcher, { dedupingInterval: 300000 });
-  const categoryList = Array.isArray(categories?.data) ? categories.data : [];
+  // ── API fetches ──────────────────────────────────────────────────────────────
+  const { data: categoriesRes, isLoading: catsLoading } = useSWR('/api/categories', fetcher, {
+    dedupingInterval: 300_000,
+    revalidateOnFocus: false,
+  });
+  const categoryList: any[] = Array.isArray(categoriesRes?.data) ? categoriesRes.data : [];
 
-  // Fetch Trending Tags
-  const { data: trendingTags } = useSWR('/api/tags/trending', fetcher, { dedupingInterval: 3600000 });
-  const tagList = Array.isArray(trendingTags) ? trendingTags : [];
+  const { data: featuredRes, isLoading: heroLoading } = useSWR(
+    '/api/posts?is_featured=true&limit=1',
+    fetcher,
+    { dedupingInterval: 120_000, revalidateOnFocus: false }
+  );
+  const featuredPost = featuredRes?.data?.[0] || null;
 
-  // Fetch Sidebar Data
-  const { data: trendingPostsData } = useSWR('/api/posts?sort=most_comments&limit=5', fetcher);
-  const { data: topExperts } = useSWR('/api/users?role=expert&limit=3', fetcher);
-  
-  // Fetch Featured Posts
-  const { data: featuredPostsData } = useSWR('/api/posts?is_featured=true&limit=2', fetcher);
+  const { data: trendingRes } = useSWR('/api/posts?sort=most_comments&limit=5', fetcher, {
+    dedupingInterval: 60_000,
+    revalidateOnFocus: false,
+  });
+  const trendingPosts: any[] = trendingRes?.data || [];
 
-  const trendingPosts = trendingPostsData?.data || [];
-  const featuredPosts = featuredPostsData?.data || [];
-
+  // ── Infinite feed ────────────────────────────────────────────────────────────
   const getKey = (pageIndex: number, previousPageData: any) => {
     if (previousPageData && (!previousPageData.data || !previousPageData.data.length)) return null;
-    return `/api/posts?page=${pageIndex + 1}&category=${activeCategory}&sort=${activeSort}&limit=10`;
+    const cat = activeCategory !== 'all' ? `&category=${activeCategory}` : '';
+    return `/api/posts?page=${pageIndex + 1}&limit=10&sort=${activeSort}${cat}`;
   };
 
   const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(getKey, fetcher, {
-    dedupingInterval: 300000 // Cache for 5 minutes
+    dedupingInterval: 60_000,
+    revalidateOnFocus: false,
   });
 
-  const posts = data 
-    ? data.filter(page => page && Array.isArray(page.data)).map((page) => page.data).flat() 
+  const posts: any[] = data
+    ? data.filter((p) => p && Array.isArray(p.data)).flatMap((p) => p.data)
     : [];
-
   const isInitialLoading = isLoading && posts.length === 0;
-  const isReachingEnd = data && Array.isArray(data[data.length - 1]?.data) && data[data.length - 1].data.length < 10;
+  const isReachingEnd =
+    data &&
+    Array.isArray(data[data.length - 1]?.data) &&
+    data[data.length - 1].data.length < 10;
 
-  const { ref, inView } = useInView({
-    rootMargin: '400px',
-  });
-
+  const { ref, inView } = useInView({ rootMargin: '400px' });
   useEffect(() => {
-    if (inView && !isReachingEnd && !isValidating) {
-      setSize(size + 1);
-    }
+    if (inView && !isReachingEnd && !isValidating) setSize(size + 1);
   }, [inView, isReachingEnd, isValidating, setSize, size]);
 
-  const handleCategorySelect = (slug: string | null) => {
+  // ── Handlers ─────────────────────────────────────────────────────────────────
+  const setCategory = (slug: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (slug && slug !== 'all') {
-      params.set('category', slug);
-    } else {
-      params.delete('category');
-    }
+    slug === 'all' ? params.delete('category') : params.set('category', slug);
     params.delete('page');
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const handleSortSelect = (sortStr: string) => {
+  const setSort = (s: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('sort', sortStr);
+    params.set('sort', s);
     params.delete('page');
     router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (typeof window !== 'undefined' && window.scrollY === 0) {
-      touchStart.current = e.touches[0].clientY;
-    }
+    if (window.scrollY === 0) touchStart.current = e.touches[0].clientY;
   };
-
   const handleTouchEnd = async (e: React.TouchEvent) => {
     const touchEnd = e.changedTouches[0].clientY;
-    if (typeof window !== 'undefined' && window.scrollY === 0 && touchEnd - touchStart.current > 120) {
+    if (window.scrollY === 0 && touchEnd - touchStart.current > 120) {
       setIsRefreshing(true);
       await setSize(1);
       setIsRefreshing(false);
@@ -104,279 +150,308 @@ export default function HomePageContent() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      {/* Main Feed */}
-      <main 
-        className="lg:col-span-8 space-y-6"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Header Section */}
-        <div className="space-y-1 relative">
-          {isRefreshing && (
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white rounded-full p-2 shadow-md border border-gray-100 text-green-600 z-20 flex items-center justify-center animate-spin">
-              <Sparkles className="w-4 h-4 animate-pulse" />
-            </div>
-          )}
-          <h1 className="text-2xl font-black text-gray-900 flex items-center space-x-2">
-            <Sparkles className="w-6 h-6 text-amber-500 fill-amber-500" />
-            <span>Dành cho bạn hôm nay</span>
-          </h1>
-          <p className="text-xs font-medium text-gray-400">
-            Cập nhật kiến thức nông nghiệp mới nhất từ chuyên gia và cộng đồng.
-          </p>
+    <div
+      className="max-w-7xl mx-auto px-4 py-6 space-y-8"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Pull-to-refresh indicator */}
+      {isRefreshing && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-white rounded-full px-4 py-2 shadow-lg border border-gray-100 flex items-center gap-2 text-xs font-bold text-green-600">
+          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+          <span>Đang làm mới...</span>
         </div>
+      )}
 
-        {/* Mobile "Chủ đề hot" Tags (Hidden on Desktop) */}
-        <div className="lg:hidden flex items-center space-x-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
-          {tagList.map((tag: any) => (
-            <Link
-              key={tag.id}
-              href={`/search?q=${encodeURIComponent(tag.name)}`}
-              className="whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all bg-white text-gray-500 border border-gray-100 hover:bg-green-50 hover:text-green-600"
-            >
-              #{tag.name.replace(/\s+/g, '')}
-            </Link>
-          ))}
-        </div>
-
-        {/* Filters */}
-        <div className="space-y-4">
-          <FilterTabs 
-            categories={categoryList} 
-            activeCategory={activeCategory === 'all' ? null : activeCategory}
-            onSelectCategory={handleCategorySelect}
-          />
-          
-          <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-            <div className="flex items-center space-x-6 text-[11px] font-black uppercase tracking-wider">
-              <button 
-                onClick={() => handleSortSelect('latest')}
-                className={`transition-all relative pb-2 ${activeSort === 'latest' ? 'text-green-600 font-black' : 'text-gray-400'}`}
+      {/* ── HERO SECTION ──────────────────────────────────────────────────────── */}
+      <section>
+        {heroLoading ? (
+          <HeroSkeleton />
+        ) : featuredPost ? (
+          <FeaturedPostCard post={featuredPost} />
+        ) : (
+          /* Static hero banner khi chưa có featured post */
+          <div className="relative w-full aspect-[16/7] md:aspect-[21/8] rounded-[32px] overflow-hidden bg-gradient-to-br from-green-700 via-teal-600 to-emerald-500 flex items-end">
+            <div
+              className="absolute inset-0 opacity-20"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+              }}
+            />
+            <div className="relative z-10 p-8 md:p-12 space-y-4 w-full">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-[10px] font-black uppercase tracking-widest rounded-full">
+                <Sparkles className="w-3 h-3" />
+                Thư Viện Nông Nghiệp
+              </span>
+              <h1 className="text-2xl md:text-4xl font-black text-white leading-tight max-w-2xl">
+                Kiến thức canh tác từ chuyên gia Việt Nam
+              </h1>
+              <p className="text-sm text-white/80 max-w-lg font-medium">
+                Cập nhật kỹ thuật trồng trọt, phòng trừ sâu bệnh và công nghệ nông nghiệp mới nhất.
+              </p>
+              <Link
+                href="/posts"
+                className="inline-flex items-center gap-2 bg-white text-green-700 font-black text-xs px-5 py-2.5 rounded-full hover:bg-green-50 transition-all shadow-lg"
               >
-                Mới nhất
-                {activeSort === 'latest' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 rounded-full" />
-                )}
-              </button>
-              <button 
-                onClick={() => handleSortSelect('hot')}
-                className={`transition-all relative pb-2 ${activeSort === 'hot' ? 'text-green-600 font-black' : 'text-gray-400'}`}
-              >
-                Hot nhất
-                {activeSort === 'hot' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 rounded-full" />
-                )}
-              </button>
-            </div>
-            <div className="flex items-center space-x-1 text-gray-400 text-[10px] font-bold uppercase">
-              <Filter className="w-3 h-3" />
-              <span>Sắp xếp</span>
+                Khám phá ngay <ChevronRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
-        </div>
+        )}
+      </section>
 
-        {/* Featured Posts (Only on page 1 and 'all' category) */}
-        {!isInitialLoading && activeCategory === 'all' && activeSort === 'latest' && featuredPosts.length > 0 && (
-          <div className="space-y-4 mb-8">
-            <div className="space-y-6">
-              {featuredPosts.map((post: any) => (
-                <FeaturedPostCard key={post.id} post={post} />
+      {/* ── MAIN LAYOUT ───────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* ── LEFT: Feed (70%) ──────────────────────────────────────────────── */}
+        <main className="lg:col-span-8 space-y-6">
+          {/* Category Pills */}
+          <div className="space-y-1">
+            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+              <Leaf className="w-3.5 h-3.5 text-green-600" /> Chủ đề
+            </h2>
+            {catsLoading ? (
+              <CategorySkeleton />
+            ) : (
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* "Tất cả" pill */}
+                <button
+                  onClick={() => setCategory('all')}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-black transition-all border ${
+                    activeCategory === 'all'
+                      ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-600/20'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-green-300 hover:text-green-600'
+                  }`}
+                >
+                  Tất cả
+                </button>
+                {categoryList.map((cat: any) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setCategory(cat.slug)}
+                    className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black transition-all border ${
+                      activeCategory === cat.slug
+                        ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-600/20'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-green-300 hover:text-green-600'
+                    }`}
+                  >
+                    {cat.emoji && <span>{cat.emoji}</span>}
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sort Tabs */}
+          <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-6">
+              {[
+                { key: 'latest', label: 'Mới nhất', Icon: Clock },
+                { key: 'hot', label: 'Hot nhất', Icon: Flame },
+              ].map(({ key, label, Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setSort(key)}
+                  className={`relative flex items-center gap-1.5 pb-2 text-[11px] font-black uppercase tracking-wider transition-all ${
+                    activeSort === key ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  <Icon className="w-3 h-3" />
+                  {label}
+                  {activeSort === key && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 rounded-full" />
+                  )}
+                </button>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Post List / Skeleton / Empty State */}
-        {isInitialLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Array(3).fill(0).map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 px-4 text-center bg-white rounded-[40px] border border-gray-100 shadow-sm">
-            <div className="w-16 h-16 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-4 animate-bounce">
-              <Leaf className="w-8 h-8" />
-            </div>
-            <h3 className="text-base font-black text-gray-900 mb-1">Chưa có bài viết nào.</h3>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-4">
-              Hãy là người đầu tiên chia sẻ!
-            </p>
-            <Link 
-              href="/posts/create"
-              className="px-6 py-2.5 bg-green-600 text-white text-xs font-black uppercase tracking-wider rounded-full hover:bg-green-700 transition-all shadow-sm shadow-green-600/20"
-            >
-              Viết bài đầu tiên
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {posts.map((post: any, idx: number) => (
-              <PostCard key={post.id} post={post} prefetch={idx < 3} />
-            ))}
-          </div>
-        )}
-
-        {/* Load More Trigger */}
-        <div ref={ref} className="h-20 flex items-center justify-center">
-          {isValidating && !isLoading && (
-            <div className="flex items-center space-x-2 text-xs font-bold text-green-600">
-              <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-bounce" />
-              <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-bounce [animation-delay:0.2s]" />
-              <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-bounce [animation-delay:0.4s]" />
-            </div>
-          )}
-          {isReachingEnd && posts.length > 0 && (
-            <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">
-              Bạn đã xem hết bài viết hôm nay
-            </p>
-          )}
-        </div>
-
-        {/* Mobile Sidebar Accordion */}
-        <div className="lg:hidden mt-8 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="w-full flex items-center justify-between p-5 font-black text-xs text-gray-900 uppercase tracking-wider bg-gray-50/50 border-b border-gray-100"
-          >
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="w-4 h-4 text-green-600" />
-              <span>Chủ đề & Thảo luận nổi bật</span>
-            </div>
-            <span className={`transform transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`}>
-              ▼
+            <span className="text-[10px] text-gray-300 font-bold uppercase">
+              {posts.length > 0 ? `${posts.length} bài viết` : ''}
             </span>
-          </button>
+          </div>
 
-          <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isSidebarOpen ? 'max-h-[1000px] opacity-100 p-6 space-y-6' : 'max-h-0 opacity-0'}`}>
-            {/* Đang thảo luận */}
-            <div className="space-y-3">
-              <h4 className="font-black text-[10px] text-gray-400 flex items-center space-x-2 uppercase tracking-wider">
-                <MessageSquare className="w-3.5 h-3.5 text-green-600" />
-                <span>Đang thảo luận</span>
-              </h4>
-              <ul className="space-y-3">
-                {trendingPosts.map((post: any) => (
-                  <li key={post.id} className="group">
-                    <Link href={`/posts/${post.slug}`} className="flex flex-col">
-                      <span className="text-xs font-bold text-gray-800 line-clamp-2">
-                        {post.title}
-                      </span>
-                      <span className="text-[9px] text-gray-400 font-bold uppercase mt-1">
-                        {post.comment_count || 0} bình luận
-                      </span>
+          {/* Post Grid / Skeleton / Empty */}
+          {isInitialLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Array(6).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-[32px] border border-gray-100 shadow-sm space-y-4">
+              <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center animate-bounce">
+                <Leaf className="w-8 h-8 text-green-400" />
+              </div>
+              <h3 className="text-base font-black text-gray-900">Chưa có bài viết nào</h3>
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
+                {activeCategory !== 'all'
+                  ? 'Chủ đề này chưa có bài viết. Hãy thử chủ đề khác!'
+                  : 'Hãy là người đầu tiên chia sẻ kiến thức!'}
+              </p>
+              <div className="flex gap-3">
+                {activeCategory !== 'all' && (
+                  <button
+                    onClick={() => setCategory('all')}
+                    className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-black uppercase tracking-wider rounded-full transition-all"
+                  >
+                    Xem tất cả
+                  </button>
+                )}
+                <Link
+                  href="/posts/create"
+                  className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-black uppercase tracking-wider rounded-full transition-all shadow-md shadow-green-600/20"
+                >
+                  Viết bài đầu tiên
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {posts.map((post: any, idx: number) => (
+                <PostCard key={`${post.id}-${idx}`} post={post} prefetch={idx < 4} />
+              ))}
+            </div>
+          )}
+
+          {/* Infinite scroll trigger / Load more */}
+          <div ref={ref} className="h-16 flex items-center justify-center">
+            {isValidating && !isInitialLoading && (
+              <div className="flex items-center gap-2 text-xs font-bold text-green-600">
+                {[0, 0.15, 0.3].map((delay, i) => (
+                  <span
+                    key={i}
+                    className="w-2 h-2 bg-green-500 rounded-full animate-bounce"
+                    style={{ animationDelay: `${delay}s` }}
+                  />
+                ))}
+              </div>
+            )}
+            {isReachingEnd && posts.length > 0 && (
+              <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">
+                ✓ Bạn đã xem hết bài viết hôm nay
+              </p>
+            )}
+          </div>
+        </main>
+
+        {/* ── RIGHT: Sidebar (30%) — Desktop only ───────────────────────────── */}
+        <aside className="hidden lg:flex lg:col-span-4 flex-col gap-6 sticky top-20 self-start">
+          {/* Trending Posts */}
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+            <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest flex items-center gap-2 border-b border-gray-50 pb-3">
+              <TrendingUp className="w-4 h-4 text-green-600" /> Đang thảo luận nhiều
+            </h3>
+            {trendingPosts.length === 0 ? (
+              <SidebarSkeleton />
+            ) : (
+              <ul className="space-y-4">
+                {trendingPosts.map((post: any, i: number) => (
+                  <li key={post.id || i}>
+                    <Link
+                      href={`/posts/${post.slug}`}
+                      className="flex gap-3 group"
+                    >
+                      <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 bg-gray-50">
+                        {post.thumbnail_url ? (
+                          <Image
+                            src={post.thumbnail_url}
+                            alt={post.title}
+                            width={56}
+                            height={56}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-green-50 flex items-center justify-center">
+                            <Leaf className="w-6 h-6 text-green-300" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-gray-800 group-hover:text-green-600 transition-colors line-clamp-2 leading-snug">
+                          {post.title}
+                        </p>
+                        <p className="text-[10px] text-gray-400 font-bold mt-1 flex items-center gap-1">
+                          <MessageSquare className="w-2.5 h-2.5" />
+                          {post.comment_count || 0} bình luận
+                        </p>
+                      </div>
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
+            )}
+          </div>
 
-            {/* Chuyên gia online */}
-            <div className="space-y-3 pt-4 border-t border-gray-50">
-              <h4 className="font-black text-[10px] text-gray-400 flex items-center space-x-2 uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5 text-green-600" />
-                <span>Chuyên gia online</span>
-              </h4>
-              <div className="space-y-3">
-                {topExperts?.map((expert: any) => (
-                  <div key={expert.id} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Image
-                        src={expert.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'}
-                        className="w-8 h-8 rounded-xl bg-gray-50 object-cover"
-                        alt={expert.full_name || 'Avatar'}
-                        width={32}
-                        height={32}
-                      />
-                      <div>
-                        <p className="text-xs font-black text-gray-900">{expert.full_name}</p>
-                        <p className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">
-                          {expert.role === 'expert' ? 'Chuyên gia' : 'Thành viên'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+          {/* Category Quick Links */}
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+            <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest flex items-center gap-2 border-b border-gray-50 pb-3">
+              <Leaf className="w-4 h-4 text-green-600" /> Chủ đề nổi bật
+            </h3>
+            {catsLoading ? (
+              <div className="space-y-2">
+                {Array(5).fill(0).map((_, i) => (
+                  <div key={i} className="h-9 rounded-xl bg-gray-100 animate-pulse" />
                 ))}
               </div>
-            </div>
+            ) : (
+              <div className="space-y-1.5">
+                {categoryList.slice(0, 6).map((cat: any) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setCategory(cat.slug)}
+                    className={`w-full text-left flex items-center justify-between px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                      activeCategory === cat.slug
+                        ? 'bg-green-50 text-green-700'
+                        : 'hover:bg-gray-50 text-gray-600'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span>{cat.emoji || '🌿'}</span>
+                      {cat.name}
+                    </span>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </main>
 
-      {/* Sidebar (Desktop Only) */}
-      <aside className="hidden lg:block lg:col-span-4 space-y-6 sticky top-20 self-start">
-        {/* Đang thảo luận */}
-        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-gray-50 pb-3">
-            <h3 className="font-black text-xs text-gray-900 flex items-center space-x-2 uppercase tracking-wider">
-              <MessageSquare className="w-4 h-4 text-green-600" />
-              <span>Đang thảo luận</span>
-            </h3>
+          {/* CTA Banner */}
+          <div className="bg-gradient-to-br from-green-600 to-teal-700 rounded-3xl p-6 text-white shadow-xl shadow-green-900/20 space-y-3">
+            <Sparkles className="w-8 h-8 text-white/80" />
+            <h4 className="font-black text-base leading-tight">Tham gia cộng đồng Nhà nông</h4>
+            <p className="text-xs text-white/75 leading-relaxed">
+              Đặt câu hỏi, chia sẻ kinh nghiệm và nhận tư vấn từ chuyên gia.
+            </p>
+            <Link
+              href="/hoi-dap"
+              className="inline-flex items-center gap-2 bg-white text-green-700 font-black text-xs px-5 py-2.5 rounded-full hover:bg-green-50 transition-all mt-2"
+            >
+              Hỏi chuyên gia <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-          <ul className="space-y-4">
-            {trendingPosts.map((post: any) => (
-              <li key={post.id} className="group cursor-pointer">
+        </aside>
+      </div>
+
+      {/* ── MOBILE: Trending accordion at bottom ──────────────────────────────── */}
+      {trendingPosts.length > 0 && (
+        <div className="lg:hidden bg-white rounded-3xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-green-600" /> Đang thảo luận nhiều
+          </h3>
+          <ul className="space-y-3">
+            {trendingPosts.slice(0, 3).map((post: any) => (
+              <li key={post.id}>
                 <Link href={`/posts/${post.slug}`} className="flex flex-col">
-                  <span className="text-[11px] font-bold text-gray-800 group-hover:text-green-600 transition-colors line-clamp-2">
-                    {post.title}
-                  </span>
-                  <span className="text-[9px] text-gray-400 font-bold uppercase mt-1">
+                  <span className="text-xs font-bold text-gray-800 line-clamp-2">{post.title}</span>
+                  <span className="text-[10px] text-gray-400 font-bold mt-0.5 flex items-center gap-1">
+                    <MessageSquare className="w-2.5 h-2.5" />
                     {post.comment_count || 0} bình luận
                   </span>
                 </Link>
               </li>
             ))}
-            {trendingPosts.length === 0 && (
-              <p className="text-[10px] font-bold text-gray-400 text-center py-4">
-                Chưa có thảo luận nào sôi nổi.
-              </p>
-            )}
           </ul>
         </div>
-
-        {/* Chuyên gia online */}
-        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-gray-50 pb-3">
-            <h3 className="font-black text-xs text-gray-900 flex items-center space-x-2 uppercase tracking-wider">
-              <Sparkles className="w-4 h-4 text-green-600" />
-              <span>Chuyên gia online</span>
-            </h3>
-          </div>
-          <div className="space-y-4">
-            {topExperts?.map((expert: any) => (
-              <div key={expert.id} className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Image
-                    src={expert.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'}
-                    className="w-10 h-10 rounded-2xl bg-gray-50 object-cover"
-                    alt={expert.full_name || 'Avatar'}
-                    width={48}
-                    height={48}
-                  />
-                  <div>
-                    <p className="text-xs font-black text-gray-900">{expert.full_name}</p>
-                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
-                      {expert.role === 'expert' ? 'Kỹ sư/Chuyên gia' : 'Thành viên'}
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  href={`/profile/${expert.username}`}
-                  className="px-3 py-1.5 bg-gray-50 hover:bg-green-50 text-gray-600 hover:text-green-600 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all"
-                >
-                  Xem
-                </Link>
-              </div>
-            ))}
-            {(!topExperts || topExperts.length === 0) && (
-              <p className="text-[10px] font-bold text-gray-400 text-center py-4">
-                Không có chuyên gia nào đang online.
-              </p>
-            )}
-          </div>
-        </div>
-      </aside>
+      )}
     </div>
   );
 }
