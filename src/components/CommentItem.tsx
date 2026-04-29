@@ -5,6 +5,7 @@ import { ThumbsUp, Reply, MoreHorizontal, Flag, Edit, Trash2, Award, ChevronDown
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import Image from 'next/image';
+import Link from 'next/link';
 import CommentForm from './CommentForm';
 
 interface CommentItemProps {
@@ -70,15 +71,17 @@ export default function CommentItem({ comment, onReply, onDelete, onEdit, onVote
       <div className="flex space-x-4">
         {/* Avatar */}
         <div className="flex-shrink-0">
-          <Image 
-            src={comment.author?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'} 
-            className="w-8 h-8 rounded-xl bg-gray-100 shadow-sm border border-white object-cover" 
-            alt={comment.author?.full_name || 'Avatar'} 
-            width={32}
-            height={32}
-            placeholder="blur"
-            blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
-          />
+          <Link href={`/users/${comment.author?.username || 'default'}`}>
+            <Image 
+              src={comment.author?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg'} 
+              className="w-8 h-8 rounded-xl bg-gray-100 shadow-sm border border-white object-cover hover:opacity-80 transition-opacity" 
+              alt={comment.author?.full_name || 'Avatar'} 
+              width={32}
+              height={32}
+              placeholder="blur"
+              blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
+            />
+          </Link>
         </div>
 
         {/* Content Area */}
@@ -86,7 +89,9 @@ export default function CommentItem({ comment, onReply, onDelete, onEdit, onVote
           <div className="bg-gray-50/50 group-hover:bg-gray-50 transition-colors p-4 rounded-[24px] rounded-tl-none border border-transparent group-hover:border-gray-100">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-black text-gray-900">{comment.author?.full_name}</span>
+                <Link href={`/users/${comment.author?.username || 'default'}`} className="hover:text-green-600 transition-colors">
+                  <span className="text-xs font-black text-gray-900">{comment.author?.full_name}</span>
+                </Link>
                 {comment.author?.role === 'expert' && (
                   <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[8px] font-black uppercase rounded-md border border-amber-100 flex items-center space-x-0.5">
                     <Award className="w-2.5 h-2.5" />

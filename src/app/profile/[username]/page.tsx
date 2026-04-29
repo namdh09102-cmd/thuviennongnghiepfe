@@ -37,6 +37,8 @@ export interface ProfileData {
   level: number;
   levelProgress: number;
   points: number;
+  last_checkin?: string;
+  email?: string;
   stats: {
     postsCount: number;
     answersCount: number;
@@ -61,6 +63,9 @@ export default function PublicProfilePage({ params }: { params: { username: stri
   
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [hasCheckedIn, setHasCheckedIn] = useState(false);
+  const [checkingIn, setCheckingIn] = useState(false);
+  
   const [editForm, setEditForm] = useState({
     full_name: '',
     bio: '',
@@ -77,6 +82,11 @@ export default function PublicProfilePage({ params }: { params: { username: stri
       })
       .then(data => {
         setProfile(data);
+        if (data.last_checkin) {
+          const today = new Date().toISOString().split('T')[0];
+          const lastCheckin = new Date(data.last_checkin).toISOString().split('T')[0];
+          setHasCheckedIn(today === lastCheckin);
+        }
         setEditForm({
           full_name: data.full_name || '',
           bio: data.bio || '',
@@ -139,6 +149,36 @@ export default function PublicProfilePage({ params }: { params: { username: stri
       }
     } catch (e) {
       console.error('Follow toggle failed');
+    }
+  };
+
+  const handleCheckin = async () => {
+    if (checkingIn || hasCheckedIn) return;
+    setCheckingIn(true);
+    try {
+      const res = await fetch('/api/users/me/checkin', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setHasCheckedIn(true);
+        if (profile) {
+          const newPoints = data.points || (profile.points + 1);
+          const newLevel = Math.max(1, Math.floor(newPoints / 100) + 1);
+          const newProgress = newPoints % 100;
+          setProfile({
+            ...profile,
+            points: newPoints,
+            level: newLevel,
+            levelProgress: newProgress
+          });
+        }
+        alert('Điểm danh thành công! +1 điểm uy tín.');
+      } else {
+        alert(data.error || 'Điểm danh thất bại');
+      }
+    } catch (e) {
+      alert('Đã xảy ra lỗi khi điểm danh');
+    } finally {
+      setCheckingIn(false);
     }
   };
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -214,7 +254,11 @@ export default function PublicProfilePage({ params }: { params: { username: stri
     );
   }
 
-  const isOwnProfile = session?.user && (session.user as any).id === profile.id;
+  const isOwnProfile = session?.user && (
+    (session.user as any).id === profile.id || 
+    (session.user as any).username === profile.username ||
+    (session.user as any).email === profile.email
+  );
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12 space-y-8 animate-in fade-in duration-500">
@@ -332,6 +376,21 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                   <div className="h-full bg-green-600 rounded-full" style={{ width: `${profile.levelProgress}%` }} />
                 </div>
                 <p className="text-[9px] font-bold text-gray-600 mt-1">{profile.points} điểm uy tín</p>
+                
+                {isOwnProfile && (
+                  <button
+                    onClick={handleCheckin}
+                    disabled={hasCheckedIn || checkingIn}
+                    className={`mt-3 w-full flex items-center justify-center space-x-1.5 font-black text-[10px] uppercase tracking-widest py-2.5 rounded-xl border transition-all ${
+                      hasCheckedIn 
+                        ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed' 
+                        : 'bg-amber-500 text-white border-amber-500 hover:bg-amber-600 shadow-sm shadow-amber-500/20'
+                    }`}
+                  >
+                    <span>📅</span>
+                    <span>{hasCheckedIn ? 'Đã điểm danh hôm nay' : 'Điểm danh +1đ'}</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -34,6 +34,7 @@ function formatUser(user: any, currentUserId?: string) {
     followingCount: following.length,
     created_at: user.created_at || user.createdAt || new Date().toISOString(),
     isFollowing: currentUserId ? followers.includes(currentUserId) : false,
+    last_checkin: user.last_checkin || null,
     stats: {
       postsCount: 0,
       answersCount: 0,

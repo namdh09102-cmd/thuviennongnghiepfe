@@ -69,7 +69,7 @@ export default function PostCard({ post, prefetch }: PostCardProps) {
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-          <div className="flex items-center space-x-2">
+          <Link href={`/users/${post.author?.username || 'default'}`} className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
             <div className="relative flex-shrink-0">
               <Image
                 src={post.author?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky'}
@@ -104,7 +104,7 @@ export default function PostCard({ post, prefetch }: PostCardProps) {
                 </span>
               </div>
             </div>
-          </div>
+          </Link>
 
           <div className="flex items-center space-x-3 text-gray-400 flex-shrink-0">
             <div className="flex items-center space-x-1">
