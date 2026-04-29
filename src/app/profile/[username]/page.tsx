@@ -263,13 +263,15 @@ export default function PublicProfilePage({ params }: { params: { username: stri
               <HelpCircle className="w-4 h-4" />
               <span>Câu hỏi</span>
             </button>
-            <button
-              onClick={() => setActiveTab('saved')}
-              className={`flex items-center space-x-2 px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${activeTab === 'saved' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
-            >
-              <Bookmark className="w-4 h-4" />
-              <span>Đã lưu</span>
-            </button>
+            {isOwnProfile && (
+              <button
+                onClick={() => setActiveTab('saved')}
+                className={`flex items-center space-x-2 px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${activeTab === 'saved' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              >
+                <Bookmark className="w-4 h-4" />
+                <span>Đã lưu</span>
+              </button>
+            )}
           </div>
 
           {/* Tab Content */}

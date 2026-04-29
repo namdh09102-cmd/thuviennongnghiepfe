@@ -65,13 +65,25 @@ export default function EditProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Here you would upload to Supabase Storage or Cloudinary
-    // Mocking the upload for now with a local preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData(prev => ({ ...prev, avatar_url: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
+    const formDataPayload = new FormData();
+    formDataPayload.append('file', file);
+
+    try {
+      setIsSaving(true);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataPayload,
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setFormData(prev => ({ ...prev, avatar_url: data.url }));
+      }
+    } catch (err) {
+      console.error('Upload failed');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
