@@ -23,14 +23,34 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('comments')
-    .select(`
-      *,
-      author:profiles(full_name, username, avatar_url),
-      post:posts(title, slug)
-    `)
+    .select('*')
     .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (data && data.length > 0) {
+    const authorIds = Array.from(new Set(data.map((c: any) => c.author_id).filter(Boolean)));
+    const { data: profiles } = await supabaseAdmin
+      .from('profiles')
+      .select('id, full_name, username, avatar_url')
+      .in('id', authorIds);
+
+    const profileMap = new Map(profiles?.map((p: any) => [p.id, p]) || []);
+
+    const postIds = Array.from(new Set(data.map((c: any) => c.post_id).filter(Boolean)));
+    const { data: posts } = await supabaseAdmin
+      .from('posts')
+      .select('id, title, slug')
+      .in('id', postIds);
+
+    const postMap = new Map(posts?.map((p: any) => [p.id, p]) || []);
+
+    data.forEach((c: any) => {
+      c.author = profileMap.get(c.author_id) || { full_name: 'Người dùng', username: 'member' };
+      c.post = postMap.get(c.post_id) || { title: 'Bài viết đã xóa', slug: 'deleted' };
+    });
+  }
+
   return NextResponse.json(data);
 }
 

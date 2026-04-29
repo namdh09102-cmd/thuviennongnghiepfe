@@ -42,11 +42,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabaseAdmin
     .from('posts')
-    .select(`
-      *,
-      author:profiles(full_name, username),
-      category:categories(name)
-    `, { count: 'exact' })
+    .select('*', { count: 'exact' })
     .range(from, to)
     .order('created_at', { ascending: false });
 
@@ -56,9 +52,29 @@ export async function GET(req: NextRequest) {
 
   const { data, count, error } = await query;
   
-  if (error || !data || data.length === 0) {
-    const filtered = status && status !== 'all' ? MOCK_ADMIN_POSTS.filter(p => p.status === status) : MOCK_ADMIN_POSTS;
-    return NextResponse.json({ data: filtered, total: filtered.length });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (data && data.length > 0) {
+    const authorIds = Array.from(new Set(data.map((p: any) => p.author_id).filter(Boolean)));
+    const { data: profiles } = await supabaseAdmin
+      .from('profiles')
+      .select('id, full_name, username')
+      .in('id', authorIds);
+
+    const profileMap = new Map(profiles?.map((p: any) => [p.id, p]) || []);
+
+    const categoryIds = Array.from(new Set(data.map((p: any) => p.category_id).filter(Boolean)));
+    const { data: categories } = await supabaseAdmin
+      .from('categories')
+      .select('id, name')
+      .in('id', categoryIds);
+
+    const categoryMap = new Map(categories?.map((c: any) => [c.id, c]) || []);
+
+    data.forEach((p: any) => {
+      p.author = profileMap.get(p.author_id) || { full_name: 'Người dùng', username: 'member' };
+      p.category = categoryMap.get(p.category_id) || { name: 'Chưa phân loại' };
+    });
   }
 
   return NextResponse.json({ data, total: count });
