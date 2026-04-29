@@ -120,7 +120,7 @@ export default function ChatWidget() {
       {/* Floating Chat Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-green-500 text-white shadow-2xl hover:shadow-emerald-500/25 transform hover:-translate-y-1 transition-all duration-300 z-50 flex items-center space-x-2 border border-white/10 group ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`}
+        className={`fixed bottom-20 md:bottom-6 right-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-green-500 text-white shadow-2xl hover:shadow-emerald-500/25 transform hover:-translate-y-1 transition-all duration-300 z-50 flex items-center space-x-2 border border-white/10 group ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`}
       >
         <Sparkles className="h-5 w-5 group-hover:animate-spin" />
         <span className="text-sm font-semibold">Tư vấn AI</span>

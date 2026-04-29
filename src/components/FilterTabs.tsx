@@ -18,7 +18,7 @@ export default function FilterTabs({ categories, activeCategory, onSelectCategor
   const currentCat = activeCategory || 'all';
 
   return (
-    <div className="flex overflow-x-auto scrollbar-hide sticky top-[60px] bg-gray-50/90 backdrop-blur-md z-10 py-2 border-b border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0 space-x-8">
+    <div className="flex overflow-x-auto scrollbar-hide relative md:sticky md:top-[64px] bg-gray-50/90 backdrop-blur-md z-10 py-2 border-b border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0 space-x-8">
       <button
         onClick={() => onSelectCategory('all')}
         className={`whitespace-nowrap pb-3 text-xs font-bold uppercase tracking-wider transition-all relative ${
