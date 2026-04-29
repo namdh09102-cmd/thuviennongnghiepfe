@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Eye, Heart, MessageSquare, Bookmark, Clock, Award } from 'lucide-react';
+import { Eye, Heart, MessageSquare, Bookmark, Clock, Award, Leaf } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
@@ -28,17 +28,22 @@ export default function PostCard({ post }: PostCardProps) {
     <article className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-green-900/5 transition-all group overflow-hidden">
       <Link href={`/posts/${post.slug}`}>
         <div className="relative aspect-[4/3] overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <Image
-            src={post.thumbnail_url || 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80'}
-            alt={post.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            width={800}
-            height={450}
-            loading="lazy"
-            placeholder="blur"
-            blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
-          />
+          {post.thumbnail_url ? (
+            <Image
+              src={post.thumbnail_url}
+              alt={post.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              width={800}
+              height={450}
+              loading="lazy"
+              placeholder="blur"
+              blurDataURL="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-green-50 text-green-300 transition-transform duration-500 group-hover:scale-105">
+              <Leaf className="w-12 h-12 opacity-50" />
+            </div>
+          )}
           <div className="absolute top-4 left-4">
             <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-green-700 text-[10px] font-black uppercase rounded-full shadow-sm">
               {post.category?.name || 'Chưa phân loại'}

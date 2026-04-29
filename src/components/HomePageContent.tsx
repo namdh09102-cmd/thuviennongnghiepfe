@@ -8,9 +8,10 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import PostCard from '@/components/PostCard';
+import FeaturedPostCard from '@/components/FeaturedPostCard';
 import FilterTabs from '@/components/FilterTabs';
 import SkeletonCard from '@/components/SkeletonCard';
-import { TrendingUp, Sparkles, Filter, MessageSquare, Leaf } from 'lucide-react';
+import { TrendingUp, Sparkles, Filter, MessageSquare, Leaf, Award } from 'lucide-react';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -36,8 +37,12 @@ export default function HomePageContent() {
   // Fetch Sidebar Data
   const { data: trendingPostsData } = useSWR('/api/posts?sort=most_comments&limit=5', fetcher);
   const { data: topExperts } = useSWR('/api/users?role=expert&limit=3', fetcher);
+  
+  // Fetch Featured Posts
+  const { data: featuredPostsData } = useSWR('/api/posts?is_featured=true&limit=2', fetcher);
 
   const trendingPosts = trendingPostsData?.data || [];
+  const featuredPosts = featuredPostsData?.data || [];
 
   const getKey = (pageIndex: number, previousPageData: any) => {
     if (previousPageData && (!previousPageData.data || !previousPageData.data.length)) return null;
@@ -170,6 +175,17 @@ export default function HomePageContent() {
             </div>
           </div>
         </div>
+
+        {/* Featured Posts (Only on page 1 and 'all' category) */}
+        {!isInitialLoading && activeCategory === 'all' && activeSort === 'latest' && featuredPosts.length > 0 && (
+          <div className="space-y-4 mb-8">
+            <div className="space-y-6">
+              {featuredPosts.map((post: any) => (
+                <FeaturedPostCard key={post.id} post={post} />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Post List / Skeleton / Empty State */}
         {isInitialLoading ? (

@@ -23,6 +23,8 @@ export async function GET(req: NextRequest) {
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
+  const is_featured = searchParams.get('is_featured');
+
   if (!supabaseAdmin) {
     return NextResponse.json({
       data: [],
@@ -35,6 +37,10 @@ export async function GET(req: NextRequest) {
     .from('posts')
     .select('*', { count: 'exact' })
     .eq('status', 'published');
+
+  if (is_featured === 'true') {
+    query = query.eq('is_featured', true);
+  }
 
   if (category && category !== 'all') {
     const { data: catData } = await supabaseAdmin
