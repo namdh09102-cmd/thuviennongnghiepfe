@@ -125,7 +125,11 @@ export async function GET(req: NextRequest) {
     },
     {
       status: 200,
-      headers: { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=300' }
+      headers: { 
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
     }
   );
 }
