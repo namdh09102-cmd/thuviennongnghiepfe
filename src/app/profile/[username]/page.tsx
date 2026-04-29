@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { Award, CheckCircle, MapPin, Calendar, FileText, Users, Edit3, UserPlus, UserMinus, Sprout, Bookmark, HelpCircle } from 'lucide-react';
+import { Award, CheckCircle, MapPin, Calendar, FileText, Users, Edit3, UserPlus, UserMinus, Sprout, Bookmark, HelpCircle, UploadCloud, X, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import Link from 'next/link';
@@ -10,7 +10,20 @@ import Image from 'next/image';
 import PostCard from '@/components/PostCard';
 import BadgeCard from '@/components/BadgeCard';
 
-interface ProfileData {
+const PROVINCES = [
+  'An Giang', 'Bà Rịa - Vũng Tàu', 'Bắc Giang', 'Bắc Kạn', 'Bạc Liêu', 'Bắc Ninh', 'Bến Tre', 'Bình Định', 
+  'Bình Dương', 'Bình Phước', 'Bình Thuận', 'Cà Mau', 'Cần Thơ', 'Cao Bằng', 'Đà Nẵng', 'Đắk Lắk', 
+  'Đắk Nông', 'Điện Biên', 'Đồng Nai', 'Đồng Tháp', 'Gia Lai', 'Hà Giang', 'Hà Nam', 'Hà Nội', 
+  'Hà Tĩnh', 'Hải Dương', 'Hải Phòng', 'Hậu Giang', 'Hòa Bình', 'Hưng Yên', 'Khánh Hòa', 'Kiên Giang', 
+  'Kon Tum', 'Lai Châu', 'Lâm Đồng', 'Lạng Sơn', 'Lào Cai', 'Long An', 'Nam Định', 'Nghệ An', 
+  'Ninh Bình', 'Ninh Thuận', 'Phú Thọ', 'Phú Yên', 'Quảng Bình', 'Quảng Nam', 'Quảng Ngãi', 'Quảng Ninh', 
+  'Quảng Trị', 'Sóc Trăng', 'Sơn La', 'Tây Ninh', 'Thái Bình', 'Thái Nguyên', 'Thanh Hóa', 'Thừa Thiên Huế', 
+  'Tiền Giang', 'TP Hồ Chí Minh', 'Trà Vinh', 'Tuyên Quang', 'Vĩnh Long', 'Vĩnh Phúc', 'Yên Bái'
+];
+
+const EXPERTISE_AREAS = ["Lúa nước", "Rau màu", "Cây ăn trái", "Thủy sản", "Chăn nuôi"];
+
+export interface ProfileData {
   id: string;
   username: string;
   full_name: string;
@@ -45,6 +58,16 @@ export default function PublicProfilePage({ params }: { params: { username: stri
   const [activeTab, setActiveTab] = useState<'posts' | 'questions' | 'saved' | 'badges'>('posts');
   const [savedPosts, setSavedPosts] = useState<any[]>([]);
   const [loadingSaved, setLoadingSaved] = useState(false);
+  
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [editForm, setEditForm] = useState({
+    full_name: '',
+    bio: '',
+    region: '',
+    main_crops: [] as string[],
+    avatar_url: ''
+  });
 
   useEffect(() => {
     fetch(`/api/users/${username}`)
@@ -54,6 +77,13 @@ export default function PublicProfilePage({ params }: { params: { username: stri
       })
       .then(data => {
         setProfile(data);
+        setEditForm({
+          full_name: data.full_name || '',
+          bio: data.bio || '',
+          region: data.region || data.location || '',
+          main_crops: data.main_crops || data.expertise || [],
+          avatar_url: data.avatar_url || ''
+        });
         setLoading(false);
       })
       .catch(() => {
@@ -111,7 +141,63 @@ export default function PublicProfilePage({ params }: { params: { username: stri
       console.error('Follow toggle failed');
     }
   };
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingProfile(true);
+    try {
+      const res = await fetch('/api/users/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm)
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        // Update profile state
+        if (profile) {
+          setProfile({
+            ...profile,
+            full_name: data.full_name || editForm.full_name,
+            bio: data.bio || editForm.bio,
+            region: data.region || editForm.region,
+            main_crops: data.main_crops || editForm.main_crops,
+            avatar_url: data.avatar_url || editForm.avatar_url
+          });
+        }
+        setShowEditModal(false);
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Cập nhật thất bại');
+      }
+    } catch (e) {
+      alert('Đã xảy ra lỗi khi cập nhật');
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
+  const handleAvatarUpload = async (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result as string;
+      setEditForm(prev => ({ ...prev, avatar_url: base64 }));
+      
+      try {
+        const res = await fetch('/api/users/me/avatar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ avatar_url: base64 })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setEditForm(prev => ({ ...prev, avatar_url: data.avatar_url }));
+        }
+      } catch (e) {
+        console.error('Tải ảnh thất bại');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -160,13 +246,13 @@ export default function PublicProfilePage({ params }: { params: { username: stri
 
             <div className="flex items-center pb-2">
               {isOwnProfile ? (
-                <Link 
-                  href="/settings/profile"
+                <button 
+                  onClick={() => setShowEditModal(true)}
                   className="flex items-center space-x-2 bg-gray-900 hover:bg-green-700 text-white font-black text-xs px-8 py-3.5 rounded-2xl transition-all shadow-lg shadow-gray-900/10"
                 >
                   <Edit3 className="w-4 h-4" />
                   <span>Chỉnh sửa</span>
-                </Link>
+                </button>
               ) : (
                 <button 
                   onClick={handleFollowToggle}
@@ -346,9 +432,182 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                 )}
               </div>
             )}
+            {activeTab === 'badges' && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                {(profile.badges || []).map((badge: any) => (
+                  <BadgeCard key={badge.id} badge={badge} />
+                ))}
+                {(profile.badges || []).length === 0 && (
+                  <div className="col-span-full py-20 text-center bg-white rounded-[32px] border border-gray-100">
+                    <p className="text-xs font-bold text-gray-400 italic">Chưa có huy hiệu nào.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
+      {/* Edit Profile Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[40px] p-8 w-full max-w-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
+            <button 
+              onClick={() => setShowEditModal(false)} 
+              className="absolute top-6 right-6 p-2.5 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-full transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <h3 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+              <Edit3 className="w-6 h-6 text-green-600" />
+              <span>Chỉnh sửa hồ sơ</span>
+            </h3>
+
+            <form onSubmit={handleSaveProfile} className="space-y-6">
+              {/* Avatar Drag & Drop */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Ảnh đại diện</label>
+                <div 
+                  className="border-2 border-dashed border-gray-200 rounded-[32px] p-6 flex flex-col items-center justify-center gap-4 hover:border-green-500 hover:bg-green-50/30 transition-all cursor-pointer group bg-gray-50"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) handleAvatarUpload(file);
+                  }}
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e: any) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAvatarUpload(file);
+                    };
+                    input.click();
+                  }}
+                >
+                  {editForm.avatar_url ? (
+                    <div className="relative">
+                      <Image 
+                        src={editForm.avatar_url} 
+                        alt="Avatar Preview" 
+                        width={96} 
+                        height={96} 
+                        className="w-24 h-24 rounded-[24px] object-cover border-4 border-white shadow-md"
+                        unoptimized
+                      />
+                      <div className="absolute inset-0 bg-black/40 rounded-[24px] opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity">
+                        Thay đổi
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 rounded-[24px] bg-white shadow-inner flex items-center justify-center border border-gray-100 text-gray-300">
+                      <UploadCloud className="w-10 h-10" />
+                    </div>
+                  )}
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-gray-700">Kéo thả ảnh hoặc nhấn vào đây</p>
+                    <p className="text-[10px] font-medium text-gray-400 mt-1">Hỗ trợ PNG, JPG, GIF (Tối đa 5MB)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tên hiển thị & Bio */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tên hiển thị</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={editForm.full_name}
+                    onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                    placeholder="Họ tên của bạn"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-green-600" />
+                    <span>Tỉnh / Thành phố</span>
+                  </label>
+                  <select
+                    value={editForm.region}
+                    onChange={(e) => setEditForm({ ...editForm, region: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold focus:ring-2 focus:ring-green-500 outline-none transition-all cursor-pointer"
+                  >
+                    <option value="">Chọn khu vực</option>
+                    {PROVINCES.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tiểu sử (Bio)</label>
+                <textarea 
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value.slice(0, 200) })}
+                  rows={3}
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold focus:ring-2 focus:ring-green-500 outline-none transition-all resize-none"
+                  placeholder="Giới thiệu ngắn về bản thân..."
+                  maxLength={200}
+                />
+                <span className="text-[9px] font-bold text-gray-400 block text-right mr-1">{editForm.bio.length}/200 ký tự</span>
+              </div>
+
+              {/* Chuyên môn / Multi-select */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <Sprout className="w-3.5 h-3.5 text-green-600" />
+                  <span>Lĩnh vực chuyên môn</span>
+                </label>
+                <div className="flex flex-wrap gap-2 bg-gray-50 p-4 rounded-[24px] border border-gray-100">
+                  {EXPERTISE_AREAS.map((area) => {
+                    const isSelected = editForm.main_crops.includes(area);
+                    return (
+                      <button
+                        type="button"
+                        key={area}
+                        onClick={() => {
+                          setEditForm(prev => ({
+                            ...prev,
+                            main_crops: isSelected 
+                              ? prev.main_crops.filter(c => c !== area)
+                              : [...prev.main_crops, area]
+                          }));
+                        }}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                          isSelected 
+                            ? 'bg-green-600 text-white border-green-600 shadow-sm shadow-green-600/20' 
+                            : 'bg-white text-gray-400 border-gray-100 hover:border-green-200 hover:text-gray-600'
+                        }`}
+                      >
+                        {area}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isSavingProfile}
+                className="w-full bg-gray-900 hover:bg-green-700 text-white font-black text-xs py-4 rounded-2xl shadow-xl shadow-gray-900/10 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSavingProfile ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                <span>{isSavingProfile ? 'Đang lưu hồ sơ...' : 'Lưu thay đổi'}</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
