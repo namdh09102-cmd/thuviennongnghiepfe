@@ -127,14 +127,14 @@ export default function HomePageContent() {
     const params = new URLSearchParams(searchParams.toString());
     slug === 'all' ? params.delete('category') : params.set('category', slug);
     params.delete('page');
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const setSort = (s: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('sort', s);
     params.delete('page');
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
